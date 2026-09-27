@@ -135,7 +135,12 @@ function lcSolveWave(lv, h, dt) {
         else   next.add(Math.round(ny / GQ))
       }
     }
-    if (i > 8 && next.size) {
+    // Ignore the opening, where the set is still fanning out from a single
+    // point and its width says nothing about the level. This was a count of
+    // 8 frames, which was a third of a second at 60Hz but is a thirtieth at
+    // the 240Hz clock the game now runs — so the band stayed pinned to that
+    // opening fan and every level reported the same meaningless number.
+    if (i * DT > 0.4 && next.size) {
       const ys = [...next].map(q => q * GQ)
       const span = Math.max(...ys) - Math.min(...ys)
       if (span < worst) { worst = span; worstCol = Math.round(scroll) }
