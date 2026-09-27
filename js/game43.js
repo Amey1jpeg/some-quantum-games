@@ -526,7 +526,7 @@ const G43 = {
   // They used to be one flag; separating them lets you practise a level
   // for real without it counting.
   practice:false, noclip:false,
-  portals:[], portalFlash:0, portalCool:0,
+  portals:[], portalFlash:0, portalCool:0, laps:0,
   practiceDiff:null, practiceLevel:null, hitFlash:0, attempts:0,
   fullTrail:[],         // whole run, for the clear-card picture
   paused:false,         // frozen while the clear card is up
@@ -965,6 +965,7 @@ function _g43LoadChallenge(w, h) {
   // So the announce screen can say which version turned up
   if (G43.challenge) G43.challenge.hasPortal = !!wantPortals
   G43.portalCool    = 0
+  G43.laps          = 0
   G43.scrollX       = 0
   G43.trail         = []
   G43.phase         = 'announce'
@@ -1122,6 +1123,16 @@ function _g43Loop(ts) {
         // whole screen and so cannot be dodged; anything less can be flown past.
         const half = Math.min(1, p.mouth) * h / 2
         if (Math.abs(G43.wy - p.cf * h) > half) continue
+        // A portal that sends you back up the level is a lap, not a skip —
+        // practice never scores, so without counting these a loop level had
+        // nothing at all to show for going round again.
+        if (p.toAt < p.at) {
+          G43.laps = (G43.laps || 0) + 1
+          // Practice leaves the badge as a dash because it never scores, so a
+          // lap level had no visible tally anywhere. Show the laps there.
+          const hud = document.getElementById('g43-score-hud')
+          if (hud && G43.practice) hud.textContent = '\u21ba ' + G43.laps
+        }
         G43.scrollX = p.toAt
         G43.wy = Math.max(WR + 2, Math.min(h - WR - 2, p.toCf * h))
         G43.portalFlash = 0.3
@@ -1291,6 +1302,7 @@ function _g43RetryNow() {
   if (G43.botMode) { G43.bot = null; G43.botPending = true }
   G43.retrying  = false
   G43.retryT    = 0
+  G43.laps      = 0
   G43.scrollX   = 0
   G43.wy        = c.height / 2
   G43.wvy       = G43_WAVE_SPD
@@ -1372,9 +1384,10 @@ function _g43TrailCard() {
   g.textAlign = 'right'
   g.fillStyle = 'rgba(255,255,255,0.45)'; g.font = '12px monospace'
   const att = G43.attempts ? `${G43.attempts + 1} attempts` : 'first try'
+  const laps = G43.laps ? `${G43.laps + 1} laps  ·  ` : ''
   const secs = G43.clearAt / G43.challenge.speed
   const rate = secs > 0 ? (G43.taps / secs).toFixed(1) : '0'
-  g.fillText(`${G43.taps} taps (${rate}/s)  ·  ${att}  ·  ${secs.toFixed(1)}s  ·  Wave Gauntlet`,
+  g.fillText(`${laps}${G43.taps} taps (${rate}/s)  ·  ${att}  ·  ${secs.toFixed(1)}s  ·  Wave Gauntlet`,
              W - 16, 30)
 
   _g43ShowCard(cv)
@@ -1544,6 +1557,7 @@ function _g43Draw(ctx, w, h) {
     ctx.fillText((G43.noclip ? 'PRACTICE · NOCLIP' : 'PRACTICE') +
                  (G43.practiceDiff ? ' — ' + G43.practiceDiff.toUpperCase() : '') +
                  (G43.attempts ? '   att ' + G43.attempts : '') +
+                 (G43.laps ? '   LAP ' + (G43.laps + 1) : '') +
                  (G43.taps ? '   taps ' + G43.taps : '') +
                  (G43.bot ? '   \ud83e\udd16 BOT ' + G43.bot.taps + ' taps'
                           : (G43.botMode ? '   \ud83e\udd16 NO BOT LINE HERE' : '')), w/2, 18)
