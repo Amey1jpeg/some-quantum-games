@@ -389,6 +389,46 @@ function lcReport(lv) {
     r.warnings.push(`Corridor sits outside the visible screen for ${offscreen} of ${r.clearAt} columns — those walls can't be seen, though the game now bounds the corridor to the screen.`)
   }
 
+  // Portals. None of this forbids anything — a portal that loops you back is
+  // a perfectly good trap to build on purpose. The report just has to say so,
+  // because the solvers deliberately skip backward portals and would
+  // otherwise call a level clearable without mentioning the cage in it.
+  const ports = lv.portals || []
+  if (ports.length) {
+    const back = ports.filter(p => (p.toAt ?? p.at) < p.at)
+    if (back.length) {
+      r.warnings.push(
+        `${back.length} portal(s) send you back up the level` +
+        (back.length > 1 ? '' : ` (column ${back[0].at} to ${back[0].toAt})`) +
+        ' — a loop. The check and the bot follow the route that dodges it, so' +
+        ' "clearable" here means clearable if you stay out; anyone who goes' +
+        ' through keeps going round.')
+    }
+    // How much room there is to dodge each mouth, which is the whole
+    // difficulty of a trap and worth knowing exactly.
+    const H = 500
+    for (const p of ports) {
+      const mouth = Math.min(1, p.mouth ?? 0.24)
+      if (mouth >= 1) {
+        r.warnings.push(`Portal at column ${p.at} spans the full height — it cannot be dodged.`)
+        continue
+      }
+      const wl = lcWallAt(kfs, p.at, H)
+      const cTop = wl.cy - wl.gapH / 2, cBot = wl.cy + wl.gapH / 2
+      const mTop = (p.cf ?? 0.5) * H - mouth * H / 2
+      const mBot = (p.cf ?? 0.5) * H + mouth * H / 2
+      const above = mTop - cTop - 2 * LC_R
+      const below = cBot - mBot - 2 * LC_R
+      const room = Math.max(above, below)
+      if (room < 0) {
+        r.warnings.push(`Portal at column ${p.at} fills the corridor there — no way past it.`)
+      } else if (room < 16) {
+        r.warnings.push(`Portal at column ${p.at} leaves ${Math.round(room)}px to squeeze past on a 500px screen` +
+                        ` (${Math.round(above)}px above, ${Math.round(below)}px below the mouth).`)
+      }
+    }
+  }
+
   // Speed feel: how much of the level a player can actually see and react to
   r.colsPerFrame = speed * LC_DT
   r.lookahead    = 900 / speed          // seconds of level visible on a 900px arena
