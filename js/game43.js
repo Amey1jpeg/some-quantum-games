@@ -56,10 +56,7 @@ const G43_POOL = {
           {at:600, cf:0.68, gapH:h*.54},
           {at:740, cf:0.30, gapH:h*.54},  // slope up
           {at:880, cf:0.50, gapH:h*.54},
-        ],
-        // Optional shortcut: fly through the mouth and it skips ahead,
-        // miss it and the level plays as it always did.
-        portals:[{ at:264, cf:0.30,   toAt:546, toCf:0.68,   mouth:0.20 }] }
+        ]}
       }
     },
     {
@@ -111,10 +108,7 @@ const G43_POOL = {
           {at:650, cf:a,    gapH:h*.28},  // 120-col shift back
           {at:760, cf:a,    gapH:h*.28},
           {at:870, cf:0.50, gapH:h*.30},
-        ],
-        // The second shift is now a portal rather than a climb: it drops you
-        // straight onto the upper lane at the column the corridor gets there.
-        portals:[{ at:650, toCf:a, mouth:1 }] }
+        ]}
       }
     },
     {
@@ -127,10 +121,7 @@ const G43_POOL = {
           {at:530, cf:0.50, gapH:h*.23},
           {at:590, cf:0.50, gapH:h*.44},
           {at:920, cf:0.50, gapH:h*.44},
-        ],
-        // Optional shortcut: fly through the mouth and it skips ahead,
-        // miss it and the level plays as it always did.
-        portals:[{ at:276, cf:0.50,   toAt:570, toCf:0.50,   mouth:0.20 }] }
+        ]}
       }
     },
     {
@@ -220,10 +211,7 @@ const G43_POOL = {
           {at:855,  cf:cys[3],  gapH:h*.145},  // 75-col ✓
           {at:1000, cf:cys[3],  gapH:h*.145},
           {at:1120, cf:0.50,    gapH:h*.16},
-        ],
-        // Optional shortcut: fly through the mouth and it skips ahead,
-        // miss it and the level plays as it always did.
-        portals:[{ at:336, cf:0.50,   toAt:694, toCf:0.4786, mouth:0.20 }] }
+        ]}
       }
     },
     {
@@ -387,10 +375,7 @@ const G43_POOL = {
           {at:580, cf:0.5533, gapH:h*0.1104},
           {at:640, cf:0.5533, gapH:h*0.36},
           {at:960, cf:0.5,    gapH:h*0.36},
-        ],
-        // Optional shortcut: fly through the mouth and it skips ahead,
-        // miss it and the level plays as it always did.
-        portals:[{ at:288, cf:0.3267, toAt:595, toCf:0.5533, mouth:0.20 }] }
+        ]}
       }
     },
     {
@@ -520,10 +505,7 @@ const G43_POOL = {
           {at:500,  cf:0.35,   gapH:h*0.0925},   // downhill
           {at:750,  cf:0.5041, gapH:h*0.0925},   // uphill
           {at:1006, cf:0.4998, gapH:h*0.5},      // release
-        ],
-        // Optional shortcut: fly through the mouth and it skips ahead,
-        // miss it and the level plays as it always did.
-        portals:[{ at:300, cf:0.45,   toAt:620, toCf:0.424,  mouth:0.20 }] }
+        ]}
       }
     },
   ],
