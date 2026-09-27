@@ -230,10 +230,16 @@ const G43_POOL = {
       name:'SPEED NEEDLE', diff:'hard', speed:408,
       gen(h) {
         const cy=0.27+qRandInt(46)/100
+        // The opening slope used to be 70 columns. At 408px/s that is 0.172s,
+        // in which the wave can cover 43.8px — but cy ranges over 0.27..0.72,
+        // so an extreme roll asked for far more than that and the level was
+        // simply impossible. It cleared at only 2 window heights of 8, and
+        // only then because a short screen makes the same fraction fewer
+        // pixels. 150 columns gives every roll room at every height.
         return { clearAt:1200, keyframes:[
           {at:0,    cf:0.50, gapH:h*.28},
-          {at:70,   cf:cy,   gapH:h*.28},  // slope 70 col
-          {at:130,  cf:cy,   gapH:h*.15},  // close 60 col
+          {at:150,  cf:cy,   gapH:h*.28},  // slope 150 col
+          {at:210,  cf:cy,   gapH:h*.15},  // close 60 col
           {at:640,  cf:cy,   gapH:h*.15},
           {at:700,  cf:cy,   gapH:h*.28},  // open 60 col
           {at:1200, cf:0.50, gapH:h*.28},

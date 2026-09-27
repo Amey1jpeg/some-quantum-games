@@ -63,6 +63,7 @@ const ED = {
   drag:null,            // {type, i}
   evilBot:false,        // bot runs take the most presses instead of the fewest
   portalPend:null,      // first half of a portal, waiting for its exit
+  portalSel:0,          // which portal the properties panel is editing
   scroll:0,             // horizontal scroll in columns
   zoom:1,               // px per column
   msg:'',
@@ -475,6 +476,7 @@ function _edRenderProps() {
   const lv = _edCur()
   if (!lv || lv.game !== ED.game) { el.innerHTML = '<div class="ed-empty">Select a level.</div>'; return }
   if (ED.mode === 'deco') { _edRenderDecoProps(el, lv); return }
+  if (ED.mode === 'portal') { _edRenderPortalProps(el, lv); return }
   const diffs = ED_DIFFS[ED.game].map(d =>
     `<option value="${d}" ${d === lv.diff ? 'selected' : ''}>${d.toUpperCase()}</option>`).join('')
   const rank = lv.rank ?? 20
@@ -511,6 +513,50 @@ function _edRenderProps() {
 
   // One undo entry per field-editing session, taken before the first keystroke
   el.querySelectorAll('input, select').forEach(i => i.addEventListener('focus', _edPush))
+}
+
+// Portal properties. The opening is the thing worth tuning: a wide mouth is
+// hard to miss, a narrow one has to be aimed for, and a full-height one
+// cannot be dodged at all.
+function _edRenderPortalProps(el, lv) {
+  const ps = lv.portals || []
+  if (!ps.length) {
+    el.innerHTML = `<div class="ed-empty">Click the canvas to place a portal:
+      first click is where you go <b>in</b>, second is where you come <b>out</b>.</div>`
+    return
+  }
+  const i = Math.min(ED.portalSel ?? ps.length - 1, ps.length - 1)
+  ED.portalSel = i
+  const p = ps[i]
+  const mouth = p.mouth ?? 0.24
+  const pct = Math.round(mouth * 100)
+  const opts = ps.map((q, k) =>
+    `<option value="${k}" ${k === i ? 'selected' : ''}>#${k + 1} — col ${q.at} → ${q.toAt ?? q.at}</option>`).join('')
+  el.innerHTML = `
+    <label>Portal<select id="ed-p-sel">${opts}</select></label>
+    <label>Opening <b id="ed-p-out">${pct === 100 ? 'full height' : pct + '%'}</b>
+      <span class="ed-hint">of the screen — 100% cannot be dodged</span>
+      <input id="ed-p-mouth" type="range" min="4" max="100" value="${pct}"></label>
+    <label>Goes in at column<input id="ed-p-at" type="number" min="0" step="5" value="${p.at}"></label>
+    <label>Comes out at column<input id="ed-p-toat" type="number" min="0" step="5" value="${p.toAt ?? p.at}"></label>
+    <button class="ed-mini danger" id="ed-p-del">Delete this portal</button>
+    <div class="ed-hint">Drag either end on the canvas to move it.</div>
+  `
+  const q = s => el.querySelector(s)
+  q('#ed-p-sel').onchange = e => { ED.portalSel = +e.target.value; _edRenderProps(); _edDraw() }
+  q('#ed-p-mouth').oninput = e => {
+    p.mouth = Math.max(0.04, Math.min(1, +e.target.value / 100))
+    const v = Math.round(p.mouth * 100)
+    q('#ed-p-out').textContent = v === 100 ? 'full height' : v + '%'
+    _edTouch(); _edDraw()
+  }
+  q('#ed-p-at').oninput   = e => { p.at = Math.max(0, +e.target.value || 0); _edTouch(); _edDraw() }
+  q('#ed-p-toat').oninput = e => { p.toAt = Math.max(0, +e.target.value || 0); _edTouch(); _edDraw() }
+  q('#ed-p-del').onclick  = () => {
+    _edPush(); ps.splice(i, 1); ED.portalSel = Math.max(0, i - 1)
+    _edTouch(); _edRenderProps(); _edDraw()
+  }
+  el.querySelectorAll('input, select').forEach(x => x.addEventListener('focus', _edPush))
 }
 
 function _edRenderDecoProps(el, lv) {
@@ -1186,6 +1232,7 @@ window.edSetMode = function(m) {
   ED.mode = m
   if (m !== 'stamp') ED.stamp = null
   if (m !== 'deco')  ED.decoSel = -1
+  if (m !== 'portal') ED.portalPend = null   // a half-placed portal is dropped
   _edRenderModes(); _edRenderPalette(); _edRenderProps(); _edDraw()
 }
 
@@ -1326,12 +1373,19 @@ function _edDraw() {
     ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5
     ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke()
     ctx.setLineDash([]); ctx.globalAlpha = 1
+    // The opening is drawn at its real size, so a wide mouth looks wide
+    const half = Math.max(5, Math.min(1, p.mouth ?? 0.24) * h / 2)
+    const sel = (lv.portals.indexOf(p) === ED.portalSel && ED.mode === 'portal')
     for (const [x, y, col] of [[ax, ay, '#38bdf8'], [bx, by, '#f97316']]) {
-      ctx.strokeStyle = col; ctx.lineWidth = 2
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.globalAlpha = 0.25; ctx.stroke()
+      ctx.strokeStyle = col; ctx.lineWidth = sel ? 3 : 2
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.globalAlpha = 0.2; ctx.stroke()
       ctx.globalAlpha = 1
-      ctx.beginPath(); ctx.ellipse(x, y, 5, 11, 0, 0, Math.PI * 2)
-      ctx.fillStyle = col + '55'; ctx.fill(); ctx.stroke()
+      ctx.beginPath(); ctx.ellipse(x, y, 6, half, 0, 0, Math.PI * 2)
+      ctx.fillStyle = col + '44'; ctx.fill(); ctx.stroke()
+      // lips, so you can see what has to be threaded
+      ctx.lineWidth = 3
+      ctx.beginPath(); ctx.moveTo(x - 9, y - half); ctx.lineTo(x + 9, y - half); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(x - 9, y + half); ctx.lineTo(x + 9, y + half); ctx.stroke()
     }
     ctx.restore()
   }
@@ -1501,16 +1555,19 @@ function _edDown(e) {
     if (ED.portalPend) {
       lv.portals.push({ at: ED.portalPend.at, cf: ED.portalPend.cf, toAt: at, toCf: cf })
       lv.portals.sort((a, b) => a.at - b.at)
+      ED.portalSel = lv.portals.findIndex(q => q.at === ED.portalPend.at)
       ED.portalPend = null
+      _edRenderProps()          // so the opening slider appears for the new one
       _edSetMsg(at < lv.portals[lv.portals.length-1].at
         ? 'Portal placed. It sends you backwards — the checker cannot follow that.'
         : 'Portal placed. Click again to start another.')
     } else {
       const near = (lv.portals || []).findIndex(p => Math.abs(p.at - at) < 14)
       if (near >= 0) {
-        // clicking an existing entry grabs it to drag
+        // clicking an existing entry selects it and grabs it to drag
+        ED.portalSel = near
         ED.drag = { type:'portal', i: near }
-        _edDraw(); return
+        _edRenderProps(); _edDraw(); return
       }
       ED.portalPend = { at, cf }
       _edSetMsg('Entry set — now click where it should spit you out.')
