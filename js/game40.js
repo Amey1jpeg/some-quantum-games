@@ -65,6 +65,7 @@ const G40 = {
   portals:  [],
   portalFlash: 0,
   portalCool: 0,
+  hasPortal: false,
   fullTrail: [],
   taps:     0,
 }
@@ -177,11 +178,16 @@ function _g40LoadLevel(w, h) {
   const ufoX0 = w * 0.20
   // Portals: fly through the mouth at (at, cf) and you come out at
   // (toAt, toCf) — a different column, a different height, or both.
-  G40.portals   = (tmpl.portals || []).map(p => ({
+  // Rolled once per load, so the pillars and the bot plan agree on which
+  // version is being played. Test play always gets them.
+  const wantPortals = tmpl.portals && tmpl.portals.length &&
+    (G40.testLevel ? true : qRandInt(100) < Math.round((tmpl.portalChance ?? 0.35) * 100))
+  G40.portals   = wantPortals ? tmpl.portals.map(p => ({
     at: p.at, cf: p.cf ?? 0.5,
     toAt: p.toAt ?? p.at, toCf: p.toCf ?? 0.5,
     mouth: p.mouth ?? 0.16,
-  }))
+  })) : []
+  G40.hasPortal = !!wantPortals
   G40.portalFlash = 0
   G40.portalCool = 0
   G40.pipes     = tmpl.pipes.map(p => ({
@@ -204,14 +210,16 @@ function _g40LoadLevel(w, h) {
     // looks exactly like the page hanging. The plan only depends on the
     // level, the canvas height and which bot you asked for, so cache on that.
     const sig = [tmpl.name, tmpl.clearAt, tmpl.speed, tmpl.gapf,
-                 (tmpl.pipes || []).length, h, G40.evil ? 1 : 0].join('|')
+                 (tmpl.pipes || []).length, h, G40.evil ? 1 : 0,
+                 G40.hasPortal ? 'p' : '-'].join('|')
     const hit = G40._botCache
     if (hit && hit.sig === sig) {
       G40.bot = { flaps: hit.flaps, i: 0, taps: hit.taps }
     } else {
       try {
         const r = lcSolveUFOAll({ speed: tmpl.speed, clearAt: tmpl.clearAt,
-                               gapf: tmpl.gapf, pipes: tmpl.pipes },
+                               gapf: tmpl.gapf, pipes: tmpl.pipes,
+                               portals: G40.portals },
                              h, w, G40_SIM_DT, !!G40.evil)
         if (r.ok) {
           G40.bot = { flaps: r.flaps, i: 0, taps: r.taps }
@@ -778,7 +786,8 @@ function _g40Draw(ctx, w, h) {
     ctx.textAlign = 'center'
     ctx.font = 'bold 13px monospace'
     ctx.fillStyle = '#a855f7'
-    ctx.fillText(G40.challenge.diff.toUpperCase(), w / 2, h / 2 - 22)
+    ctx.fillText(G40.challenge.diff.toUpperCase() + (G40.hasPortal ? '  \u00b7  PORTAL' : ''),
+                 w / 2, h / 2 - 22)
     ctx.font = 'bold 32px monospace'
     ctx.fillStyle = '#fff'
     ctx.shadowColor = '#a855f7'; ctx.shadowBlur = 20

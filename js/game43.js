@@ -811,12 +811,18 @@ function _g43SerializeChallenge(h) {
     clearAt: G43.clearAt,
     isFP: !!ch.isFP, isDC: !!ch.isDC, miniWave: !!ch.miniWave,
     keyframes: G43.keyframes.map(kf => ({ at: kf.at, cf: kf.cf, gapHf: kf.gapH / h })),
+    // the roll travels with the challenge, so both players get the same one
+    portals: (G43.portals || []).map(p => ({ ...p })),
+    hasPortal: !!(G43.challenge && G43.challenge.hasPortal),
   }
 }
 
 function _g43ApplyNetChallenge(data, h) {
   G43.challenge = { name: data.name, diff: data.diff, speed: data.speed,
-    clearAt: data.clearAt, isFP: data.isFP, isDC: data.isDC, miniWave: data.miniWave }
+    clearAt: data.clearAt, isFP: data.isFP, isDC: data.isDC, miniWave: data.miniWave,
+    hasPortal: !!data.hasPortal }
+  G43.portals  = (data.portals || []).map(p => ({ ...p }))
+  G43.portalCool = 0
   G43.waveR    = data.miniWave ? G43_WAVE_R_MINI : G43_WAVE_R_NRM
   G43.keyframes = data.keyframes.map(kf => ({ at: kf.at, cf: kf.cf, gapH: kf.gapHf * h }))
   G43.clearAt  = data.clearAt
@@ -957,11 +963,19 @@ function _g43LoadChallenge(w, h) {
   // mouth — an opening of `mouth` of the height, centred on cf — and you
   // come out at the other end, which can be anywhere: a different column,
   // a different height, or both. Same column means a pure vertical hop.
-  G43.portals       = (kfData.portals || []).map(p => ({
+  // A level with portals is a variant, not the everyday version: the roll
+  // happens here, once, so the corridor and the bot plan agree about which
+  // one is being played. Test play always gets them, or you could never see
+  // the thing you just authored.
+  const wantPortals = kfData.portals && kfData.portals.length &&
+    (G43.testLevel ? true : qRandInt(100) < Math.round((kfData.portalChance ?? 0.35) * 100))
+  G43.portals       = wantPortals ? kfData.portals.map(p => ({
     at: p.at, cf: p.cf ?? 0.5,
     toAt: p.toAt ?? p.at, toCf: p.toCf ?? 0.5,
     mouth: p.mouth ?? 0.24,
-  }))
+  })) : []
+  // So the announce screen can say which version turned up
+  if (G43.challenge) G43.challenge.hasPortal = !!wantPortals
   G43.portalCool    = 0
   G43.scrollX       = 0
   G43.trail         = []
@@ -1616,7 +1630,7 @@ function _g43Draw(ctx, w, h) {
     ctx.textAlign = 'center'
     ctx.font = 'bold 12px monospace'
     ctx.fillStyle = mainCol; ctx.shadowColor = mainCol; ctx.shadowBlur = 12
-    ctx.fillText(ch.diff.toUpperCase(), w/2, h/2 - 50)
+    ctx.fillText(ch.diff.toUpperCase() + (ch.hasPortal ? '  \u00b7  PORTAL' : ''), w/2, h/2 - 50)
     ctx.font = `bold ${ch.isDC ? 20 : ch.isFP ? 22 : 28}px monospace`
     ctx.fillStyle = ch.isDC ? '#fca5a5' : ch.isFP ? '#e9d5ff' : '#fff'
     ctx.shadowColor = mainCol; ctx.shadowBlur = 22
