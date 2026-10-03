@@ -9,8 +9,19 @@ const app = express()
 const httpServer = createServer(app)
 const io = new Server(httpServer, { cors: { origin: '*' } })
 
-const rooms  = {}  // code → { players, game, scores, dead }
-const queues = {}  // game → [socket, ...]
+// Maps, not objects. A plain object inherits keys from Object.prototype, so
+// a client sending game:"__proto__" hit an existing truthy key, skipped the
+// array init, and then called .push on Object.prototype — an uncaught
+// TypeError that took the whole process down and every match with it.
+// A Map has no inherited keys, so any string is just a string.
+const rooms  = new Map()  // code → { players, game, scores, dead }
+const queues = new Map()  // game → [socket, ...]
+
+// The only queues that may exist. Without this, each unknown name the
+// client sent created another queue that nothing would ever drain.
+const GAMES = new Set([
+  'typing', 'parkour', 'cps', 'wavedash', 'wavegauntlet', 'freighter', 'traprace',
+])
 
 // ── Quantum room codes ────────────────────────────────
 // Same bits the games use: 10 qubits x 204,683 measurements, von Neumann
@@ -67,16 +78,27 @@ function randomCode() {
 function freshCode() {
   for (let i = 0; i < 100; i++) {
     const c = randomCode()
-    if (!rooms[c]) return c
+    if (!rooms.has(c)) return c
   }
   return randomCode() + qIndex(36).toString(36).toUpperCase()
 }
 
+// Drop a socket from every queue it is sitting in. Used on join, on
+// explicit leave, and on disconnect.
+function dequeue(socket) {
+  for (const [g, list] of queues) {
+    const next = list.filter(s => s.id !== socket.id)
+    if (next.length) queues.set(g, next)
+    else queues.delete(g)          // don't leave empty arrays lying around
+  }
+}
+
 function tryMatch(game) {
-  if (!queues[game] || queues[game].length < 2) return
-  const [p1, p2] = queues[game].splice(0, 2)
+  const q = queues.get(game)
+  if (!q || q.length < 2) return
+  const [p1, p2] = q.splice(0, 2)
   const code = freshCode()
-  rooms[code] = { players: [p1.id, p2.id], game, scores: {}, dead: {} }
+  rooms.set(code, { players: [p1.id, p2.id], game, scores: {}, dead: {} })
   p1.join(code)
   p2.join(code)
   io.to(code).emit('matched', { code })
@@ -84,38 +106,62 @@ function tryMatch(game) {
 
 io.on('connection', socket => {
 
+  // Everything below reads values the client chose, so each handler is
+  // wrapped: a throw inside a socket handler is otherwise uncaught and
+  // kills the process, which disconnects every other match too.
+  const on = (event, fn) => socket.on(event, (...args) => {
+    try { fn(...args) }
+    catch (e) { console.warn(`[${event}] from ${socket.id}:`, e.message) }
+  })
+
+  // A relay is only allowed into a room this socket actually joined.
+  // Without the check, anyone could push scores and state into someone
+  // else's match by guessing its code.
+  const inRoom = code => typeof code === 'string' && socket.rooms.has(code)
+
   // ── Queue ─────────────────────────────────────────
-  socket.on('join-queue', ({ game }) => {
-    // Remove from any existing queue first
-    for (const g in queues) queues[g] = queues[g].filter(s => s.id !== socket.id)
-    if (!queues[game]) queues[game] = []
-    queues[game].push(socket)
+  on('join-queue', (p) => {
+    const { game } = p || {}
+    if (!GAMES.has(game)) return      // unknown game: no queue to create
+    dequeue(socket)                   // only ever in one queue at a time
+    const q = queues.get(game) || []
+    q.push(socket)
+    queues.set(game, q)
     socket.data.queueGame = game
-    socket.emit('queue-joined', { position: queues[game].length })
+    socket.emit('queue-joined', { position: q.length })
     tryMatch(game)
   })
 
-  socket.on('leave-queue', () => {
-    const game = socket.data.queueGame
-    if (game && queues[game]) queues[game] = queues[game].filter(s => s.id !== socket.id)
-  })
+  on('leave-queue', () => dequeue(socket))
 
   // ── Ping ──────────────────────────────────────────
-  socket.on('ping-check', ts => socket.emit('pong-check', ts))
+  on('ping-check', ts => socket.emit('pong-check', ts))
 
   // ── Game events ───────────────────────────────────
-  socket.on('score-update', ({ code, score }) => socket.to(code).emit('opponent-score', score))
-  socket.on('state-sync',   ({ code, state }) => socket.to(code).emit('opponent-state', state))
+  on('score-update', (p) => {
+    const { code, score } = p || {}
+    if (inRoom(code)) socket.to(code).emit('opponent-score', score)
+  })
+  on('state-sync', (p) => {
+    const { code, state } = p || {}
+    if (inRoom(code)) socket.to(code).emit('opponent-state', state)
+  })
 
   // Natural end (CPS timer, Typing rounds)
-  socket.on('game-over', ({ code, score }) => socket.to(code).emit('opponent-done', score))
+  on('game-over', (p) => {
+    const { code, score } = p || {}
+    if (inRoom(code)) socket.to(code).emit('opponent-done', score)
+  })
 
   // Player died mid-game
-  socket.on('player-died', ({ code, score }) => {
-    if (!rooms[code]) return
-    if (rooms[code].game === 'parkour') {
+  on('player-died', (p) => {
+    const { code, score } = p || {}
+    if (!inRoom(code)) return
+    const room = rooms.get(code)
+    if (!room) return
+    if (room.game === 'parkour') {
       // Parkour: opponent keeps playing — tell them you died, they keep going
-      rooms[code].dead[socket.id] = score
+      room.dead[socket.id] = score
       socket.to(code).emit('opponent-died', score)
     } else {
       // Wave Dash etc: instant force-end for both
@@ -124,16 +170,21 @@ io.on('connection', socket => {
   })
 
   // ── Disconnect ────────────────────────────────────
-  socket.on('disconnecting', () => {
-    for (const g in queues) queues[g] = queues[g].filter(s => s.id !== socket.id)
+  on('disconnecting', () => {
+    dequeue(socket)
     socket.rooms.forEach(code => {
-      if (rooms[code]) {
+      if (rooms.has(code)) {
         socket.to(code).emit('opponent-left')
-        delete rooms[code]
+        rooms.delete(code)
       }
     })
   })
 })
+
+// Last line of defence. A match server losing one room is survivable;
+// losing the process drops everyone in all seven games at once.
+process.on('uncaughtException',  e => console.error('uncaughtException:', e))
+process.on('unhandledRejection', e => console.error('unhandledRejection:', e))
 
 const PORT = process.env.PORT || 3000
 httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`))
