@@ -177,7 +177,6 @@ const STALL_GAMES = new Set([
   40,  // UFO
   43,  // Wave Gauntlet
   44,  // Spider
-  47,  // Bell Test
 ])
 
 // ── How to play ─────────────────────────────────────────
@@ -199,10 +198,6 @@ const STALL_HOWTO = {
         steps: ['Each tap snaps you between floor and ceiling',
                 'There is no in-between \u2014 you are on one or the other',
                 'Time the snap so the blocks pass on the empty side'] },
-  47: { keys: 'Four sliders',
-        steps: ['Alice and Bob get a random bit each and cannot talk',
-                'They win a round when their answers match the rule',
-                'No agreed plan beats 75% \u2014 angle the sliders to beat it anyway'] },
 }
 
 let QG_STALL = false
@@ -238,7 +233,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=5'
+    link.href = QG_ROOT + 'css/stall.css?v=6'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -751,9 +746,6 @@ const MEDALS = {
   spider:       { bronze: 4,  silver: 10, gold: 18 },
   freighter:    { bronze: 15, silver: 40, gold: 80 },
   traprace:     { bronze: 3,  silver: 7,  gold: 10 },
-  // 300 rounds. 225 is the classical ceiling and ~256 the quantum one,
-  // so silver is where entanglement starts to show and gold is near best play.
-  chsh:         { bronze: 200, silver: 232, gold: 250 },
 }
 
 let authorScores   = { equation: null, aim: null, reaction: null, dodge: null, flash: null, deltae: null, gravity: null, typing: null, mrts: null, runsnake: null, gravflip: null, memseq: null, manualsort: null, wavedash: null, cps: null }
@@ -930,7 +922,6 @@ function scoreToDisplay(game, score) {
   if (game === 'flash') return score + '/10'
   if (game === 'deltae') return score + ' pts'
   if (game === 'typing') return score + ' WPM'
-  if (game === 'chsh') return score + '/300'   // rounds won, out of the run length
   return score.toLocaleString()
 }
 
@@ -971,7 +962,6 @@ const LB_TABS = [
   { id: 'lb-tab-44', game: 'spider',       label: 'Spider',        color: '#a855f7' },
   { id: 'lb-tab-45', game: 'freighter',    label: 'Freighter',     color: '#22d3ee' },
   { id: 'lb-tab-46', game: 'traprace',     label: 'Trap Race',     color: '#fb923c' },
-  { id: 'lb-tab-47', game: 'chsh',         label: 'Bell Test',     color: '#38bdf8' },
 ]
 
 window.switchLbTab = function(game) {
@@ -1176,7 +1166,6 @@ const SCORE_COLORS = {
   spider:        '#a855f7',
   freighter:     '#22d3ee',
   traprace:      '#fb923c',
-  chsh:          '#38bdf8',
 }
 
 window.openSubmit = function(game) {
@@ -1220,7 +1209,6 @@ window.openSubmit = function(game) {
   else if (game === 'spider')       score = window._spdScore  || 0
   else if (game === 'freighter')    score = window._g45Score  || 0
   else if (game === 'traprace')     score = window._g46Score  || 0
-  else if (game === 'chsh')         score = window._g47Score  || 0
 
   pendingSubmit = { game, score }
   document.getElementById('sub-score-display').textContent = scoreToDisplay(game, score)
@@ -1339,7 +1327,7 @@ window.submitScore = async function() {
         entanglement:'g15-over', qsnake:'g17-over',
         qwhip:'g18-over', gravitysling:'g22-over', chargerush:'g23-over',
         pulse:'g24-over', orbit:'g26-over', parkour:'g28-over', qblaster:'g29-over',
-        mrts:'g30-over', runsnake:'g31-over', gravflip:'g32-over', memseq:'g33-over', manualsort:'g34-over', wavedash:'g35-over', cps:'g36-over', crossy:'g38-over', ufo:'g40-over', jetrush:'g41-over', typerracer:'g42-over', rhythm:'g37-over', wavegauntlet:'g43-over', spider:'spd-over', freighter:'g45-over', traprace:'g46-over', chsh:'g47-over',
+        mrts:'g30-over', runsnake:'g31-over', gravflip:'g32-over', memseq:'g33-over', manualsort:'g34-over', wavedash:'g35-over', cps:'g36-over', crossy:'g38-over', ufo:'g40-over', jetrush:'g41-over', typerracer:'g42-over', rhythm:'g37-over', wavegauntlet:'g43-over', spider:'spd-over', freighter:'g45-over', traprace:'g46-over',
       }
       const overId = overMap[pendingSubmit.game]
       if (overId) document.getElementById(overId).classList.remove('show')

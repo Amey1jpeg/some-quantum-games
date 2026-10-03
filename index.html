@@ -253,8 +253,8 @@
     <div class="game-card" onclick="showGame(47)" style="border-color:#38bdf844;">
       <div class="card-icon">🔗</div>
       <div class="card-title">Bell Test</div>
-      <div class="card-desc">The CHSH game. Alice and Bob answer a referee without talking — no agreed plan beats 75%. Aim their entangled pair to break the classical bound.</div>
-      <span class="card-tag" style="background:rgba(56,189,248,.15);color:#38bdf8;border-color:#38bdf844;">Quantum · Puzzle</span>
+      <div class="card-desc">The CHSH game, for two. A referee deals you a bit each and you answer without seeing the other’s — win together. No plan you agree can beat 75%, and that is a theorem.</div>
+      <span class="card-tag" style="background:rgba(56,189,248,.15);color:#38bdf8;border-color:#38bdf844;">2 Player · Co-op</span>
     </div>
     <div class="game-card" onclick="showGame(42)" style="border-color:#06b6d444;">
       <div class="card-icon">⌨️</div>
@@ -302,7 +302,6 @@
         <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-44" onclick="switchLbTab('spider')">Spider</button>
         <button class="lb-tab" style="border-color:#22d3ee;color:#22d3ee;" id="lb-tab-45" onclick="switchLbTab('freighter')">Freighter</button>
         <button class="lb-tab" style="border-color:#fb923c;color:#fb923c;" id="lb-tab-46" onclick="switchLbTab('traprace')">Trap Race</button>
-        <button class="lb-tab" style="border-color:#38bdf8;color:#38bdf8;" id="lb-tab-47" onclick="switchLbTab('chsh')">Bell Test</button>
         <button class="lb-tab" style="border-color:#06b6d4;color:#06b6d4;" id="lb-tab-42" onclick="switchLbTab('typerracer')">Type Racer</button>
         <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-mp" onclick="switchLbTab('mp')">⚔️ MP Wins</button>
       </div>
@@ -1385,7 +1384,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/sfx.js?v=2"></script>
-<script src="js/core.js?v=19"></script>
+<script src="js/core.js?v=20"></script>
 <script src="js/auth.js"></script>
 <script src="js/game1.js?v=2"></script>
 <script src="js/game2.js?v=2"></script>
@@ -1923,38 +1922,33 @@
   <div class="top-bar">
     <button class="btn-back" onclick="goHome()">← Back</button>
     <span class="game-title">🔗 Bell Test</span>
-    <div class="score-badge" style="border-color:#38bdf8;color:#38bdf8;">Won <span id="g47-hud">0 / 0</span></div>
-  </div>
-
-  <div class="canvas-arena" id="g47-arena" style="min-height:300px;">
-    <canvas id="g47-canvas"></canvas>
+    <div class="score-badge" style="border-color:#38bdf8;color:#38bdf8;">Won <span id="g47-tally">0 / 0</span></div>
   </div>
 
   <!-- Mode picker -->
   <div class="g47-start" id="g47-start">
     <p class="g47-brief">
-      A referee deals <b>Alice</b> a bit and <b>Bob</b> a bit. They answer one bit each,
-      without seeing the other's. They win the round when <b>a XOR b = x AND y</b>.
+      A referee deals <b>Alice</b> a bit and <b>Bob</b> a bit. You each answer with one bit,
+      without seeing the other's. You win the round when <b>a XOR b = x AND y</b>.
       You are on the same side — one shared score.
     </p>
     <div class="g47-modes">
       <button class="btn-primary" style="background:#38bdf8;border-color:#38bdf8;color:#04202e;font-weight:700;"
-              onclick="g47Mode('local')">👥 2 players · same device</button>
-      <button class="btn-primary" id="g47-match-btn" onclick="g47Mode('online')">🌐 Find a partner online</button>
-      <button class="btn-primary ghost" onclick="g47Mode('solo')">▶ Practice (solo)</button>
+              onclick="g47Local()">👥 2 players · same device</button>
+      <button class="btn-primary" id="g47-match-btn" onclick="g47Online()">🌐 Find a partner online</button>
     </div>
-    <div id="g47-match-status" style="font-size:.8rem;color:var(--muted);margin-top:.6rem;min-height:1.2em"></div>
-    <p style="font-size:.76rem;color:var(--muted);margin-top:.9rem;max-width:460px">
-      Two people can only ever reach <b>75%</b> — that is a theorem, not a difficulty.
-      Practice mode is where entanglement breaks it.
+    <div id="g47-match-status"></div>
+    <p class="g47-foot">
+      Agree a plan first — that is allowed. You still cannot beat <b>75%</b>:
+      it is a theorem, not a difficulty setting.
     </p>
   </div>
 
-  <!-- Two-player round view -->
+  <!-- Round view -->
   <div class="g47-play" id="g47-play" style="display:none">
     <div id="g47-handoff" class="g47-handoff" style="display:none">
       <p>Pass the device to <b>Player 2 — Bob</b></p>
-      <p class="g47-sub">Bob must not see Alice's bit or answer.</p>
+      <p class="g47-sub">Bob must not see Alice's bit or her answer.</p>
       <button class="btn-primary" style="background:#38bdf8;border-color:#38bdf8;color:#04202e"
               onclick="g47Handoff()">I'm Bob — show my bit</button>
     </div>
@@ -1967,69 +1961,21 @@
         <button class="g47-choice" id="g47-btn-1" onclick="g47Answer(1)">1</button>
       </div>
       <div class="g47-reveal" id="g47-reveal"></div>
-      <div class="g47-tally" id="g47-tally">0 / 0 won</div>
-    </div>
-  </div>
-
-  <div class="g47-panel" id="g47-panel" style="display:none">
-    <p class="g47-brief">
-      The referee sends <b>Alice</b> a bit and <b>Bob</b> a bit. They answer without talking.
-      They win the round when <b>a XOR b = x AND y</b>.
-      Any plan they agree in advance tops out at <b>75%</b> — set the four measurement
-      angles so their entangled pair does better.
-    </p>
-
-    <div class="g47-dials">
-      <div class="g47-dial">
-        <label for="g47-a0"><span class="g47-key" style="background:#38bdf8"></span> Alice · x=0 <b id="g47-lab-a0">0°</b></label>
-        <input id="g47-a0" type="range" min="-90" max="90" step="0.5" value="0"
-               oninput="g47Set('a0', this.value)">
-      </div>
-      <div class="g47-dial">
-        <label for="g47-a1"><span class="g47-key" style="background:#818cf8"></span> Alice · x=1 <b id="g47-lab-a1">0°</b></label>
-        <input id="g47-a1" type="range" min="-90" max="90" step="0.5" value="0"
-               oninput="g47Set('a1', this.value)">
-      </div>
-      <div class="g47-dial">
-        <label for="g47-b0"><span class="g47-key" style="background:#f472b6"></span> Bob · y=0 <b id="g47-lab-b0">0°</b></label>
-        <input id="g47-b0" type="range" min="-90" max="90" step="0.5" value="0"
-               oninput="g47Set('b0', this.value)">
-      </div>
-      <div class="g47-dial">
-        <label for="g47-b1"><span class="g47-key" style="background:#fbbf24"></span> Bob · y=1 <b id="g47-lab-b1">0°</b></label>
-        <input id="g47-b1" type="range" min="-90" max="90" step="0.5" value="0"
-               oninput="g47Set('b1', this.value)">
-      </div>
-    </div>
-
-    <div class="g47-stats">
-      <span>CHSH <b id="g47-s">2.000</b></span>
-      <span>Win rate <b id="g47-pred">75.0%</b></span>
-      <span id="g47-verdict" style="color:var(--muted)">Classical territory (S ≤ 2)</span>
-    </div>
-
-    <div class="g47-actions">
-      <button class="btn-primary" id="g47-run"
-              style="background:#38bdf8;border-color:#38bdf8;color:#04202e;font-weight:700;"
-              onclick="g47Run()">▶ Play 300 rounds</button>
-      <button class="btn-primary ghost" onclick="g47Solve()">💡 Best angles</button>
     </div>
   </div>
 
   <div class="game-over-overlay" id="g47-over" style="display:none;">
     <div class="game-over-card">
       <h2 id="g47-over-head">Result</h2>
-      <div class="final-score" id="g47-final-score" style="color:#38bdf8">0 / 300</div>
-      <p id="g47-over-note" style="color:var(--muted);font-size:.86rem;max-width:320px;margin:.2rem auto .6rem"></p>
-      <div id="g47-medal-display"></div>
-      <button class="btn-primary" id="g47-submit-btn" style="background:#38bdf8;border-color:#38bdf8;color:#04202e;" onclick="openSubmit('chsh')">Submit Score</button><br><br>
-      <button class="btn-primary" style="background:var(--card);color:var(--muted);border:1px solid var(--border);box-shadow:none;" onclick="initGame47()">Play Again</button>
+      <div class="final-score" id="g47-final-score" style="color:#38bdf8">0 / 20</div>
+      <p id="g47-over-note" style="color:var(--muted);font-size:.84rem;max-width:340px;margin:.2rem auto .8rem;line-height:1.5"></p>
+      <button class="btn-primary" style="background:#38bdf8;border-color:#38bdf8;color:#04202e;" onclick="initGame47()">Play Again</button>
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
 </section>
 
-<script src="js/game47.js?v=2"></script>
+<script src="js/game47.js?v=3"></script>
 
 
 
