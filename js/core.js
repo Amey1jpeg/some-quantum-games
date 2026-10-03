@@ -1,7 +1,16 @@
 // ═══════════════════════════════════════════════════════
 //  MULTIPLAYER — shared queue + ping utilities
 // ═══════════════════════════════════════════════════════
-const MP_SERVER = 'https://some-quantum-games.onrender.com'
+// Self-hosted on a Raspberry Pi 5, reached over a Tailscale Funnel. The
+// funnel terminates TLS, which the page needs: it is served over HTTPS, so
+// a plain ws:// to the Pi would be blocked as mixed content.
+//
+// Must stay https:// and not wss:// — the Socket.IO client takes an HTTP
+// origin and upgrades the transport itself.
+//
+// One constant for every site, so main, /beta and /stall all follow it.
+// (/stall never opens a socket at all; mpFindMatch refuses there.)
+const MP_SERVER = 'https://arham-pi.taila1cfdc.ts.net'
 let _mpSocket = null
 
 function mpGetSocket() {
