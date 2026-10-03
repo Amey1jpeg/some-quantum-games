@@ -1930,7 +1930,48 @@
     <canvas id="g47-canvas"></canvas>
   </div>
 
-  <div class="g47-panel">
+  <!-- Mode picker -->
+  <div class="g47-start" id="g47-start">
+    <p class="g47-brief">
+      A referee deals <b>Alice</b> a bit and <b>Bob</b> a bit. They answer one bit each,
+      without seeing the other's. They win the round when <b>a XOR b = x AND y</b>.
+      You are on the same side — one shared score.
+    </p>
+    <div class="g47-modes">
+      <button class="btn-primary" style="background:#38bdf8;border-color:#38bdf8;color:#04202e;font-weight:700;"
+              onclick="g47Mode('local')">👥 2 players · same device</button>
+      <button class="btn-primary" id="g47-match-btn" onclick="g47Mode('online')">🌐 Find a partner online</button>
+      <button class="btn-primary ghost" onclick="g47Mode('solo')">▶ Practice (solo)</button>
+    </div>
+    <div id="g47-match-status" style="font-size:.8rem;color:var(--muted);margin-top:.6rem;min-height:1.2em"></div>
+    <p style="font-size:.76rem;color:var(--muted);margin-top:.9rem;max-width:460px">
+      Two people can only ever reach <b>75%</b> — that is a theorem, not a difficulty.
+      Practice mode is where entanglement breaks it.
+    </p>
+  </div>
+
+  <!-- Two-player round view -->
+  <div class="g47-play" id="g47-play" style="display:none">
+    <div id="g47-handoff" class="g47-handoff" style="display:none">
+      <p>Pass the device to <b>Player 2 — Bob</b></p>
+      <p class="g47-sub">Bob must not see Alice's bit or answer.</p>
+      <button class="btn-primary" style="background:#38bdf8;border-color:#38bdf8;color:#04202e"
+              onclick="g47Handoff()">I'm Bob — show my bit</button>
+    </div>
+    <div id="g47-main">
+      <div class="g47-roundline" id="g47-roundline">Round 1 of 20</div>
+      <div class="g47-whose" id="g47-whose">PLAYER 1 — ALICE</div>
+      <div class="g47-bit" id="g47-bit"></div>
+      <div class="g47-choices">
+        <button class="g47-choice" id="g47-btn-0" onclick="g47Answer(0)">0</button>
+        <button class="g47-choice" id="g47-btn-1" onclick="g47Answer(1)">1</button>
+      </div>
+      <div class="g47-reveal" id="g47-reveal"></div>
+      <div class="g47-tally" id="g47-tally">0 / 0 won</div>
+    </div>
+  </div>
+
+  <div class="g47-panel" id="g47-panel" style="display:none">
     <p class="g47-brief">
       The referee sends <b>Alice</b> a bit and <b>Bob</b> a bit. They answer without talking.
       They win the round when <b>a XOR b = x AND y</b>.
@@ -1981,14 +2022,14 @@
       <div class="final-score" id="g47-final-score" style="color:#38bdf8">0 / 300</div>
       <p id="g47-over-note" style="color:var(--muted);font-size:.86rem;max-width:320px;margin:.2rem auto .6rem"></p>
       <div id="g47-medal-display"></div>
-      <button class="btn-primary" style="background:#38bdf8;border-color:#38bdf8;color:#04202e;" onclick="openSubmit('chsh')">Submit Score</button><br><br>
+      <button class="btn-primary" id="g47-submit-btn" style="background:#38bdf8;border-color:#38bdf8;color:#04202e;" onclick="openSubmit('chsh')">Submit Score</button><br><br>
       <button class="btn-primary" style="background:var(--card);color:var(--muted);border:1px solid var(--border);box-shadow:none;" onclick="initGame47()">Play Again</button>
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
 </section>
 
-<script src="js/game47.js?v=1"></script>
+<script src="js/game47.js?v=2"></script>
 
 
 

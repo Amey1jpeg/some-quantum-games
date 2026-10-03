@@ -100,6 +100,24 @@ window.g47Solve = function() {
 }
 
 window.initGame47 = function() {
+  _g47cReset()
+  _g47Show('start')
+  _g47ResetSolo()
+}
+
+// Swap between the three screens: the mode picker, the solo angle panel,
+// and the two-player round view.
+function _g47Show(which) {
+  const map = { start: 'g47-start', solo: 'g47-panel', play: 'g47-play' }
+  for (const [k, id] of Object.entries(map)) {
+    const el = document.getElementById(id)
+    if (el) el.style.display = (k === which) ? '' : 'none'
+  }
+  const arena = document.getElementById('g47-arena')
+  if (arena) arena.style.display = (which === 'solo') ? '' : 'none'
+}
+
+function _g47ResetSolo() {
   if (G47.raf) cancelAnimationFrame(G47.raf)
   G47.raf = null
   G47.running = false
@@ -127,6 +145,7 @@ window.stopGame47 = function() {
   G47.running = false
   if (G47.raf) cancelAnimationFrame(G47.raf)
   G47.raf = null
+  _g47cReset()
 }
 
 window.g47Run = function() {
@@ -314,3 +333,234 @@ window.addEventListener('resize', () => {
   const s = document.getElementById('game47')
   if (s && s.classList.contains('active')) _g47Draw()
 })
+
+// ═══════════════════════════════════════════════════════
+//  THE TWO-PLAYER GAME — classical CHSH
+//
+//  Two real people. Each round the referee deals Alice a bit x and Bob a
+//  bit y. Each answers with a bit of their own, without seeing the
+//  other's bit OR their answer. The pair wins the round when
+//  a XOR b == x AND y.
+//
+//  They are on the SAME side: one shared score. They may agree any plan
+//  beforehand — that is allowed, and it is why this is interesting.
+//
+//  Two people pressing buttons can only ever play a classical strategy,
+//  and every classical strategy wins at most 3 of the 4 question pairs.
+//  So 75% is a ceiling no cleverness gets past. That wall IS the game;
+//  the solo practice mode above is where you see entanglement break it.
+//
+//  Why each player must not see the other's bit: knowing both x and y
+//  lets one of them just compute x AND y and answer it, winning every
+//  round. The whole problem is that they are kept apart.
+// ═══════════════════════════════════════════════════════
+
+const G47_CROUNDS = 20       // ~a minute; short enough for a queue at a stand
+
+const G47C = {
+  mode: null,        // 'local' | 'online'
+  phase: 'idle',     // 'ask' | 'handoff' | 'wait' | 'reveal' | 'done'
+  round: 0, wins: 0,
+  x: 0, y: 0, a: null, b: null,
+  turn: 'alice',     // local: who is at the screen now
+  role: 'alice',     // online: which side we are
+  code: null, rng: null, timer: null, log: [],
+}
+
+function _g47cReset() {
+  if (G47C.timer) { clearTimeout(G47C.timer); G47C.timer = null }
+  const sock = (G47C.mode === 'online' && typeof mpGetSocket === 'function') ? mpGetSocket() : null
+  if (sock) { sock.off('opponent-state'); sock.off('opponent-left') }
+  Object.assign(G47C, { mode: null, phase: 'idle', round: 0, wins: 0,
+    a: null, b: null, turn: 'alice', code: null, rng: null, log: [] })
+}
+
+// Both clients must deal the SAME bits each round, or the two screens
+// disagree about who won. Seeding off the shared room code means neither
+// side has to send them and there is no round-trip before you can play.
+function _g47cSeed(str) {
+  let h = 2166136261 >>> 0
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) }
+  return h >>> 0
+}
+function _g47cRng(seed) {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6D2B79F5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const _g47q = id => document.getElementById(id)
+const _g47set = (id, txt) => { const e = _g47q(id); if (e) e.textContent = txt }
+
+window.g47Mode = function(mode) {
+  if (mode === 'solo') { _g47cReset(); _g47Show('solo'); _g47ResetSolo(); return }
+  if (mode === 'local') {
+    _g47cReset()
+    G47C.mode = 'local'
+    _g47Show('play')
+    _g47cStartRound()
+    return
+  }
+  if (mode === 'online') {
+    _g47cReset()
+    if (typeof mpFindMatch !== 'function') return
+    mpFindMatch('chsh', {
+      statusEl: _g47q('g47-match-status'),
+      btnEl:    _g47q('g47-match-btn'),
+      onMatched: ({ code, isHost }) => {
+        G47C.mode = 'online'
+        G47C.code = code
+        G47C.role = isHost ? 'alice' : 'bob'
+        G47C.rng  = _g47cRng(_g47cSeed(code))
+        _g47cNet()
+        _g47Show('play')
+        _g47cStartRound()
+      },
+      onLeft: () => {
+        if (G47C.mode !== 'online') return
+        _g47set('g47-whose', 'Your partner left')
+        _g47set('g47-bit', '')
+        _g47cButtons(false)
+        G47C.phase = 'done'
+      },
+    })
+  }
+}
+
+function _g47cNet() {
+  const sock = mpGetSocket()
+  sock.off('opponent-state')
+  sock.on('opponent-state', state => {
+    if (!state || state.t !== 'ans' || state.round !== G47C.round) return
+    if (G47C.role === 'alice') G47C.b = state.v
+    else                      G47C.a = state.v
+    _g47cMaybeResolve()
+  })
+}
+
+function _g47cStartRound() {
+  if (G47C.round >= G47_CROUNDS) return _g47cFinish()
+  G47C.round++
+  G47C.a = null; G47C.b = null
+  // Deal the referee's two bits
+  const r = (G47C.mode === 'online') ? G47C.rng : Math.random
+  G47C.x = r() < 0.5 ? 0 : 1
+  G47C.y = r() < 0.5 ? 0 : 1
+  G47C.turn = 'alice'
+  G47C.phase = 'ask'
+  _g47cRender()
+}
+
+// Who is being asked right now, and which bit are they shown
+function _g47cAsking() {
+  if (G47C.mode === 'online') return G47C.role
+  return G47C.turn
+}
+
+function _g47cRender() {
+  const who = _g47cAsking()
+  const isAlice = who === 'alice'
+  const label = G47C.mode === 'online'
+    ? (isAlice ? 'YOU ARE ALICE' : 'YOU ARE BOB')
+    : (isAlice ? 'PLAYER 1 — ALICE' : 'PLAYER 2 — BOB')
+  _g47set('g47-whose', label)
+  _g47set('g47-roundline', 'Round ' + G47C.round + ' of ' + G47_CROUNDS)
+  _g47set('g47-tally', G47C.wins + ' / ' + (G47C.round - (G47C.phase === 'reveal' ? 0 : 1)) + ' won')
+
+  const bitEl = _g47q('g47-bit')
+  if (G47C.phase === 'ask') {
+    if (bitEl) bitEl.innerHTML = 'Your bit is <b>' + (isAlice ? G47C.x : G47C.y) + '</b>'
+    _g47set('g47-reveal', '')
+    _g47cButtons(true)
+  } else if (G47C.phase === 'wait') {
+    if (bitEl) bitEl.innerHTML = ''
+    _g47set('g47-reveal', 'Waiting for your partner…')
+    _g47cButtons(false)
+  }
+  const hand = _g47q('g47-handoff')
+  if (hand) hand.style.display = (G47C.phase === 'handoff') ? '' : 'none'
+  const main = _g47q('g47-main')
+  if (main) main.style.display = (G47C.phase === 'handoff') ? 'none' : ''
+}
+
+function _g47cButtons(on) {
+  for (const v of [0, 1]) {
+    const b = _g47q('g47-btn-' + v)
+    if (b) b.disabled = !on
+  }
+}
+
+window.g47Answer = function(v) {
+  if (G47C.phase !== 'ask') return
+  if (typeof SFX !== 'undefined') SFX.tap()
+  const who = _g47cAsking()
+  if (who === 'alice') G47C.a = v; else G47C.b = v
+
+  if (G47C.mode === 'online') {
+    mpGetSocket().emit('state-sync',
+      { code: G47C.code, state: { t: 'ans', round: G47C.round, v } })
+    G47C.phase = 'wait'
+    _g47cRender()
+    _g47cMaybeResolve()
+    return
+  }
+  // Same device: hand over without the next player seeing the last answer
+  if (G47C.turn === 'alice') {
+    G47C.turn = 'bob'
+    G47C.phase = 'handoff'
+    _g47cRender()
+  } else {
+    _g47cMaybeResolve()
+  }
+}
+
+// Same-device hand-over screen, so Bob never sees Alice's bit or answer
+window.g47Handoff = function() {
+  if (G47C.phase !== 'handoff') return
+  G47C.phase = 'ask'
+  _g47cRender()
+}
+
+function _g47cMaybeResolve() {
+  if (G47C.a === null || G47C.b === null) return
+  const won = ((G47C.a ^ G47C.b) === (G47C.x & G47C.y))
+  if (won) G47C.wins++
+  G47C.log.push(won)
+  G47C.phase = 'reveal'
+  _g47cButtons(false)
+  const rule = `x AND y = ${G47C.x & G47C.y} · a XOR b = ${G47C.a ^ G47C.b}`
+  _g47set('g47-reveal', (won ? '✓ WON — ' : '✗ LOST — ') + rule)
+  const rev = _g47q('g47-reveal')
+  if (rev) rev.style.color = won ? '#4ade80' : '#f87171'
+  _g47set('g47-bit', '')
+  _g47set('g47-whose', `ALICE got ${G47C.x}, answered ${G47C.a}   ·   BOB got ${G47C.y}, answered ${G47C.b}`)
+  _g47set('g47-tally', G47C.wins + ' / ' + G47C.round + ' won')
+  if (typeof SFX !== 'undefined') (won ? SFX.click() : SFX.bounce())
+  G47C.timer = setTimeout(_g47cStartRound, 1500)
+}
+
+function _g47cFinish() {
+  G47C.phase = 'done'
+  const pct = G47C.wins / G47_CROUNDS * 100
+  _g47set('g47-final-score', G47C.wins + ' / ' + G47_CROUNDS)
+  _g47set('g47-over-head', 'Together you won ' + G47C.wins)
+  const note = _g47q('g47-over-note')
+  if (note) {
+    // The honest message either way: the ceiling is a theorem, and the
+    // only thing that gets past it is entanglement.
+    note.textContent = pct > 75
+      ? `${pct.toFixed(0)}% — above 75%, but over only ${G47_CROUNDS} rounds that is luck. No agreed plan can average more than 75%: every classical strategy loses at least one of the four question pairs. Entangled particles reach 85.4% — try Practice to see how.`
+      : `${pct.toFixed(0)}%. The ceiling here is 75%, and it is a theorem rather than a difficulty setting — every classical strategy loses at least one of the four question pairs. Entangled particles reach 85.4%. Try Practice to see how.`
+  }
+  const medal = _g47q('g47-medal-display')
+  if (medal) medal.innerHTML = ''     // co-op pair, not a leaderboard run
+  const sub = _g47q('g47-submit-btn')
+  if (sub) sub.style.display = 'none'
+  const over = _g47q('g47-over')
+  if (over) over.classList.add('show')
+  if (typeof SFX !== 'undefined') SFX.win()
+}

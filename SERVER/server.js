@@ -21,6 +21,7 @@ const queues = new Map()  // game → [socket, ...]
 // client sent created another queue that nothing would ever drain.
 const GAMES = new Set([
   'typing', 'parkour', 'cps', 'wavedash', 'wavegauntlet', 'freighter', 'traprace',
+  'chsh',
 ])
 
 // ── Quantum room codes ────────────────────────────────
