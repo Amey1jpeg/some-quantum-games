@@ -1111,3 +1111,40 @@ body {
   border-radius: 4px; padding: .1rem .3rem;
 }
 .pp-toggle.bot { border-color: #a78bfa; color: #a78bfa; background: rgba(167,139,250,.14); }
+
+/* ═══════════════════════════════════════════════════════
+   GAME 47 — BELL TEST (CHSH)
+   The controls live below the arena rather than over it: all four
+   angles have to be visible AND adjustable at once, because the
+   whole puzzle is the relationship between them.
+   ═══════════════════════════════════════════════════════ */
+.g47-panel {
+  max-width: 760px; margin: .8rem auto 0; padding: 0 .9rem 1rem;
+}
+.g47-brief {
+  font-size: .84rem; color: var(--muted); line-height: 1.5;
+  text-align: center; margin: 0 0 .9rem;
+}
+.g47-brief b { color: var(--text) }
+.g47-dials {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .55rem 1.2rem;
+}
+.g47-dial label {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .78rem; color: var(--muted); margin-bottom: .2rem;
+}
+.g47-dial label b { margin-left: auto; color: var(--text); font-variant-numeric: tabular-nums }
+.g47-key { width: 10px; height: 10px; border-radius: 50%; flex: none }
+.g47-dial input[type=range] { width: 100%; accent-color: #38bdf8; cursor: pointer }
+.g47-stats {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1.1rem;
+  margin: .9rem 0 .7rem; font-size: .8rem; color: var(--muted);
+}
+.g47-stats b { color: var(--text); font-variant-numeric: tabular-nums }
+.g47-actions {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem;
+}
+/* Two columns is unreadable once the labels wrap */
+@media (max-width: 560px) {
+  .g47-dials { grid-template-columns: 1fr }
+}

@@ -168,7 +168,33 @@ const STALL_GAMES = new Set([
   40,  // UFO
   43,  // Wave Gauntlet
   44,  // Spider
+  47,  // Bell Test
 ])
+
+// ── How to play ─────────────────────────────────────────
+// A stand gets walk-up players who have never seen the game and
+// will not read a paragraph. Each entry is the control first, then
+// the goal, then the one thing people get wrong — short enough to
+// take in while standing up. Shown on the stall cards only; the
+// main site has the card description and the start screen instead.
+const STALL_HOWTO = {
+  40: { keys: 'Tap / click / SPACE',
+        steps: ['Each tap fires the thruster and lifts you',
+                'Let go and you fall \u2014 nothing holds you up',
+                'Fly through the gaps; green pillars are safe to land on'] },
+  43: { keys: 'Hold / release',
+        steps: ['Hold to climb, let go to dive',
+                'You are always moving diagonally, never flat',
+                'Stay inside the corridor \u2014 touching a wall ends the run'] },
+  44: { keys: 'Tap / click / SPACE',
+        steps: ['Each tap snaps you between floor and ceiling',
+                'There is no in-between \u2014 you are on one or the other',
+                'Time the snap so the blocks pass on the empty side'] },
+  47: { keys: 'Four sliders',
+        steps: ['Alice and Bob get a random bit each and cannot talk',
+                'They win a round when their answers match the rule',
+                'No agreed plan beats 75% \u2014 angle the sliders to beat it anyway'] },
+}
 
 let QG_STALL = false
 try {
@@ -203,7 +229,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=4'
+    link.href = QG_ROOT + 'css/stall.css?v=5'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -240,7 +266,25 @@ function qgApplyStall() {
 
   document.querySelectorAll('.game-card').forEach(card => {
     const m = (card.getAttribute('onclick') || '').match(/showGame\((\d+)\)/)
-    if (!m || !STALL_GAMES.has(+m[1])) card.remove()
+    if (!m || !STALL_GAMES.has(+m[1])) { card.remove(); return }
+    // Instructions go on the card, where someone deciding whether to
+    // play can read them without committing to opening the game.
+    const how = STALL_HOWTO[+m[1]]
+    if (!how || card.querySelector('.stall-how')) return
+    const box = document.createElement('div')
+    box.className = 'stall-how'
+    const head = document.createElement('b')
+    head.textContent = 'How to play \u00B7 ' + how.keys
+    box.appendChild(head)
+    const ul = document.createElement('ul')
+    for (const step of how.steps) {
+      const li = document.createElement('li')
+      li.textContent = step          // textContent, so copy is never markup
+      ul.appendChild(li)
+    }
+    box.appendChild(ul)
+    const tag = card.querySelector('.card-tag')
+    card.insertBefore(box, tag || null)
   })
 
   // Leaderboard tabs for games that are not on the stall, and the MP-wins
@@ -506,6 +550,7 @@ const GAME_SLUGS = {
   'spider':           44,
   'freighter':        45,
   'trap-race':        46,
+  'chsh':             47,
 }
 const SLUG_BY_ID = Object.fromEntries(Object.entries(GAME_SLUGS).map(([k,v]) => [v, k]))
 
@@ -576,6 +621,7 @@ window.showGame = function(n) {
   if (n === 44) initSpider()
   if (n === 45) initGame45()
   if (n === 46) initGame46()
+  if (n === 47) initGame47()
 }
 
 window.goHome = function() {
@@ -604,6 +650,7 @@ window.goHome = function() {
   if (typeof stopGame41    === 'function') stopGame41()
   if (typeof stopGame42    === 'function') stopGame42()
   if (typeof stopGame43    === 'function') stopGame43()
+  if (typeof stopGame47    === 'function') stopGame47()
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
   document.getElementById('home').classList.add('active')
   pushHomeUrl()
@@ -695,6 +742,9 @@ const MEDALS = {
   spider:       { bronze: 4,  silver: 10, gold: 18 },
   freighter:    { bronze: 15, silver: 40, gold: 80 },
   traprace:     { bronze: 3,  silver: 7,  gold: 10 },
+  // 300 rounds. 225 is the classical ceiling and ~256 the quantum one,
+  // so silver is where entanglement starts to show and gold is near best play.
+  chsh:         { bronze: 200, silver: 232, gold: 250 },
 }
 
 let authorScores   = { equation: null, aim: null, reaction: null, dodge: null, flash: null, deltae: null, gravity: null, typing: null, mrts: null, runsnake: null, gravflip: null, memseq: null, manualsort: null, wavedash: null, cps: null }
@@ -871,6 +921,7 @@ function scoreToDisplay(game, score) {
   if (game === 'flash') return score + '/10'
   if (game === 'deltae') return score + ' pts'
   if (game === 'typing') return score + ' WPM'
+  if (game === 'chsh') return score + '/300'   // rounds won, out of the run length
   return score.toLocaleString()
 }
 
@@ -911,6 +962,7 @@ const LB_TABS = [
   { id: 'lb-tab-44', game: 'spider',       label: 'Spider',        color: '#a855f7' },
   { id: 'lb-tab-45', game: 'freighter',    label: 'Freighter',     color: '#22d3ee' },
   { id: 'lb-tab-46', game: 'traprace',     label: 'Trap Race',     color: '#fb923c' },
+  { id: 'lb-tab-47', game: 'chsh',         label: 'Bell Test',     color: '#38bdf8' },
 ]
 
 window.switchLbTab = function(game) {
@@ -1115,6 +1167,7 @@ const SCORE_COLORS = {
   spider:        '#a855f7',
   freighter:     '#22d3ee',
   traprace:      '#fb923c',
+  chsh:          '#38bdf8',
 }
 
 window.openSubmit = function(game) {
@@ -1158,6 +1211,7 @@ window.openSubmit = function(game) {
   else if (game === 'spider')       score = window._spdScore  || 0
   else if (game === 'freighter')    score = window._g45Score  || 0
   else if (game === 'traprace')     score = window._g46Score  || 0
+  else if (game === 'chsh')         score = window._g47Score  || 0
 
   pendingSubmit = { game, score }
   document.getElementById('sub-score-display').textContent = scoreToDisplay(game, score)
@@ -1276,7 +1330,7 @@ window.submitScore = async function() {
         entanglement:'g15-over', qsnake:'g17-over',
         qwhip:'g18-over', gravitysling:'g22-over', chargerush:'g23-over',
         pulse:'g24-over', orbit:'g26-over', parkour:'g28-over', qblaster:'g29-over',
-        mrts:'g30-over', runsnake:'g31-over', gravflip:'g32-over', memseq:'g33-over', manualsort:'g34-over', wavedash:'g35-over', cps:'g36-over', crossy:'g38-over', ufo:'g40-over', jetrush:'g41-over', typerracer:'g42-over', rhythm:'g37-over', wavegauntlet:'g43-over', spider:'spd-over', freighter:'g45-over', traprace:'g46-over',
+        mrts:'g30-over', runsnake:'g31-over', gravflip:'g32-over', memseq:'g33-over', manualsort:'g34-over', wavedash:'g35-over', cps:'g36-over', crossy:'g38-over', ufo:'g40-over', jetrush:'g41-over', typerracer:'g42-over', rhythm:'g37-over', wavegauntlet:'g43-over', spider:'spd-over', freighter:'g45-over', traprace:'g46-over', chsh:'g47-over',
       }
       const overId = overMap[pendingSubmit.game]
       if (overId) document.getElementById(overId).classList.remove('show')

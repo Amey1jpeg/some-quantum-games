@@ -205,3 +205,33 @@ body.stall-mode {
    has to stand down; it resumes once the flag settles. */
 .stall-bunting i.swinging { animation: none !important }
 .stall-bunting i.grabbed  { cursor: grabbing }
+
+/* ── How to play ────────────────────────────────────── */
+/* Walk-up players have not read the site and will not read a
+   paragraph, so this is a control line and three short steps.
+   It sits inside the card, above the tag. */
+.stall-how {
+  margin: .7rem 0 .2rem;
+  padding: .6rem .7rem;
+  border-radius: .55rem;
+  background: rgba(255,244,224,.06);
+  border: 1px solid rgba(255,194,60,.22);
+  text-align: left;
+}
+.stall-how b {
+  display: block;
+  font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--fair-gold); margin-bottom: .35rem;
+}
+.stall-how ul { margin: 0; padding-left: 1.05rem }
+.stall-how li {
+  font-size: .78rem; line-height: 1.45; color: #e7d3ba; margin-bottom: .18rem;
+}
+.stall-how li::marker { color: var(--fair-red) }
+
+:root[data-theme="light"] .stall-how {
+  background: rgba(216,30,63,.05);
+  border-color: rgba(216,30,63,.22);
+}
+:root[data-theme="light"] .stall-how b  { color: #c2410c }
+:root[data-theme="light"] .stall-how li { color: #5a3a22 }
