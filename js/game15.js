@@ -62,6 +62,80 @@ function g15Reset() {
     keys:{},
     wave:1, waveTimer:0,
     screenShake:0,
+    beamCD:0, beamFlash:0, kills:0,
+  }
+}
+
+// ── The link cuts ───────────────────────────────────────
+// Until now the only answer to a hazard was to dodge it. The link
+// already drawn between you and your twin is the obvious weapon: sweep
+// it through an attacker and it dies.
+//
+// It costs nothing to fire and cannot be aimed freely, which is what
+// keeps it fair — the twin mirrors you, so lining the link up means
+// putting one of you somewhere you might not want to be. And it only
+// exists while entangled, so breaking the link to dodge (Space) also
+// disarms you. The trade-off was already in the game; this gives it
+// teeth.
+//
+// After a cut it needs a moment to re-form, so it cannot simply hoover
+// the screen. During a resonance burst that recharge is waived.
+const G15_BEAM_CD    = 42   // frames before the link can cut again
+const G15_BEAM_REACH = 13   // px from the curve that counts as a hit
+
+// The link is drawn as a quadratic curve, so the hit test samples that
+// same curve rather than the straight chord between the two. At the
+// current bow (25px) the curve only ever departs from the chord by half
+// that, which is inside the hit tolerance, so this does not change many
+// outcomes today — it is here so the test still matches what is drawn if
+// the bow is ever made deeper.
+function g15BeamPoint(t, W, midY) {
+  const u = 1 - t
+  return {
+    x: u*u*G15.px + 2*u*t*(W/2) + t*t*G15.tx,
+    y: u*u*G15.py + 2*u*t*midY  + t*t*G15.ty,
+  }
+}
+
+function g15BeamCut(W, midY) {
+  if (G15.broken) return                       // no link, no weapon
+  if (G15.beamCD > 0 && !G15.resonanceBurst) return
+
+  // Sample the curve and take the closest approach to each hazard
+  const pts = []
+  for (let i = 0; i <= 14; i++) pts.push(g15BeamPoint(i/14, W, midY))
+
+  for (const h of G15.hazards) {
+    if (h.dead) continue
+    let near = Infinity
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i-1], b = pts[i]
+      const dx = b.x-a.x, dy = b.y-a.y
+      const len2 = dx*dx + dy*dy
+      // Project the hazard onto this segment, clamped to its ends
+      let t = len2 ? ((h.x-a.x)*dx + (h.y-a.y)*dy) / len2 : 0
+      t = Math.max(0, Math.min(1, t))
+      const d = Math.hypot(h.x - (a.x + dx*t), h.y - (a.y + dy*t))
+      if (d < near) near = d
+    }
+    if (near > G15_BEAM_REACH + h.r) continue
+
+    h.dead = true
+    G15.kills++
+    // Worth less than an orb, so hunting never beats collecting — this
+    // is relief from pressure, not a better way to score.
+    const pts2 = 20 * G15.combo
+    G15.score   += pts2
+    G15.puCoins += Math.ceil(pts2 / 10)
+    G15.resonance = Math.min(G15.resonance + 6, 100)
+    if (G15.resonance >= 100 && !G15.resonanceBurst) g15TriggerResonance()
+    G15.beamFlash = 10
+    G15.screenShake = Math.max(G15.screenShake, 5)
+    if (typeof SFX !== 'undefined') SFX.bounce()
+    for (let i = 0; i < 10; i++)
+      G15.particles.push({ x:h.x, y:h.y, vx:(Math.random()-.5)*7, vy:(Math.random()-1)*6,
+                           life:26, col:'#c4b5fd' })
+    if (!G15.resonanceBurst) { G15.beamCD = G15_BEAM_CD; break }
   }
 }
 
@@ -244,6 +318,12 @@ function g15Loop() {
     return true
   })
 
+  // The link cuts anything it sweeps through, before hazards get to hit
+  if (G15.beamCD > 0) G15.beamCD--
+  if (G15.beamFlash > 0) G15.beamFlash--
+  g15BeamCut(W, (G15.py + G15.ty) / 2 + Math.sin(G15.frameCount * 0.06) * 25)
+  G15.hazards = G15.hazards.filter(h => !h.dead)
+
   // Hazard collision
   if (!ghost) {
     for (const h of G15.hazards) {
@@ -279,14 +359,29 @@ function g15Loop() {
   ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke()
   ctx.setLineDash([])
 
-  // Entanglement line (when not broken)
+  // Entanglement line (when not broken). It is also the weapon, so it has
+  // to read at a glance as armed or re-forming — a thin dashed line means
+  // sweeping a hazard will not kill it.
   if (!G15.broken) {
-    const pulse = 0.3+0.2*Math.sin(G15.frameCount*0.08)
-    ctx.strokeStyle=`rgba(139,92,246,${pulse})`
-    ctx.lineWidth=2
     const midY = (G15.py+G15.ty)/2+Math.sin(G15.frameCount*0.06)*25
+    const armed = G15.beamCD <= 0 || G15.resonanceBurst
+    const pulse = 0.3+0.2*Math.sin(G15.frameCount*0.08)
+    if (G15.beamFlash > 0) {
+      ctx.strokeStyle = `rgba(233,213,255,${0.55+0.45*(G15.beamFlash/10)})`
+      ctx.lineWidth = 5
+      ctx.shadowBlur = 16; ctx.shadowColor = '#a78bfa'
+    } else if (armed) {
+      ctx.strokeStyle = `rgba(167,139,250,${pulse+0.3})`
+      ctx.lineWidth = 3
+      ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(167,139,250,0.7)'
+    } else {
+      // Re-forming: dim, thin and dashed
+      ctx.strokeStyle = `rgba(139,92,246,${pulse*0.5})`
+      ctx.lineWidth = 1.5
+      ctx.setLineDash([4,6])
+    }
     ctx.beginPath();ctx.moveTo(G15.px,G15.py);ctx.quadraticCurveTo(W/2,midY,G15.tx,G15.ty);ctx.stroke()
-    ctx.lineWidth=1
+    ctx.setLineDash([]); ctx.shadowBlur = 0; ctx.lineWidth=1
   }
 
   // Labels

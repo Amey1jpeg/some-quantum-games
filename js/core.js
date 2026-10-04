@@ -174,6 +174,7 @@ function _quantumSrc() { return QG_ROOT + 'data/quantum.bin' }
 // ═══════════════════════════════════════════════════════
 
 const STALL_GAMES = new Set([
+  15,  // Entanglement
   40,  // UFO
   43,  // Wave Gauntlet
   44,  // Spider
@@ -186,6 +187,10 @@ const STALL_GAMES = new Set([
 // take in while standing up. Shown on the stall cards only; the
 // main site has the card description and the start screen instead.
 const STALL_HOWTO = {
+  15: { keys: 'Arrow keys \u00B7 SPACE',
+        steps: ['Arrows move you; your twin mirrors you on the other side',
+                'Grab the BLUE orbs, your twin grabs the PINK ones',
+                'The glowing link between you cuts attackers \u2014 sweep it through them'] },
   40: { keys: 'Tap / click / SPACE',
         steps: ['Each tap fires the thruster and lifts you',
                 'Let go and you fall \u2014 nothing holds you up',
@@ -233,7 +238,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=6'
+    link.href = QG_ROOT + 'css/stall.css?v=7'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
