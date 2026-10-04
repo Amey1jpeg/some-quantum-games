@@ -45,6 +45,14 @@
       border: 2px solid transparent;
     }
     .ed-swatch.active { border-color: #fff; }
+    .ae-field { display: flex; align-items: center; gap: .4rem; font-size: .74rem; color: var(--muted); margin-bottom: .25rem; }
+    .ae-field span { width: 78px; flex: none; }
+    .ae-field input, .ae-field select { flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--border);
+      color: var(--text); border-radius: 5px; padding: .2rem .35rem; font-family: inherit; font-size: .76rem; }
+    .ae-group { font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: .35rem 0 .2rem; }
+    .ae-objhead { font-size: .76rem; margin: .45rem 0 .3rem; color: var(--text); text-transform: capitalize; }
+    .ae-issues { font-size: .78rem; color: #facc15; display: flex; flex-direction: column; gap: .15rem; }
+    #ae-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
     #ed-evil-btn.on { border-color: #f87171; color: #f87171; background: rgba(248,113,113,.14); }
   </style>
 </head>
@@ -61,6 +69,7 @@
     <button class="ed-gametab active" data-game="wavegauntlet" onclick="edSetGame('wavegauntlet')">🌊 Wave Gauntlet</button>
     <button class="ed-gametab" data-game="spider" onclick="edSetGame('spider')">🕷 Spider</button>
     <button class="ed-gametab" data-game="ufo" onclick="edSetGame('ufo')">🛸 UFO Flap</button>
+    <button class="ed-gametab" data-game="ascent" onclick="aeOpen()">🔗 Entangled Ascent</button>
   </div>
 
   <div class="ed-layout">
@@ -136,6 +145,52 @@
       </p>
     </main>
   </div>
+
+  <!-- Entangled Ascent editor (js/ascent-editor.js) — replaces .ed-layout while its tab is open -->
+  <div id="ae-panel" class="ed-layout" style="display:none">
+    <aside class="ed-side">
+      <div class="ed-side-head">Drafts <button class="ed-mini" onclick="aeNew()">+ New</button></div>
+      <div id="ae-list" class="ed-list"></div>
+      <div class="ed-side-head">Built-in <span class="ed-hint">click to edit a copy</span></div>
+      <div id="ae-builtin" class="ed-list"></div>
+      <div class="ed-side-head">Tool</div>
+      <div id="ae-tools" class="ae-tools"></div>
+      <div class="ed-side-head">Properties</div>
+      <div id="ae-props" class="ed-props"></div>
+      <div class="ed-side-head">Restore <span class="ed-hint" id="ae-undo-count"></span></div>
+      <div class="ed-restore-row">
+        <button class="ed-mini" onclick="aeUndo()" title="Ctrl/Cmd + Z">↩ Undo</button>
+        <button class="ed-mini" onclick="aeRedo()" title="Ctrl/Cmd + Shift + Z">↪ Redo</button>
+      </div>
+    </aside>
+    <main class="ed-main">
+      <div class="ed-canvas-wrap" style="height:440px;flex:none"><canvas id="ae-canvas"></canvas></div>
+      <div class="ed-actions">
+        <button class="btn-primary" onclick="aeTestPlay()">▶ Test Play</button>
+        <button class="btn-primary" onclick="aeCheck()">✓ Check</button>
+        <button class="btn-primary ghost" onclick="aeDuplicate()">Duplicate</button>
+        <button class="btn-primary ghost" onclick="aeExportJS()">Copy as JS</button>
+        <button class="btn-primary ghost" onclick="aeExportJSON()">Copy JSON</button>
+        <button class="btn-primary ghost" onclick="aeImport()">Import</button>
+        <button class="btn-primary danger" onclick="aeDelete()">Delete</button>
+        <span id="ae-msg" class="ed-hint"></span>
+      </div>
+      <div id="ae-issues" class="ae-issues"></div>
+      <p class="ed-help">
+        <b>Entangled Ascent:</b> pick a tool and click to place it. The top half is your gap, the bottom half the twin's.
+        With <b>Select</b>, drag a column's white gap edges to resize, drag inside a gap to move it, drag the spikes to
+        move the column; drag blocks, portals, orbs and the finish line anywhere. Drag empty space or scroll to pan.
+        <b>Spikes:</b> column, thick column, half wall (one half only), spike block (set a slide speed to make it move),
+        saw, and spike strip (snaps to the ceiling, either side of the mirror line, or the floor, by where you click).
+        <b>🏁 Finish</b> ends the level the moment the dots reach its x, at any height (the first one wins; otherwise the level ends at the finish line).
+        <b>Desync start/end</b> triggers mark a section where the link is forced broken — W/S moves you, ↑/↓ your twin.
+        <b>Right-click</b> or <b>Delete</b> removes. Columns turn <b style="color:#f87171">red</b> when the gaps don't
+        mirror (DESYNC). <b>✓ Check</b> flags columns the dots can't reach in time (assuming any fast portal
+        before them was taken). <b>▶ Test Play</b> opens the level in the game. To ship a level, <b>Copy as JS</b>
+        and paste it into <code>AL_LEVELS</code> in <code>js/ascent-levels.js</code>.
+      </p>
+    </main>
+  </div>
 </div>
 
 <!-- Real game canvases, shown only during Test Play -->
@@ -206,6 +261,8 @@
 <script src="js/game40.js?v=17"></script>
 <script src="js/game44.js"></script>
 <script src="js/editor.js?v=8"></script>
+<script src="js/ascent-levels.js?v=3"></script>
+<script src="js/ascent-editor.js?v=3"></script>
 
 </body>
 </html>

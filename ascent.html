@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entangled Ascent — Quantum Games</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Standalone page — index.html's .screen rules don't apply here */
+    body { margin: 0; height: 100vh; overflow: hidden; }
+    .ga-page { display: flex; flex-direction: column; height: 100vh; padding: 1rem; gap: .8rem; }
+    .ga-page .top-bar { flex: none; }
+    .ga-arena {
+      flex: 1; min-height: 0; max-height: 620px; width: 100%; max-width: 1100px; margin: auto;
+      position: relative; border: 1px solid var(--border); border-radius: 1.25rem; overflow: hidden;
+      touch-action: none;
+    }
+    .ga-arena canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .ga-howto { color: var(--muted); font-size: .84rem; text-align: center; max-width: 560px; line-height: 1.5; }
+    .ga-break-btn { font-size: .8rem; padding: .35rem .8rem; }
+    .ga-levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: .5rem; width: min(640px, 92%); }
+    .ga-lvl {
+      display: flex; flex-direction: column; align-items: flex-start; gap: .1rem; text-align: left;
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      border-radius: 10px; padding: .5rem .65rem; cursor: pointer; font-family: inherit;
+    }
+    .ga-lvl:hover:not(:disabled) { border-color: #a78bfa; }
+    .ga-lvl b { font-size: 1.1rem; color: #a78bfa; }
+    .ga-lvl span { font-size: .8rem; }
+    .ga-lvl small { font-size: .68rem; color: var(--muted); }
+    .ga-lvl.done { border-color: rgba(34,197,94,.45); }
+    .ga-lvl.done small { color: var(--success); }
+    .ga-lvl.locked { opacity: .45; cursor: not-allowed; }
+    .ga-row { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; justify-content: center; }
+    .ga-row small { color: var(--muted); }
+    .ga-sub { width: 100%; text-align: center; color: var(--muted); font-size: .76rem; margin-bottom: .2rem; }
+    .ga-sub a { color: var(--accent2); }
+    #ga-custom { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; width: min(640px, 92%); }
+    .ga-chip {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      border-radius: 7px; padding: .25rem .6rem; font-size: .76rem; cursor: pointer; font-family: inherit;
+    }
+    .ga-chip:hover { border-color: var(--accent2); }
+    .ga-ghost { background: var(--card) !important; color: var(--muted) !important; border: 1px solid var(--border) !important; box-shadow: none !important; }
+  </style>
+</head>
+<body>
+<div class="ga-page">
+  <div class="top-bar">
+    <button class="btn-back ga-back" onclick="location.href='index.html'">← Home</button>
+    <span class="game-title">🔗 Entangled Ascent</span>
+    <button class="btn-back ga-break-btn" onclick="gaBreak()">⚡ Break link</button>
+    <div class="score-badge" style="border-color:#a78bfa;color:#a78bfa;"><span id="ga-score-label" style="color:inherit;font-weight:400">Columns</span> <span id="ga-score">0</span></div>
+    <div class="entropy-indicator"><div class="entropy-dot" id="ga-entropy-dot"></div><span id="ga-entropy-label">loading…</span></div>
+  </div>
+
+  <div class="ga-arena">
+    <canvas id="ga-canvas"></canvas>
+    <div class="canvas-overlay" id="ga-overlay">
+      <h3>🔗 Entangled Ascent</h3>
+      <p class="ga-howto">
+        You (blue, top) and your twin (pink, bottom) fly forward — <b>touch a spike and it's over</b>.
+        <b>W/S</b> mirrors you, <b>↑/↓</b> moves you both the same way.
+        <b style="color:#fca5a5">Red DESYNC</b> columns need re-aligning, or <b>SPACE</b> to break the link.
+        Speed portals (<span style="color:#f97316">fast</span> · <span style="color:#22d3ee">slow</span> ·
+        <span style="color:#a78bfa">normal</span>) only count if you fly through them.
+      </p>
+      <div id="ga-levels" class="ga-levels"></div>
+      <div class="ga-row" id="ga-endless-row">
+        <button class="btn-primary" onclick="gaPlayEndless()">∞ Endless</button>
+        <small>Best <span id="ga-endless-best">0</span> columns</small>
+      </div>
+      <div class="ga-row" id="ga-test-row" style="display:none">
+        <button class="btn-primary" onclick="gaPlayTest()">▶ Test level</button>
+      </div>
+      <div id="ga-custom"></div>
+    </div>
+  </div>
+</div>
+
+<div class="game-over-overlay" id="ga-over">
+  <div class="game-over-card">
+    <h2 id="ga-over-title">Decohered!</h2>
+    <div class="final-score" id="ga-final" style="color:#a78bfa">0</div>
+    <p id="ga-final-best"></p>
+    <div id="ga-over-btns"></div>
+  </div>
+</div>
+
+<script src="js/sfx.js?v=2"></script>
+<script src="js/ascent-levels.js?v=3"></script>
+<script src="js/ascent.js?v=6"></script>
+</body>
+</html>
