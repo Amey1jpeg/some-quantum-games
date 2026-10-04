@@ -210,6 +210,7 @@ function gaStart(level) {
     cols: [], blocks: [], portals: [], orbs: [], pending: [], saws: [], strips: [], triggers: [], forced: false,
     parts: [], trail: [],
     score: 0, deadT: 0, shake: 0, flash: 0, banner: null,
+    submit: 0,   // what Submit Score sends; set when the run ends
     keys: {},
   })
   GA.touches.clear()
@@ -437,14 +438,13 @@ function gaShowOver() {
     final.textContent = GA.score
     sub.textContent = GA.score >= best && GA.score > 0 ? 'New best!' : 'Best: ' + best
   }
-  // Only built-in levels count for the leaderboard: endless is a different
-  // number, and custom/test levels are whatever the player made them.
-  if (GA.mode === 'level' && typeof openSubmit === 'function') {
-    const total = gaLeaderboardScore()
-    if (total > 0) {
-      html += `<button class="btn-primary" style="background:#a78bfa;border-color:#a78bfa;color:#13092b" onclick="openSubmit('ascent')">Submit \u00B7 ${total} across all levels</button><br><br>`
-      if (typeof renderMedalDisplay === 'function') renderMedalDisplay('ga-medal-display', 'ascent', total)
-    }
+  // Submit Score, same as every other game. Custom and test levels are
+  // whatever the player made them, so they never count.
+  if ((GA.mode === 'level' || GA.mode === 'endless') && typeof openSubmit === 'function') {
+    GA.submit = (GA.mode === 'endless') ? GA.score : null   // see gaLeaderboardScore
+    const n = gaLeaderboardScore()
+    html += `<button class="btn-primary" style="background:#a78bfa;border-color:#a78bfa;color:#13092b" onclick="openSubmit('ascent')">Submit Score</button><br><br>`
+    if (typeof renderMedalDisplay === 'function') renderMedalDisplay('ga-medal-display', 'ascent', n)
   }
   html += `<button class="btn-primary${won && GA.mode === 'level' ? ' ga-ghost' : ''}" onclick="gaRetry()">${won ? 'Play again' : 'Retry'}</button><br><br>`
   html += GA_TEST
@@ -688,12 +688,24 @@ window.stopGame48 = function() {
   if (GA.raf) { cancelAnimationFrame(GA.raf); GA.raf = null }
 }
 
-// Total progress across every built-in level, which is what the
-// leaderboard ranks: 100 per level cleared, plus partial credit on the
-// rest. Endless is a different number entirely and stays local.
+// What the leaderboard ranks. Two eras, and it switches by itself:
+//
+//   no built-in levels yet -> the columns you passed in the Endless run
+//     just played, which is one number from one run like every other
+//     game on the board.
+//
+//   once levels exist -> total progress across all of them, 100 per
+//     level cleared plus partial credit on the rest, so every level
+//     counts toward a single score.
+//
+// Nothing to change when Amey's levels land; the board just starts
+// meaning the other thing. Worth clearing the old Endless scores off it
+// at that point, or the two eras sit side by side looking comparable
+// when they are not.
 window.gaLeaderboardScore = function() {
-  const prog = gaProgress()
   const n = alBuiltinLevels().length
+  if (!n) return Math.max(0, GA.submit || 0)
+  const prog = gaProgress()
   let total = 0
   for (let i = 0; i < n; i++) total += Math.max(0, Math.min(100, prog.best[i] || 0))
   return Math.round(total)

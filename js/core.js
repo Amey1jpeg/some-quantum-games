@@ -174,7 +174,6 @@ function _quantumSrc() { return QG_ROOT + 'data/quantum.bin' }
 // ═══════════════════════════════════════════════════════
 
 const STALL_GAMES = new Set([
-  15,  // Entanglement
   39,  // LIMBO
   40,  // UFO
   43,  // Wave Gauntlet
@@ -189,30 +188,26 @@ const STALL_GAMES = new Set([
 // take in while standing up. Shown on the stall cards only; the
 // main site has the card description and the start screen instead.
 const STALL_HOWTO = {
-  15: { keys: 'Arrow keys \u00B7 SPACE',
-        steps: ['Arrows move you; your twin mirrors you on the other side',
-                'Grab the BLUE orbs, your twin grabs the PINK ones',
-                'The glowing link between you cuts attackers \u2014 sweep it through them'] },
   39: { keys: 'Click / tap',
         steps: ['One key lights up \u2014 remember which one it is',
-                'It gets shuffled 20 times, fast',
-                'Click the key you think it ended up as'] },
+                'It gets shuffled 20 times, fast, and you lose sight of it',
+                'Pick where it ended up \u2014 guess wrong and it was never anywhere'] },
   48: { keys: 'Drag \u00B7 or arrow keys',
         steps: ['Drag in the top half to steer you, the bottom half for your twin',
                 'Both of you have to fit through the gaps \u2014 one spike ends the run',
                 'Tap BREAK LINK when the two gaps do not line up'] },
   40: { keys: 'Tap / click / SPACE',
-        steps: ['Each tap fires the thruster and lifts you',
-                'Let go and you fall \u2014 nothing holds you up',
-                'Fly through the gaps; green pillars are safe to land on'] },
+        steps: ['Each tap fires the thruster, let go and you fall',
+                'Slip through the gaps in each barrier \u2014 that is the tunnelling bit',
+                'Green pillars are solid ground, you can land on them'] },
   43: { keys: 'Hold / release',
         steps: ['Hold to climb, let go to dive',
                 'You are always moving diagonally, never flat',
                 'Stay inside the corridor \u2014 touching a wall ends the run'] },
   44: { keys: 'Tap / click / SPACE',
-        steps: ['Each tap snaps you between floor and ceiling',
-                'There is no in-between \u2014 you are on one or the other',
-                'Time the snap so the blocks pass on the empty side'] },
+        steps: ['Each tap flips you between the two states, up and down',
+                'There is no in-between \u2014 you are one or the other',
+                'Time the flip so the blocks pass on the empty side'] },
 }
 
 let QG_STALL = false
@@ -248,7 +243,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=9'
+    link.href = QG_ROOT + 'css/stall.css?v=10'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -979,9 +974,9 @@ const LB_TABS = [
   { id: 'lb-tab-36', game: 'cps',         label: 'CPS',          color: '#6366f1'  },
   { id: 'lb-tab-37', game: 'rhythm',     label: 'Rhythm',     color: '#f472b6' },
   { id: 'lb-tab-42', game: 'typerracer', label: 'Typer',      color: '#06b6d4' },
-  { id: 'lb-tab-40', game: 'ufo',        label: 'UFO Flap', color: '#a855f7' },
+  { id: 'lb-tab-40', game: 'ufo',        label: 'Tunnel', color: '#a855f7' },
   { id: 'lb-tab-43', game: 'wavegauntlet', label: 'Wave Gauntlet', color: '#22c55e' },
-  { id: 'lb-tab-44', game: 'spider',       label: 'Spider',        color: '#a855f7' },
+  { id: 'lb-tab-44', game: 'spider',       label: 'Spin Flip',     color: '#a855f7' },
   { id: 'lb-tab-45', game: 'freighter',    label: 'Freighter',     color: '#22d3ee' },
   { id: 'lb-tab-46', game: 'traprace',     label: 'Trap Race',     color: '#fb923c' },
   { id: 'lb-tab-48', game: 'ascent',       label: 'Ascent',        color: '#a78bfa' },
