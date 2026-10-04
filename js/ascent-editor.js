@@ -20,7 +20,8 @@ const AE = {
   drag: null,
   scrollX: -150,
   undo: [], redo: [],
-  issues: [],             // indexes of columns ✓ Check flagged
+  issues: [],             // x positions of columns ✓ Check flagged
+  armDelete: -1,          // draft armed by a first Delete click
 }
 
 const AE_TOOLS = [
@@ -92,7 +93,19 @@ window.aeDuplicate = function() {
 }
 window.aeDelete = function() {
   const lv = _aeCur(); if (!lv) return
-  if (!confirm(`Delete “${lv.name}”? This can't be undone.`)) return
+  // Native confirm() is suppressed in some embedded browsers (it returns
+  // false instantly), so confirmation is a second click instead.
+  const btn = document.getElementById('ae-del-btn')
+  if (AE.armDelete !== AE.sel) {
+    AE.armDelete = AE.sel
+    if (btn) btn.textContent = 'Click again to delete'
+    clearTimeout(aeDelete.t)
+    aeDelete.t = setTimeout(() => { AE.armDelete = -1; if (btn) btn.textContent = 'Delete' }, 3000)
+    return
+  }
+  clearTimeout(aeDelete.t); AE.armDelete = -1
+  if (btn) btn.textContent = 'Delete'
+  _aeMsg(`Deleted “${lv.name}”`)
   AE.drafts.splice(AE.sel, 1); _aeSave()
   aeSelect(Math.min(AE.sel, AE.drafts.length - 1))
 }
@@ -107,8 +120,9 @@ window.aeSetTool = function(t) { AE.tool = t; aeRender() }
 function _aeClean() { return alCleanLevel(_aeCur()) }
 function _aeCopy(text, what) {
   const done = () => _aeMsg(what + ' copied to the clipboard')
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => prompt('Copy this:', text))
-  else prompt('Copy this:', text)
+  const manual = () => _aeIoShow(text, null, what + ' — copy it from the box')
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, manual)
+  else manual()
 }
 window.aeExportJSON = function() { const lv = _aeClean(); if (lv) _aeCopy(JSON.stringify(lv), 'Level JSON') }
 window.aeExportJS = function() {
@@ -118,12 +132,31 @@ window.aeExportJS = function() {
   _aeCopy(js, 'Level code (paste into AL_LEVELS in js/ascent-levels.js)')
 }
 window.aeImport = function() {
-  const text = prompt('Paste level JSON:'); if (!text) return
+  _aeIoShow('', aeImportText, 'Paste level JSON, then press Import')
+}
+window.aeImportText = function(text) {
+  if (!text.trim()) return
   let lv = null
   try { lv = alCleanLevel(JSON.parse(text)) } catch {}
   if (!lv) { _aeMsg('That isn’t a valid level'); return }
+  aeIoClose()
   AE.drafts.push(lv); _aeSave(); aeSelect(AE.drafts.length - 1)
 }
+
+// Inline text box for import and for copying when the clipboard is blocked
+function _aeIoShow(text, onOk, label) {
+  const box = document.getElementById('ae-io')
+  document.getElementById('ae-io-label').textContent = label
+  const ta = document.getElementById('ae-io-text')
+  ta.value = text
+  const ok = document.getElementById('ae-io-ok')
+  ok.style.display = onOk ? '' : 'none'
+  ok.onclick = onOk ? () => onOk(ta.value) : null
+  box.style.display = 'flex'
+  ta.focus(); if (text) ta.select()
+}
+window.aeIoClose = function() { document.getElementById('ae-io').style.display = 'none' }
+
 window.aeTestPlay = function() {
   const lv = _aeClean(); if (!lv) return
   try { localStorage.setItem(AL_TEST_KEY, JSON.stringify(lv)); sessionStorage.setItem('ae_sel', AE.sel) } catch {}

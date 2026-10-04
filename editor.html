@@ -51,6 +51,9 @@
       color: var(--text); border-radius: 5px; padding: .2rem .35rem; font-family: inherit; font-size: .76rem; }
     .ae-group { font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: .35rem 0 .2rem; }
     .ae-objhead { font-size: .76rem; margin: .45rem 0 .3rem; color: var(--text); text-transform: capitalize; }
+    .ae-io { flex-direction: column; gap: .35rem; }
+    .ae-io textarea { width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text);
+      border-radius: 6px; padding: .4rem; font: .74rem monospace; resize: vertical; }
     .ae-issues { font-size: .78rem; color: #facc15; display: flex; flex-direction: column; gap: .15rem; }
     #ae-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
     #ed-evil-btn.on { border-color: #f87171; color: #f87171; background: rgba(248,113,113,.14); }
@@ -172,8 +175,16 @@
         <button class="btn-primary ghost" onclick="aeExportJS()">Copy as JS</button>
         <button class="btn-primary ghost" onclick="aeExportJSON()">Copy JSON</button>
         <button class="btn-primary ghost" onclick="aeImport()">Import</button>
-        <button class="btn-primary danger" onclick="aeDelete()">Delete</button>
+        <button class="btn-primary danger" id="ae-del-btn" onclick="aeDelete()">Delete</button>
         <span id="ae-msg" class="ed-hint"></span>
+      </div>
+      <div id="ae-io" class="ae-io" style="display:none">
+        <span id="ae-io-label" class="ed-hint"></span>
+        <textarea id="ae-io-text" rows="4" spellcheck="false"></textarea>
+        <div class="ed-restore-row">
+          <button class="ed-mini" id="ae-io-ok">Import</button>
+          <button class="ed-mini" onclick="aeIoClose()">Close</button>
+        </div>
       </div>
       <div id="ae-issues" class="ae-issues"></div>
       <p class="ed-help">
@@ -262,7 +273,7 @@
 <script src="js/game44.js"></script>
 <script src="js/editor.js?v=8"></script>
 <script src="js/ascent-levels.js?v=3"></script>
-<script src="js/ascent-editor.js?v=3"></script>
+<script src="js/ascent-editor.js?v=4"></script>
 
 </body>
 </html>
