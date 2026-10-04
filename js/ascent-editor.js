@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  LEVEL EDITOR — Entangled Ascent (ascent.html)
+//  LEVEL EDITOR — Entangled Ascent (game 48 in index.html)
 //  Its own tab and panel in editor.html, separate from the
 //  Wave Gauntlet / Spider / UFO editor in editor.js.
 //
@@ -127,7 +127,8 @@ window.aeImport = function() {
 window.aeTestPlay = function() {
   const lv = _aeClean(); if (!lv) return
   try { localStorage.setItem(AL_TEST_KEY, JSON.stringify(lv)); sessionStorage.setItem('ae_sel', AE.sel) } catch {}
-  location.href = 'ascent.html?test=1'
+  // The game is a section in index.html now, so route by slug
+  location.href = 'index.html?game=ascent&test=1'
 }
 
 // ✓ Check: can the dots get from each column's gaps to the next one's in

@@ -437,6 +437,15 @@ function gaShowOver() {
     final.textContent = GA.score
     sub.textContent = GA.score >= best && GA.score > 0 ? 'New best!' : 'Best: ' + best
   }
+  // Only built-in levels count for the leaderboard: endless is a different
+  // number, and custom/test levels are whatever the player made them.
+  if (GA.mode === 'level' && typeof openSubmit === 'function') {
+    const total = gaLeaderboardScore()
+    if (total > 0) {
+      html += `<button class="btn-primary" style="background:#a78bfa;border-color:#a78bfa;color:#13092b" onclick="openSubmit('ascent')">Submit \u00B7 ${total} across all levels</button><br><br>`
+      if (typeof renderMedalDisplay === 'function') renderMedalDisplay('ga-medal-display', 'ascent', total)
+    }
+  }
   html += `<button class="btn-primary${won && GA.mode === 'level' ? ' ga-ghost' : ''}" onclick="gaRetry()">${won ? 'Play again' : 'Retry'}</button><br><br>`
   html += GA_TEST
     ? `<button class="btn-back" onclick="location.href='editor.html?game=ascent'">← Back to editor</button>`
@@ -662,4 +671,30 @@ function gaDot(ctx, x, y, fill, ring) {
   ctx.shadowBlur = 0; ctx.strokeStyle = ring; ctx.lineWidth = 2; ctx.stroke()
 }
 
-document.addEventListener('DOMContentLoaded', gaInit)
+// ── Site integration ─────────────────────────────────────
+// This used to be its own page, so it set itself up on DOMContentLoaded.
+// As a section in index.html it has to start when the player opens it and
+// stop when they leave, like every other game.
+let _gaReady = false
+
+window.initGame48 = function() {
+  if (!_gaReady) { gaInit(); _gaReady = true }
+  else { gaSize(); gaDrawBlank(); gaShowMenu() }
+}
+
+window.stopGame48 = function() {
+  GA.phase = 'menu'
+  GA.keys = {}
+  if (GA.raf) { cancelAnimationFrame(GA.raf); GA.raf = null }
+}
+
+// Total progress across every built-in level, which is what the
+// leaderboard ranks: 100 per level cleared, plus partial credit on the
+// rest. Endless is a different number entirely and stays local.
+window.gaLeaderboardScore = function() {
+  const prog = gaProgress()
+  const n = alBuiltinLevels().length
+  let total = 0
+  for (let i = 0; i < n; i++) total += Math.max(0, Math.min(100, prog.best[i] || 0))
+  return Math.round(total)
+}

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
 //  ENTANGLED ASCENT — level format, generator and built-in levels
-//  Shared by ascent.html (the game) and editor.html (the editor).
+//  Shared by index.html (the game) and editor.html (the editor).
 //
 //  Levels live in a fixed 600-unit-tall world and are scaled to the
 //  screen, so a level plays the same on any display.
