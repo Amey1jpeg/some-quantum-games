@@ -179,6 +179,7 @@ const STALL_GAMES = new Set([
   40,  // UFO
   43,  // Wave Gauntlet
   44,  // Spider
+  48,  // Entangled Ascent
 ])
 
 // ── How to play ─────────────────────────────────────────
@@ -196,6 +197,10 @@ const STALL_HOWTO = {
         steps: ['One key lights up \u2014 remember which one it is',
                 'It gets shuffled 20 times, fast',
                 'Click the key you think it ended up as'] },
+  48: { keys: 'Drag \u00B7 or arrow keys',
+        steps: ['Drag in the top half to steer you, the bottom half for your twin',
+                'Both of you have to fit through the gaps \u2014 one spike ends the run',
+                'Tap BREAK LINK when the two gaps do not line up'] },
   40: { keys: 'Tap / click / SPACE',
         steps: ['Each tap fires the thruster and lifts you',
                 'Let go and you fall \u2014 nothing holds you up',
@@ -243,7 +248,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=8'
+    link.href = QG_ROOT + 'css/stall.css?v=9'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
