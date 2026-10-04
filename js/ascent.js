@@ -217,6 +217,7 @@ function gaStart(level) {
     x: Math.random() * GA.W, y: Math.random() * AL_H,
     r: Math.random() * 1.3 + 0.2, par: Math.random() * 0.5 + 0.1, a: Math.random() * 0.45 + 0.25,
   }))
+  GA.endX = level ? alEndX(level) : Infinity
   if (level) GA.pending = level.objects.map(o => Object.assign({}, o)).sort((a, b) => a.x - b.x)
   else { GA.gen = alGenerator(gaRand, {}); GA.gen.x = 900 }
   document.getElementById('ga-score-label').textContent = level ? 'Progress' : 'Columns'
@@ -292,6 +293,7 @@ function gaUpdate(dt) {
   if (GA.banner) { GA.banner.t -= dt; if (GA.banner.t <= 0) GA.banner = null }
   for (const tr of GA.triggers) if (!tr.fired && GA.x >= tr.x) {
     tr.fired = true
+    if (tr.mode === 'finish') continue        // handled by the end-of-level check below
     GA.forced = tr.mode === 'desync'
     GA.banner = GA.forced
       ? { text: '⚡ DESYNC — W/S you · ↑/↓ twin', col: '#f87171', t: 1.6 }
@@ -361,9 +363,9 @@ function gaUpdate(dt) {
   })
 
   if (GA.level) {
-    const pct = Math.max(0, Math.min(100, Math.floor(GA.x / GA.level.length * 100)))
+    const pct = Math.max(0, Math.min(100, Math.floor(GA.x / GA.endX * 100)))
     document.getElementById('ga-score').textContent = pct + '%'
-    if (GA.x >= GA.level.length) return gaWin()
+    if (GA.x >= GA.endX) return gaWin()
   }
 
   for (const c of GA.cols) if (gaHitsCol(c, GA.x, GA.py) || gaHitsCol(c, GA.x, GA.ty)) return gaDie()
@@ -415,7 +417,7 @@ function gaShowOver() {
   const btns  = document.getElementById('ga-over-btns')
   let html = ''
   if (GA.level) {
-    const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.level.length * 100)))
+    const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.endX * 100)))
     title.textContent = won ? 'Level complete!' : 'Decohered!'
     final.textContent = pct + '%'
     sub.textContent = GA.level.name
@@ -465,7 +467,7 @@ function gaDraw() {
   ctx.beginPath(); ctx.moveTo(0, half); ctx.lineTo(W, half); ctx.stroke()
   ctx.setLineDash([])
 
-  if (GA.level) gaDrawFinish(ctx, sx(GA.level.length), H)
+  if (GA.level) gaDrawFinish(ctx, sx(GA.endX), H)
   for (const p of GA.portals) gaDrawPortal(ctx, sx(p.x), p.y, p.kind, p.used)
 
   for (const c of GA.cols) {
@@ -522,7 +524,7 @@ function gaDraw() {
   if (GA.level) {
     const pw = Math.min(360, W * 0.4), px = (W - pw) / 2
     ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(px, 10, pw, 4)
-    ctx.fillStyle = '#a78bfa'; ctx.fillRect(px, 10, pw * Math.min(1, Math.max(0, GA.x / GA.level.length)), 4)
+    ctx.fillStyle = '#a78bfa'; ctx.fillRect(px, 10, pw * Math.min(1, Math.max(0, GA.x / GA.endX)), 4)
   }
   const bw = 170, bx = W - bw - 16, by = 22
   ctx.fillStyle = 'rgba(5,5,15,0.6)'; ctx.fillRect(bx - 8, by - 8, bw + 16, 34)
@@ -612,6 +614,7 @@ function gaDrawSaw(ctx, x, y, r) {
 }
 
 function gaDrawTrigger(ctx, x, mode, fired) {
+  if (mode === 'finish') return               // drawn as the finish line
   const col = mode === 'desync' ? '#f87171' : '#a78bfa'
   ctx.globalAlpha = fired ? 0.15 : 0.55
   ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([2, 6])

@@ -28,7 +28,7 @@ const AE_TOOLS = [
   ['Spikes',   [['col', '▮ Column'], ['dcol', '▮▮ Thick column'], ['half', '▯ Half wall'],
                 ['block', '◆ Spike block'], ['saw', '✺ Saw'], ['strip', '▲▲ Spike strip']]],
   ['Speed portals', [['portal:fast', '»» Fast'], ['portal:slow', '«« Slow'], ['portal:normal', '== Normal']]],
-  ['Desync triggers', [['trigger:desync', '⚡ Desync start'], ['trigger:sync', '🔗 Desync end']]],
+  ['Triggers', [['trigger:desync', '⚡ Desync start'], ['trigger:sync', '🔗 Desync end'], ['trigger:finish', '🏁 Finish']]],
   ['Orbs',     [['orb:gold', '★ Gold'], ['orb:green', '⚡ Green']]],
 ]
 
@@ -215,7 +215,7 @@ function _aeRenderProps() {
     if (o.t === 'orb') h += num('y', 'y', o.y) + sel(['gold', 'green'], o.kind)
     if (o.t === 'saw') h += num('y', 'y', o.y) + num('Radius', 'r', o.r || AL_SAW_R)
     if (o.t === 'strip') h += num('Length', 'len', o.len) + sel(['top', 'midtop', 'midbot', 'bottom'], o.edge, 'edge')
-    if (o.t === 'trigger') h += sel(['desync', 'sync'], o.mode, 'mode')
+    if (o.t === 'trigger') h += sel(['desync', 'sync', 'finish'], o.mode, 'mode')
     h += `<button class="ed-mini danger" onclick="aeDeletePick()">Delete object</button>`
   } else h += '<div class="ed-empty">Select an object to edit it.</div>'
   el.innerHTML = h
@@ -474,6 +474,13 @@ function _aeDraw() {
       const [rx, ry, rw, rh] = alStripRect(o)
       ctx.fillStyle = 'rgba(244,63,94,0.55)'; ctx.fillRect(sx(rx), ry, rw, rh)
       ctx.strokeStyle = picked ? '#fff' : '#f43f5e'; ctx.lineWidth = picked ? 2 : 1; ctx.strokeRect(sx(rx), ry, rw, rh)
+    } else if (o.t === 'trigger' && o.mode === 'finish') {
+      for (let y = 0, k = 0; y < AL_H; y += 10, k++) {
+        ctx.fillStyle = k % 2 ? '#facc15' : '#1e1b4b'; ctx.fillRect(sx(o.x) - 5, y, 10, 10)
+      }
+      if (picked) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(sx(o.x) - 8, 1, 16, AL_H - 2) }
+      ctx.fillStyle = '#facc15'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'left'
+      ctx.fillText('🏁 FINISH', sx(o.x) + 8, AL_HALF + 14)
     } else if (o.t === 'trigger') {
       const col = o.mode === 'desync' ? '#f87171' : '#a78bfa'
       ctx.strokeStyle = picked ? '#fff' : col; ctx.lineWidth = 2; ctx.setLineDash([3, 5])

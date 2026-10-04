@@ -17,8 +17,10 @@
 //    { t:'saw',    x, y, r? }                      spinning saw blade
 //    { t:'strip',  x, len, edge }                  spike strip; edge 'top' | 'midtop' |
 //                                                  'midbot' | 'bottom' (mid = along the mirror line)
-//    { t:'trigger', x, mode:'desync'|'sync' }      desync starts a section where the link is
-//                                                  forced broken (W/S you, ↑/↓ twin); sync ends it
+//    { t:'trigger', x, mode:'desync'|'sync'|'finish' }
+//                                                  desync starts a section where the link is
+//                                                  forced broken (W/S you, ↑/↓ twin); sync ends it;
+//                                                  finish ends the level at that x, at every height
 //  A half wall is just a column whose other gap is the whole half.
 // ═══════════════════════════════════════════════════════
 
@@ -42,6 +44,12 @@ function alIsDesync(o) {
   const lo = Math.max(o.top[0] + AL_R, AL_H - o.bot[1] + AL_R)
   const hi = Math.min(o.top[1] - AL_R, AL_H - o.bot[0] - AL_R)
   return hi < lo
+}
+
+// Where the level actually ends: the first finish trigger, else `length`
+function alEndX(lv) {
+  const f = lv.objects.filter(o => o.t === 'trigger' && o.mode === 'finish').map(o => o.x)
+  return f.length ? Math.min(lv.length, ...f) : lv.length
 }
 
 function alStripRect(o) {
@@ -181,7 +189,7 @@ function alCleanLevel(lv) {
     else if (o.t === 'saw') objects.push({ t: 'saw', x, y: num(o.y, 150), r: Math.max(8, Math.min(80, num(o.r, AL_SAW_R))) })
     else if (o.t === 'strip' && ['top', 'midtop', 'midbot', 'bottom'].includes(o.edge))
       objects.push({ t: 'strip', x, len: Math.max(20, num(o.len, 200)), edge: o.edge })
-    else if (o.t === 'trigger' && (o.mode === 'desync' || o.mode === 'sync')) objects.push({ t: 'trigger', x, mode: o.mode })
+    else if (o.t === 'trigger' && ['desync', 'sync', 'finish'].includes(o.mode)) objects.push({ t: 'trigger', x, mode: o.mode })
   }
   objects.sort((a, b) => a.x - b.x)
   return {
