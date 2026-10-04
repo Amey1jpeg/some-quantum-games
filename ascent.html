@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Entangled Ascent — Quantum Games (beta)</title>
+  <title>Entangled Ascent — Quantum Games</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="css/style.css" />
   <style>
@@ -11,11 +11,6 @@
     body { margin: 0; height: 100vh; overflow: hidden; }
     .ga-page { display: flex; flex-direction: column; height: 100vh; padding: 1rem; gap: .8rem; }
     .ga-page .top-bar { flex: none; }
-    .ga-beta {
-      font-size: .66rem; text-transform: uppercase; letter-spacing: .06em;
-      background: rgba(239,68,68,.15); color: #fca5a5;
-      border: 1px solid rgba(239,68,68,.35); border-radius: 5px; padding: .12rem .4rem;
-    }
     .ga-arena {
       flex: 1; min-height: 0; max-height: 620px; width: 100%; max-width: 1100px; margin: auto;
       position: relative; border: 1px solid var(--border); border-radius: 1.25rem; overflow: hidden;
@@ -53,8 +48,8 @@
 <body>
 <div class="ga-page">
   <div class="top-bar">
-    <button class="btn-back ga-back" onclick="location.href='index.html?game=beta'">← Beta games</button>
-    <span class="game-title">🔗 Entangled Ascent <span class="ga-beta">Beta</span></span>
+    <button class="btn-back ga-back" onclick="location.href='index.html'">← Home</button>
+    <span class="game-title">🔗 Entangled Ascent</span>
     <button class="btn-back ga-break-btn" onclick="gaBreak()">⚡ Break link</button>
     <div class="score-badge" style="border-color:#a78bfa;color:#a78bfa;"><span id="ga-score-label" style="color:inherit;font-weight:400">Columns</span> <span id="ga-score">0</span></div>
     <div class="entropy-indicator"><div class="entropy-dot" id="ga-entropy-dot"></div><span id="ga-entropy-label">loading…</span></div>

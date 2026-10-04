@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  ENTANGLED ASCENT — horizontal runner (beta)
+//  ENTANGLED ASCENT — horizontal runner
 //  Quantum Entanglement meets Jet Rush. You (blue, top half) and your
 //  twin (pink, bottom half) fly forward on their own; the camera follows.
 //  Touch a spike and the run ends.

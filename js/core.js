@@ -135,7 +135,6 @@ const BETA_GAMES = new Set([
   38,  // Crossy
   45,  // Quantum Freighter
   46,  // Trap Race
-  48,  // Entangled Ascent (standalone page: ascent.html)
 ])
 
 // Beta sticks for the tab once entered, so navigating into a game (which
@@ -599,7 +598,7 @@ window.showGame = function(n) {
   // On the stall, only the listed games exist — a stale link or a typed
   // ?game= slug for anything else lands back on the home screen
   if (QG_STALL && !STALL_GAMES.has(n)) { if (typeof goHome === 'function') goHome(); return }
-  if (n === 48) { location.href = QG_ROOT + 'ascent.html'; return }
+  if (n === 48) { location.href = QG_ROOT + 'ascent.html'; return }   // Entangled Ascent is its own page
   document.getElementById('home').classList.remove('active')
   document.getElementById(`game${n}`).classList.add('active')
   pushGameUrl(n)
