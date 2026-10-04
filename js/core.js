@@ -175,6 +175,7 @@ function _quantumSrc() { return QG_ROOT + 'data/quantum.bin' }
 
 const STALL_GAMES = new Set([
   15,  // Entanglement
+  39,  // LIMBO
   40,  // UFO
   43,  // Wave Gauntlet
   44,  // Spider
@@ -191,6 +192,10 @@ const STALL_HOWTO = {
         steps: ['Arrows move you; your twin mirrors you on the other side',
                 'Grab the BLUE orbs, your twin grabs the PINK ones',
                 'The glowing link between you cuts attackers \u2014 sweep it through them'] },
+  39: { keys: 'Click / tap',
+        steps: ['One key lights up \u2014 remember which one it is',
+                'It gets shuffled 20 times, fast',
+                'Click the key you think it ended up as'] },
   40: { keys: 'Tap / click / SPACE',
         steps: ['Each tap fires the thruster and lifts you',
                 'Let go and you fall \u2014 nothing holds you up',
@@ -238,7 +243,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=7'
+    link.href = QG_ROOT + 'css/stall.css?v=8'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -557,6 +562,7 @@ const GAME_SLUGS = {
   'wave-dash':        35,
   'cps':              36,
   'spider':           44,
+  'limbo':            39,
   'freighter':        45,
   'trap-race':        46,
   'chsh':             47,
