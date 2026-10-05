@@ -19,8 +19,9 @@ const GA_FWD_MAX   = 330
 const GA_BREAK_DUR = 2.4
 const GA_BREAK_CD  = 5.5
 const GA_CAM_LEAD  = 0.28   // dots sit this far across the screen
-const GA_PROG_KEY  = 'qg_ascent_progress_v1'
+const GA_PROG_KEY  = 'qg_ascent_progress_v2'
 const GA_BEST_KEY  = 'qg_ascent_best'
+
 
 // Quantum entropy: same pool and rejection sampling as core.js, which this
 // standalone page doesn't load. Falls back to Math.random if unavailable.
@@ -72,11 +73,13 @@ const GA = {
 
 let _gaCanvas, _gaCtx
 
+// Best % per built-in level, keyed by level name so it survives levels being
+// added or reordered. A level is unlocked once the one before it is cleared.
 function gaProgress() {
   try {
     const p = JSON.parse(localStorage.getItem(GA_PROG_KEY) || '{}')
-    return { unlocked: +p.unlocked || 0, best: (p.best && typeof p.best === 'object') ? p.best : {} }
-  } catch { return { unlocked: 0, best: {} } }
+    return { best: (p.best && typeof p.best === 'object') ? p.best : {} }
+  } catch { return { best: {} } }
 }
 function gaSaveProgress(p) { try { localStorage.setItem(GA_PROG_KEY, JSON.stringify(p)) } catch {} }
 function gaBest() { try { return +localStorage.getItem(GA_BEST_KEY) || 0 } catch { return 0 } }
@@ -153,11 +156,11 @@ function gaShowMenu() {
   const lv = alBuiltinLevels()
   const grid = document.getElementById('ga-levels')
   grid.innerHTML = lv.map((l, i) => {
-    const locked = i > prog.unlocked
-    const best = prog.best[i]
+    const locked = i > 0 && !(prog.best[lv[i - 1].name] >= 100)
+    const best = prog.best[l.name]
     const sub = locked ? '🔒 locked' : best >= 100 ? '✓ cleared' : best ? best + '%' : 'new'
     return `<button class="ga-lvl${locked ? ' locked' : ''}${best >= 100 ? ' done' : ''}" ${locked ? 'disabled' : ''}
-      onclick="gaPlayLevel(${i})"><b>${i + 1}</b><span>${_gaEsc(l.name)}</span><small>${sub}</small></button>`
+      onclick="gaPlayLevel(${i})"><b>${i + 1}</b><span>${_gaEsc(l.name)}</span>${gaDiffBadge(l.diff)}<small>${sub}</small></button>`
   }).join('') || '<div class="ga-sub">No levels yet — play Endless, or build one in the editor.</div>'
   document.getElementById('ga-endless-best').textContent = gaBest()
 
@@ -165,7 +168,7 @@ function gaShowMenu() {
   const cust = document.getElementById('ga-custom')
   cust.innerHTML = drafts.length
     ? '<div class="ga-sub">Your levels</div>' + drafts.map((d, i) =>
-        `<button class="ga-chip" onclick="gaPlayCustom(${i})">${_gaEsc(d.name || 'Untitled')}</button>`).join('')
+        `<button class="ga-chip" onclick="gaPlayCustom(${i})"><i class="ga-dot" style="background:${alDiff(d.diff).col}"></i>${_gaEsc(d.name || 'Untitled')}</button>`).join('')
     : '<div class="ga-sub">Make your own in the <a href="editor.html?game=ascent">level editor</a>.</div>'
 
   if (GA_TEST) {
@@ -175,6 +178,11 @@ function gaShowMenu() {
     document.getElementById('ga-endless-row').style.display = 'none'
     document.getElementById('ga-test-row').style.display = t ? 'flex' : 'none'
   }
+}
+
+function gaDiffBadge(id) {
+  const d = alDiff(id)
+  return `<em class="ga-diff" style="color:${d.col};border-color:${d.col}66">${d.label}</em>`
 }
 
 function gaTestLevel() {
@@ -421,15 +429,14 @@ function gaShowOver() {
     const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.endX * 100)))
     title.textContent = won ? 'Level complete!' : 'Decohered!'
     final.textContent = pct + '%'
-    sub.textContent = GA.level.name
+    sub.innerHTML = _gaEsc(GA.level.name) + ' ' + gaDiffBadge(GA.level.diff)
     if (GA.mode === 'level') {
       const prog = gaProgress()
-      prog.best[GA.levelIdx] = Math.max(prog.best[GA.levelIdx] || 0, pct)
-      if (won) prog.unlocked = Math.max(prog.unlocked, GA.levelIdx + 1)
+      prog.best[GA.level.name] = Math.max(prog.best[GA.level.name] || 0, pct)
       gaSaveProgress(prog)
       if (won && GA.levelIdx + 1 < alBuiltinLevels().length)
         html += `<button class="btn-primary" onclick="gaPlayLevel(${GA.levelIdx + 1})">Next level →</button><br><br>`
-      else if (won) sub.textContent = 'All levels cleared — try Endless!'
+      else if (won) sub.innerHTML += '<br>All levels cleared — try Endless!'
     }
   } else {
     const best = Math.max(gaBest(), GA.score)
@@ -707,6 +714,6 @@ window.gaLeaderboardScore = function() {
   if (!n) return Math.max(0, GA.submit || 0)
   const prog = gaProgress()
   let total = 0
-  for (let i = 0; i < n; i++) total += Math.max(0, Math.min(100, prog.best[i] || 0))
+  for (const l of alBuiltinLevels()) total += Math.max(0, Math.min(100, prog.best[l.name] || 0))
   return Math.round(total)
 }
