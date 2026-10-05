@@ -6,6 +6,8 @@
 //    W / S   — mirrored: you and the twin move in opposite directions
 //    ↑ / ↓   — aligned: both move the same way, shifting how they line up
 //    SPACE   — break the link: W/S moves only you, ↑/↓ moves only the twin
+//  While linked, pushing the two together at the middle line swaps them:
+//  each crosses into the other's half and keeps going the way it was.
 //  Speed portals are optional: only a dot that flies through one changes
 //  the speed, and it holds until the next portal you take.
 //
@@ -213,7 +215,7 @@ function gaStart(level) {
   Object.assign(GA, {
     phase: 'playing', level, gen: null,
     x: 0, camX: -GA.W * GA_CAM_LEAD, fwd: level ? level.speed : GA_FWD0, mult: 1, multTarget: 1,
-    py: AL_HALF * 0.5, ty: AL_HALF * 1.5,
+    py: AL_HALF * 0.5, ty: AL_HALF * 1.5, swapped: false, swapCD: 0,
     broken: false, breakT: 0, breakCD: 0,
     cols: [], blocks: [], portals: [], orbs: [], pending: [], saws: [], strips: [], triggers: [], forced: false,
     parts: [], trail: [],
@@ -317,13 +319,34 @@ function gaUpdate(dt) {
   let pdy, tdy
   if (GA.broken || GA.forced) { pdy = mir; tdy = ali }
   else           { pdy = mir + ali; tdy = -mir + ali }
+  // A finger steers whichever dot is in the half it touches
   for (const t of GA.touches.values()) {
-    if (t.y < half) pdy = Math.abs(t.y - GA.py) > 6 ? Math.sign(t.y - GA.py) : 0
-    else            tdy = Math.abs(t.y - GA.ty) > 6 ? Math.sign(t.y - GA.ty) : 0
+    const blue = (t.y < half) !== GA.swapped
+    if (blue) pdy = Math.abs(t.y - GA.py) > 6 ? Math.sign(t.y - GA.py) : 0
+    else      tdy = Math.abs(t.y - GA.ty) > 6 ? Math.sign(t.y - GA.ty) : 0
   }
   pdy = Math.max(-1, Math.min(1, pdy)); tdy = Math.max(-1, Math.min(1, tdy))
-  GA.py = Math.max(AL_R, Math.min(half - AL_R - 2, GA.py + pdy * AL_SPD_Y * dt))
-  GA.ty = Math.max(half + AL_R + 2, Math.min(H - AL_R, GA.ty + tdy * AL_SPD_Y * dt))
+
+  // Swap: while linked, the two pressed together at the middle line pass
+  // through each other. They trade halves by exchanging positions, and each
+  // keeps its own controls and heading — so holding the same key carries
+  // them apart on the far side, still mirrored. Not in desync sections.
+  if (GA.swapCD > 0) GA.swapCD -= dt
+  const closing = Math.sign(pdy) === Math.sign(GA.ty - GA.py) && Math.sign(tdy) === Math.sign(GA.py - GA.ty)
+  if (!GA.broken && !GA.forced && GA.swapCD <= 0 && closing && Math.abs(GA.ty - GA.py) < AL_R * 2 + 8) {
+    const y = GA.py; GA.py = GA.ty; GA.ty = y
+    GA.swapped = !GA.swapped
+    GA.swapCD = 0.2
+    GA.flash = Math.max(GA.flash, 0.6)
+    gaBurst(GA.x, half, '#c4b5fd', 10)
+    if (typeof SFX !== 'undefined') SFX.whoosh()
+  }
+
+  // Each dot stays in the half it is currently in
+  const topLo = AL_R, topHi = half - AL_R - 2, botLo = half + AL_R + 2, botHi = H - AL_R
+  const clamp = (v, top) => Math.max(top ? topLo : botLo, Math.min(top ? topHi : botHi, v))
+  GA.py = clamp(GA.py + pdy * AL_SPD_Y * dt, !GA.swapped)
+  GA.ty = clamp(GA.ty + tdy * AL_SPD_Y * dt, GA.swapped)
 
   gaFeed()
 
