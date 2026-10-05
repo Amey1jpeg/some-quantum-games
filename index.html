@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Games — Powered by real qubits</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=2" />
+  <link rel="stylesheet" href="css/style.css?v=3" />
 </head>
 <body>
 
@@ -1993,13 +1993,16 @@
 <section id="game48" class="screen game-screen">
   <div class="top-bar">
     <button class="btn-back" onclick="goHome()">← Back</button>
-    <span class="game-title">🔗 Entangled Ascent</span>
+    <!-- Break link sits with Back on the left, so the right-hand side reads
+         title → score → entropy exactly like every other game. SPACE does
+         the same thing; the button is there for touch. -->
     <button class="btn-back ga-break-btn" onclick="gaBreak()">⚡ Break link</button>
-    <div class="score-badge" style="border-color:#a78bfa;color:#a78bfa;"><span id="ga-score-label" style="color:inherit;font-weight:400">Columns</span> <span id="ga-score">0</span></div>
+    <span class="game-title">🔗 Entangled Ascent</span>
+    <div class="score-badge" style="border-color:#a78bfa;color:#a78bfa;"><span id="ga-score-label">Columns</span> <span id="ga-score">0</span></div>
     <div class="entropy-indicator"><div class="entropy-dot" id="ga-entropy-dot"></div><span id="ga-entropy-label">loading…</span></div>
   </div>
 
-  <div class="ga-arena">
+  <div class="canvas-arena" id="ga-arena">
     <canvas id="ga-canvas"></canvas>
     <div class="canvas-overlay" id="ga-overlay">
       <h3>🔗 Entangled Ascent</h3>
@@ -2035,7 +2038,7 @@
 
 <script src="js/ascent-builtin.js?v=3"></script>
 <script src="js/ascent-levels.js?v=6"></script>
-<script src="js/ascent.js?v=10"></script>
+<script src="js/ascent.js?v=11"></script>
 
 
 
