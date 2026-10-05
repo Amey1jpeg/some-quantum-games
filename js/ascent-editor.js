@@ -296,7 +296,7 @@ window.aeSetLevelProp = function(k, v) {
   if (k === 'name') lv.name = String(v).slice(0, 40)
   else if (k === 'diff') lv.diff = alDiff(v).id
   else { const n = +v; if (isFinite(n)) lv[k] = k === 'speed' ? Math.max(60, Math.min(400, n)) : Math.max(400, n) }
-  _aeSave(); _aeRenderList(); _aeDraw()
+  _aeSave(); _aeRenderList(); _aeRenderProps(); _aeRenderDiffBar(); _aeDraw()
 }
 window.aeSetObjProp = function(k, v) {
   const lv = _aeCur(); const o = lv && lv.objects[AE.pick]; if (!o) return
@@ -379,9 +379,19 @@ function _aeRenderTools() {
       `<button class="ed-chip${AE.tool === id ? ' active' : ''}" onclick="aeSetTool('${id}')">${label}</button>`).join('') + '</div>').join('')
 }
 
+// Difficulty picker above the canvas, so it's in view while building
+function _aeRenderDiffBar() {
+  const el = document.getElementById('ae-diffbar'), lv = _aeCur()
+  if (!lv) { el.innerHTML = ''; return }
+  const cur = alDiff(lv.diff).id
+  el.innerHTML = `<span>Difficulty of “${_aeEsc(lv.name)}”:</span>` + AL_DIFFS.map(d =>
+    `<button class="ae-diffbtn" onclick="aeSetLevelProp('diff','${d.id}')" style="${d.id === cur
+      ? `background:${d.col};border-color:${d.col};color:#0a0a14;font-weight:700` : `border-color:${d.col}66;color:${d.col}`}">${d.label}</button>`).join('')
+}
+
 window.aeRender = function() {
   if (!AE.open) return
-  _aeRenderList(); _aeRenderTools(); _aeRenderProps()
+  _aeRenderList(); _aeRenderTools(); _aeRenderProps(); _aeRenderDiffBar()
   document.getElementById('ae-undo-count').textContent = AE.undo.length ? `${AE.undo.length} step${AE.undo.length > 1 ? 's' : ''}` : ''
   _aeDraw()
 }
