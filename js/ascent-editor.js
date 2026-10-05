@@ -39,7 +39,7 @@ function _aeSave() { alSaveDrafts(AE.drafts) }
 function _aeMsg(m) { const el = document.getElementById('ae-msg'); if (el) { el.textContent = m; clearTimeout(_aeMsg.t); _aeMsg.t = setTimeout(() => { el.textContent = '' }, 3500) } }
 
 function _aeNewLevel() {
-  return { name: 'New level ' + (AE.drafts.length + 1), speed: 170, length: 3000, objects: [] }
+  return { name: 'New level ' + (AE.drafts.length + 1), diff: 'easy', speed: 170, length: 3000, objects: [] }
 }
 
 // ── Undo ─────────────────────────────────────────────────
@@ -128,7 +128,7 @@ window.aeExportJSON = function() { const lv = _aeClean(); if (lv) _aeCopy(JSON.s
 window.aeExportJS = function() {
   const lv = _aeClean(); if (!lv) return
   const objs = lv.objects.map(o => '    ' + JSON.stringify(o).replace(/"(\w+)":/g, '$1:')).join(',\n')
-  const js = `  { name: ${JSON.stringify(lv.name)}, speed: ${lv.speed}, length: ${Math.round(lv.length)}, objects: [\n${objs}\n  ] },`
+  const js = `  { name: ${JSON.stringify(lv.name)}, diff: '${lv.diff}', speed: ${lv.speed}, length: ${Math.round(lv.length)}, objects: [\n${objs}\n  ] },`
   _aeCopy(js, 'Level code (paste into AL_LEVELS in js/ascent-levels.js)')
 }
 window.aeImport = function() {
@@ -197,6 +197,7 @@ window.aeSetLevelProp = function(k, v) {
   const lv = _aeCur(); if (!lv) return
   _aePush()
   if (k === 'name') lv.name = String(v).slice(0, 40)
+  else if (k === 'diff') lv.diff = alDiff(v).id
   else { const n = +v; if (isFinite(n)) lv[k] = k === 'speed' ? Math.max(60, Math.min(400, n)) : Math.max(400, n) }
   _aeSave(); _aeRenderList(); _aeDraw()
 }
@@ -231,6 +232,8 @@ function _aeRenderProps() {
   const inp = (label, val, on, extra = '') =>
     `<label class="ae-field"><span>${label}</span><input ${extra} value="${_aeEsc(val)}" onchange="${on}(this.value)"></label>`
   let h = inp('Name', lv.name, "aeSetLevelProp.bind(null,'name')")
+       + `<label class="ae-field"><span>Difficulty</span><select onchange="aeSetLevelProp('diff',this.value)">${
+           AL_DIFFS.map(d => `<option value="${d.id}" ${d.id === alDiff(lv.diff).id ? 'selected' : ''}>${d.label} (${d.pts} pt${d.pts > 1 ? 's' : ''})</option>`).join('')}</select></label>`
        + inp('Speed', lv.speed, "aeSetLevelProp.bind(null,'speed')", 'type="number" min="60" max="400" step="5"')
        + inp('Finish x', Math.round(lv.length), "aeSetLevelProp.bind(null,'length')", 'type="number" step="50"')
   const o = typeof AE.pick === 'number' ? lv.objects[AE.pick] : null
@@ -258,11 +261,12 @@ function _aeRenderList() {
   const list = document.getElementById('ae-list')
   list.innerHTML = AE.drafts.length ? AE.drafts.map((d, i) =>
     `<div class="ed-item${i === AE.sel ? ' active' : ''}" onclick="aeSelect(${i})">
+       <span class="ed-item-diff" style="background:${alDiff(d.diff).col}" title="${alDiff(d.diff).label}"></span>
        <span class="ed-item-name">${_aeEsc(d.name || 'Untitled')}</span></div>`).join('')
     : '<div class="ed-empty">No drafts yet.</div>'
   const bi = document.getElementById('ae-builtin')
   bi.innerHTML = AL_LEVELS.length ? AL_LEVELS.map((d, i) =>
-    `<div class="ed-item" onclick="aeLoadBuiltin(${i})"><span class="ed-item-name">${i + 1}. ${_aeEsc(d.name || 'Untitled')}</span></div>`).join('')
+    `<div class="ed-item" onclick="aeLoadBuiltin(${i})"><span class="ed-item-diff" style="background:${alDiff(d.diff).col}"></span><span class="ed-item-name">${i + 1}. ${_aeEsc(d.name || 'Untitled')}</span></div>`).join('')
     : '<div class="ed-empty">None yet — paste levels into AL_LEVELS.</div>'
 }
 

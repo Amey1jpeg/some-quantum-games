@@ -758,6 +758,7 @@ const MEDALS = {
   spider:       { bronze: 4,  silver: 10, gold: 18 },
   freighter:    { bronze: 15, silver: 40, gold: 80 },
   traprace:     { bronze: 3,  silver: 7,  gold: 10 },
+  ascent:       { bronze: 10, silver: 25, gold: 50 },
 }
 
 let authorScores   = { equation: null, aim: null, reaction: null, dodge: null, flash: null, deltae: null, gravity: null, typing: null, mrts: null, runsnake: null, gravflip: null, memseq: null, manualsort: null, wavedash: null, cps: null }
@@ -934,6 +935,8 @@ function scoreToDisplay(game, score) {
   if (game === 'flash') return score + '/10'
   if (game === 'deltae') return score + ' pts'
   if (game === 'typing') return score + ' WPM'
+  if (game === 'ascent') return score + ' columns'
+  if (game === 'ascentlevels') return score + ' pts'
   return score.toLocaleString()
 }
 
@@ -974,6 +977,8 @@ const LB_TABS = [
   { id: 'lb-tab-44', game: 'spider',       label: 'Spider',        color: '#a855f7' },
   { id: 'lb-tab-45', game: 'freighter',    label: 'Freighter',     color: '#22d3ee' },
   { id: 'lb-tab-46', game: 'traprace',     label: 'Trap Race',     color: '#fb923c' },
+  { id: 'lb-tab-48', game: 'ascent',       label: 'Ascent',        color: '#a78bfa' },
+  { id: 'lb-tab-49', game: 'ascentlevels', label: 'Ascent Levels', color: '#c084fc' },
 ]
 
 window.switchLbTab = function(game) {
@@ -1178,6 +1183,8 @@ const SCORE_COLORS = {
   spider:        '#a855f7',
   freighter:     '#22d3ee',
   traprace:      '#fb923c',
+  ascent:        '#a78bfa',
+  ascentlevels:  '#c084fc',
 }
 
 window.openSubmit = function(game) {
@@ -1221,6 +1228,7 @@ window.openSubmit = function(game) {
   else if (game === 'spider')       score = window._spdScore  || 0
   else if (game === 'freighter')    score = window._g45Score  || 0
   else if (game === 'traprace')     score = window._g46Score  || 0
+  else if (game === 'ascent' || game === 'ascentlevels') score = window._ascentSubmit || 0
 
   pendingSubmit = { game, score }
   document.getElementById('sub-score-display').textContent = scoreToDisplay(game, score)
@@ -1358,6 +1366,19 @@ window.skipSubmit = function() {
   if (pendingSubmit) setPB(pendingSubmit.game, pendingSubmit.score)
   document.getElementById('submit-overlay').classList.remove('show')
 }
+
+// Entangled Ascent runs on its own page (ascent.html) and hands a finished
+// score over through sessionStorage, so it uses the same submit flow as
+// every other game instead of a second copy of it.
+window.addEventListener('load', () => {
+  let h = null
+  try { h = JSON.parse(sessionStorage.getItem('qg_submit') || 'null'); sessionStorage.removeItem('qg_submit') } catch {}
+  if (!h || (h.game !== 'ascent' && h.game !== 'ascentlevels')) return
+  const score = Math.floor(+h.score)
+  if (!(score > 0)) return
+  window._ascentSubmit = score
+  setTimeout(() => openSubmit(h.game), 700)   // give sign-in a moment to restore
+})
 
 // Load on page start
 initCurby()

@@ -5,7 +5,8 @@
 //  Levels live in a fixed 600-unit-tall world and are scaled to the
 //  screen, so a level plays the same on any display.
 //
-//  Level:  { name, speed, length, objects: [...] }
+//  Level:  { name, diff, speed, length, objects: [...] }
+//    diff    difficulty: 'easy' | 'medium' | 'hard' | 'extreme' | 'fp' (frame perfect)
 //    speed   base forward speed, units/s
 //    length  x of the finish line
 //  Objects (x is forward distance; y is 0 at the top, 600 at the bottom):
@@ -36,6 +37,16 @@ const AL_PORTAL_H = 96
 const AL_MULT     = { slow: 0.65, normal: 1, fast: 1.45 }
 const AL_SAW_R     = 22
 const AL_STRIP_H   = 18
+// Difficulty tiers. pts is what clearing a built-in level of that tier is
+// worth on the Levels leaderboard.
+const AL_DIFFS = [
+  { id: 'easy',    label: 'Easy',          col: '#4ade80', pts: 1 },
+  { id: 'medium',  label: 'Medium',        col: '#fbbf24', pts: 2 },
+  { id: 'hard',    label: 'Hard',          col: '#f87171', pts: 4 },
+  { id: 'extreme', label: 'Extreme',       col: '#fb923c', pts: 7 },
+  { id: 'fp',      label: 'Frame Perfect', col: '#c084fc', pts: 12 },
+]
+function alDiff(id) { return AL_DIFFS.find(d => d.id === id) || AL_DIFFS[0] }
 const AL_PORTAL_COL = { slow: '#22d3ee', normal: '#a78bfa', fast: '#f97316' }
 
 // A column is desync when no mirrored pair of positions (you at y, twin at
@@ -194,6 +205,7 @@ function alCleanLevel(lv) {
   objects.sort((a, b) => a.x - b.x)
   return {
     name: String(lv.name || 'Untitled').slice(0, 40),
+    diff: alDiff(lv.diff).id,
     speed: Math.max(60, Math.min(400, num(lv.speed, 170))),
     length: Math.max(400, num(lv.length, 3000)),
     objects,

@@ -22,6 +22,13 @@ const GA_CAM_LEAD  = 0.28   // dots sit this far across the screen
 const GA_PROG_KEY  = 'qg_ascent_progress_v1'
 const GA_BEST_KEY  = 'qg_ascent_best'
 
+// Leaderboards live in the site's shared Supabase table (see core.js).
+// This page only reads them; submitting hands the score to index.html so
+// it goes through the one submit flow (sign-in, name checks, bests).
+const GA_SB_URL = 'https://kuvpxhuvednptyfqccea.supabase.co'
+const GA_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dnB4aHV2ZWRucHR5ZnFjY2VhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NjY4MTcsImV4cCI6MjA5MDQ0MjgxN30.tYb15AI3DfwSjYrYrLVUPhOJjh8tfAvglPGXmunEA4k'
+const GA_BOARDS = { ascent: { label: 'Endless', unit: 'columns' }, ascentlevels: { label: 'Levels', unit: 'pts' } }
+
 // Quantum entropy: same pool and rejection sampling as core.js, which this
 // standalone page doesn't load. Falls back to Math.random if unavailable.
 let _gaBits = null, _gaBitPos = 0
@@ -157,7 +164,7 @@ function gaShowMenu() {
     const best = prog.best[i]
     const sub = locked ? '🔒 locked' : best >= 100 ? '✓ cleared' : best ? best + '%' : 'new'
     return `<button class="ga-lvl${locked ? ' locked' : ''}${best >= 100 ? ' done' : ''}" ${locked ? 'disabled' : ''}
-      onclick="gaPlayLevel(${i})"><b>${i + 1}</b><span>${_gaEsc(l.name)}</span><small>${sub}</small></button>`
+      onclick="gaPlayLevel(${i})"><b>${i + 1}</b><span>${_gaEsc(l.name)}</span>${gaDiffBadge(l.diff, true)}<small>${sub}</small></button>`
   }).join('') || '<div class="ga-sub">No levels yet — play Endless, or build one in the editor.</div>'
   document.getElementById('ga-endless-best').textContent = gaBest()
 
@@ -165,7 +172,7 @@ function gaShowMenu() {
   const cust = document.getElementById('ga-custom')
   cust.innerHTML = drafts.length
     ? '<div class="ga-sub">Your levels</div>' + drafts.map((d, i) =>
-        `<button class="ga-chip" onclick="gaPlayCustom(${i})">${_gaEsc(d.name || 'Untitled')}</button>`).join('')
+        `<button class="ga-chip" onclick="gaPlayCustom(${i})"><i class="ga-dot" style="background:${alDiff(d.diff).col}"></i>${_gaEsc(d.name || 'Untitled')}</button>`).join('')
     : '<div class="ga-sub">Make your own in the <a href="editor.html?game=ascent">level editor</a>.</div>'
 
   if (GA_TEST) {
@@ -174,7 +181,61 @@ function gaShowMenu() {
     cust.innerHTML = t ? `<div class="ga-sub">Testing “${_gaEsc(t.name)}”</div>` : '<div class="ga-sub">No test level found.</div>'
     document.getElementById('ga-endless-row').style.display = 'none'
     document.getElementById('ga-test-row').style.display = t ? 'flex' : 'none'
+    document.getElementById('ga-lb').style.display = 'none'
+  } else gaLoadBoard(_gaBoard)
+}
+
+function gaDiffBadge(id, withPts) {
+  const d = alDiff(id)
+  return `<em class="ga-diff" style="color:${d.col};border-color:${d.col}66">${d.label}${withPts ? ' · ' + d.pts + ' pt' + (d.pts > 1 ? 's' : '') : ''}</em>`
+}
+
+// Points for every built-in level cleared, weighted by difficulty
+function gaLevelPoints() {
+  const prog = gaProgress()
+  return alBuiltinLevels().reduce((n, l, i) => n + (prog.best[i] >= 100 ? alDiff(l.diff).pts : 0), 0)
+}
+
+// ── Leaderboards ─────────────────────────────────────────
+let _gaBoard = 'ascent'
+const _gaBoardCache = {}
+window.gaLoadBoard = async function(game) {
+  _gaBoard = game
+  const tabs = document.getElementById('ga-lb-tabs'), list = document.getElementById('ga-lb-list')
+  tabs.innerHTML = Object.entries(GA_BOARDS).map(([g, b]) =>
+    `<button class="ga-chip${g === game ? ' on' : ''}" onclick="gaLoadBoard('${g}')">🏆 ${b.label}</button>`).join('')
+  const hit = _gaBoardCache[game]
+  if (!hit || Date.now() - hit.at > 60000) {
+    list.innerHTML = '<div class="ga-sub">Loading…</div>'
+    try {
+      const res = await fetch(`${GA_SB_URL}/rest/v1/leaderboard?game=eq.${game}&order=score.desc&limit=100`,
+        { headers: { apikey: GA_SB_KEY, Authorization: 'Bearer ' + GA_SB_KEY } })
+      if (!res.ok) throw new Error('HTTP ' + res.status)
+      const best = new Map()        // one row per player: their highest score
+      for (const r of await res.json()) {
+        const k = String(r.name).toLowerCase()
+        if (!best.has(k) || r.score > best.get(k).score) best.set(k, r)
+      }
+      _gaBoardCache[game] = { at: Date.now(), rows: [...best.values()].sort((a, b) => b.score - a.score).slice(0, 10) }
+    } catch (e) {
+      console.warn('Leaderboard load failed:', e)
+      if (_gaBoard === game) list.innerHTML = '<div class="ga-sub">Could not load the leaderboard.</div>'
+      return
+    }
   }
+  if (_gaBoard !== game) return
+  const rows = _gaBoardCache[game].rows
+  const medal = ['🥇', '🥈', '🥉']
+  list.innerHTML = rows.length
+    ? rows.map((r, i) => `<div class="ga-lb-row"><span>${medal[i] || i + 1}</span><span>${_gaEsc(r.name)}</span><b>${(+r.score).toLocaleString()} ${GA_BOARDS[game].unit}</b></div>`).join('')
+    : '<div class="ga-sub">No scores yet — be the first!</div>'
+}
+
+window.gaSubmit = function(game, score) {
+  score = Math.floor(score)
+  if (!(score > 0) || !GA_BOARDS[game]) return
+  try { sessionStorage.setItem('qg_submit', JSON.stringify({ game, score })) } catch { return }
+  location.href = 'index.html'
 }
 
 function gaTestLevel() {
@@ -420,7 +481,7 @@ function gaShowOver() {
     const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.endX * 100)))
     title.textContent = won ? 'Level complete!' : 'Decohered!'
     final.textContent = pct + '%'
-    sub.textContent = GA.level.name
+    sub.innerHTML = _gaEsc(GA.level.name) + ' ' + gaDiffBadge(GA.level.diff, GA.mode === 'level')
     if (GA.mode === 'level') {
       const prog = gaProgress()
       prog.best[GA.levelIdx] = Math.max(prog.best[GA.levelIdx] || 0, pct)
@@ -428,7 +489,9 @@ function gaShowOver() {
       gaSaveProgress(prog)
       if (won && GA.levelIdx + 1 < alBuiltinLevels().length)
         html += `<button class="btn-primary" onclick="gaPlayLevel(${GA.levelIdx + 1})">Next level →</button><br><br>`
-      else if (won) sub.textContent = 'All levels cleared — try Endless!'
+      else if (won) sub.innerHTML += '<br>All levels cleared — try Endless!'
+      const pts = gaLevelPoints()
+      if (won && pts > 0) html += `<button class="btn-primary ga-ghost" onclick="gaSubmit('ascentlevels', ${pts})">🏆 Submit ${pts} level pts</button><br><br>`
     }
   } else {
     const best = Math.max(gaBest(), GA.score)
@@ -436,8 +499,9 @@ function gaShowOver() {
     title.textContent = 'Decohered!'
     final.textContent = GA.score
     sub.textContent = GA.score >= best && GA.score > 0 ? 'New best!' : 'Best: ' + best
+    if (GA.score > 0) html += `<button class="btn-primary" onclick="gaSubmit('ascent', ${Math.floor(GA.score)})">🏆 Submit score</button><br><br>`
   }
-  html += `<button class="btn-primary${won && GA.mode === 'level' ? ' ga-ghost' : ''}" onclick="gaRetry()">${won ? 'Play again' : 'Retry'}</button><br><br>`
+  html += `<button class="btn-primary${(won && GA.mode === 'level') || (!GA.level && GA.score > 0) ? ' ga-ghost' : ''}" onclick="gaRetry()">${won ? 'Play again' : 'Retry'}</button><br><br>`
   html += GA_TEST
     ? `<button class="btn-back" onclick="location.href='editor.html?game=ascent'">← Back to editor</button>`
     : `<button class="btn-back" onclick="gaMenu()">☰ Levels</button>`
