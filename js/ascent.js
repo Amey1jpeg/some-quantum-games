@@ -19,7 +19,7 @@ const GA_FWD_MAX   = 330
 const GA_BREAK_DUR = 2.4
 const GA_BREAK_CD  = 5.5
 const GA_CAM_LEAD  = 0.28   // dots sit this far across the screen
-const GA_PROG_KEY  = 'qg_ascent_progress_v1'
+const GA_PROG_KEY  = 'qg_ascent_progress_v2'
 const GA_BEST_KEY  = 'qg_ascent_best'
 
 // Leaderboards live in the site's shared Supabase table (see core.js).
@@ -27,7 +27,7 @@ const GA_BEST_KEY  = 'qg_ascent_best'
 // it goes through the one submit flow (sign-in, name checks, bests).
 const GA_SB_URL = 'https://kuvpxhuvednptyfqccea.supabase.co'
 const GA_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1dnB4aHV2ZWRucHR5ZnFjY2VhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NjY4MTcsImV4cCI6MjA5MDQ0MjgxN30.tYb15AI3DfwSjYrYrLVUPhOJjh8tfAvglPGXmunEA4k'
-const GA_BOARDS = { ascent: { label: 'Endless', unit: 'columns' }, ascentlevels: { label: 'Levels', unit: 'pts' } }
+const GA_BOARDS = { ascent: { label: 'Endless', unit: 'columns' }, ascentlevels: { label: 'Levels', unit: 'cleared' } }
 
 // Quantum entropy: same pool and rejection sampling as core.js, which this
 // standalone page doesn't load. Falls back to Math.random if unavailable.
@@ -79,11 +79,13 @@ const GA = {
 
 let _gaCanvas, _gaCtx
 
+// Best % per built-in level, keyed by level name so it survives levels being
+// added or reordered. A level is unlocked once the one before it is cleared.
 function gaProgress() {
   try {
     const p = JSON.parse(localStorage.getItem(GA_PROG_KEY) || '{}')
-    return { unlocked: +p.unlocked || 0, best: (p.best && typeof p.best === 'object') ? p.best : {} }
-  } catch { return { unlocked: 0, best: {} } }
+    return { best: (p.best && typeof p.best === 'object') ? p.best : {} }
+  } catch { return { best: {} } }
 }
 function gaSaveProgress(p) { try { localStorage.setItem(GA_PROG_KEY, JSON.stringify(p)) } catch {} }
 function gaBest() { try { return +localStorage.getItem(GA_BEST_KEY) || 0 } catch { return 0 } }
@@ -160,11 +162,11 @@ function gaShowMenu() {
   const lv = alBuiltinLevels()
   const grid = document.getElementById('ga-levels')
   grid.innerHTML = lv.map((l, i) => {
-    const locked = i > prog.unlocked
-    const best = prog.best[i]
+    const locked = i > 0 && !(prog.best[lv[i - 1].name] >= 100)
+    const best = prog.best[l.name]
     const sub = locked ? '🔒 locked' : best >= 100 ? '✓ cleared' : best ? best + '%' : 'new'
     return `<button class="ga-lvl${locked ? ' locked' : ''}${best >= 100 ? ' done' : ''}" ${locked ? 'disabled' : ''}
-      onclick="gaPlayLevel(${i})"><b>${i + 1}</b><span>${_gaEsc(l.name)}</span>${gaDiffBadge(l.diff, true)}<small>${sub}</small></button>`
+      onclick="gaPlayLevel(${i})"><b>${i + 1}</b><span>${_gaEsc(l.name)}</span>${gaDiffBadge(l.diff)}<small>${sub}</small></button>`
   }).join('') || '<div class="ga-sub">No levels yet — play Endless, or build one in the editor.</div>'
   document.getElementById('ga-endless-best').textContent = gaBest()
 
@@ -185,15 +187,15 @@ function gaShowMenu() {
   } else gaLoadBoard(_gaBoard)
 }
 
-function gaDiffBadge(id, withPts) {
+function gaDiffBadge(id) {
   const d = alDiff(id)
-  return `<em class="ga-diff" style="color:${d.col};border-color:${d.col}66">${d.label}${withPts ? ' · ' + d.pts + ' pt' + (d.pts > 1 ? 's' : '') : ''}</em>`
+  return `<em class="ga-diff" style="color:${d.col};border-color:${d.col}66">${d.label}</em>`
 }
 
-// Points for every built-in level cleared, weighted by difficulty
-function gaLevelPoints() {
+// How many built-in levels this player has cleared (the Levels leaderboard)
+function gaLevelsCleared() {
   const prog = gaProgress()
-  return alBuiltinLevels().reduce((n, l, i) => n + (prog.best[i] >= 100 ? alDiff(l.diff).pts : 0), 0)
+  return alBuiltinLevels().filter(l => prog.best[l.name] >= 100).length
 }
 
 // ── Leaderboards ─────────────────────────────────────────
@@ -481,17 +483,16 @@ function gaShowOver() {
     const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.endX * 100)))
     title.textContent = won ? 'Level complete!' : 'Decohered!'
     final.textContent = pct + '%'
-    sub.innerHTML = _gaEsc(GA.level.name) + ' ' + gaDiffBadge(GA.level.diff, GA.mode === 'level')
+    sub.innerHTML = _gaEsc(GA.level.name) + ' ' + gaDiffBadge(GA.level.diff)
     if (GA.mode === 'level') {
       const prog = gaProgress()
-      prog.best[GA.levelIdx] = Math.max(prog.best[GA.levelIdx] || 0, pct)
-      if (won) prog.unlocked = Math.max(prog.unlocked, GA.levelIdx + 1)
+      prog.best[GA.level.name] = Math.max(prog.best[GA.level.name] || 0, pct)
       gaSaveProgress(prog)
       if (won && GA.levelIdx + 1 < alBuiltinLevels().length)
         html += `<button class="btn-primary" onclick="gaPlayLevel(${GA.levelIdx + 1})">Next level →</button><br><br>`
       else if (won) sub.innerHTML += '<br>All levels cleared — try Endless!'
-      const pts = gaLevelPoints()
-      if (won && pts > 0) html += `<button class="btn-primary ga-ghost" onclick="gaSubmit('ascentlevels', ${pts})">🏆 Submit ${pts} level pts</button><br><br>`
+      const n = gaLevelsCleared()
+      if (won && n > 0) html += `<button class="btn-primary ga-ghost" onclick="gaSubmit('ascentlevels', ${n})">🏆 Submit ${n} level${n > 1 ? 's' : ''} cleared</button><br><br>`
     }
   } else {
     const best = Math.max(gaBest(), GA.score)

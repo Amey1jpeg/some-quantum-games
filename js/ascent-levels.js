@@ -37,16 +37,20 @@ const AL_PORTAL_H = 96
 const AL_MULT     = { slow: 0.65, normal: 1, fast: 1.45 }
 const AL_SAW_R     = 22
 const AL_STRIP_H   = 18
-// Difficulty tiers. pts is what clearing a built-in level of that tier is
-// worth on the Levels leaderboard.
+// Difficulty tiers, easiest first. Built-in levels are played in this order.
 const AL_DIFFS = [
-  { id: 'easy',    label: 'Easy',          col: '#4ade80', pts: 1 },
-  { id: 'medium',  label: 'Medium',        col: '#fbbf24', pts: 2 },
-  { id: 'hard',    label: 'Hard',          col: '#f87171', pts: 4 },
-  { id: 'extreme', label: 'Extreme',       col: '#fb923c', pts: 7 },
-  { id: 'fp',      label: 'Frame Perfect', col: '#c084fc', pts: 12 },
+  { id: 'easy',    label: 'Easy',          col: '#4ade80' },
+  { id: 'medium',  label: 'Medium',        col: '#fbbf24' },
+  { id: 'hard',    label: 'Hard',          col: '#f87171' },
+  { id: 'extreme', label: 'Extreme',       col: '#fb923c' },
+  { id: 'fp',      label: 'Frame Perfect', col: '#c084fc' },
 ]
 function alDiff(id) { return AL_DIFFS.find(d => d.id === id) || AL_DIFFS[0] }
+// Easiest first; levels of the same difficulty keep the order they were given
+function alSortByDiff(levels) {
+  const tier = l => AL_DIFFS.indexOf(alDiff(l.diff))
+  return levels.map((l, i) => [l, i]).sort((a, b) => tier(a[0]) - tier(b[0]) || a[1] - b[1]).map(p => p[0])
+}
 const AL_PORTAL_COL = { slow: '#22d3ee', normal: '#a78bfa', fast: '#f97316' }
 
 // A column is desync when no mirrored pair of positions (you at y, twin at
@@ -161,15 +165,11 @@ function alGenerator(rand, opts) {
 }
 
 // ── Built-in levels ──────────────────────────────────────
-// Build levels in editor.html (🔗 Entangled Ascent tab), press "Copy as JS"
-// and paste the result into this list. They show up in the game in order,
-// each one unlocking the next.
-const AL_LEVELS = [
-]
-
+// The list itself (AL_LEVELS) is in js/ascent-builtin.js, which the editor
+// writes. Here it is cleaned and put in difficulty order.
 let _alBuiltins = null
 function alBuiltinLevels() {
-  if (!_alBuiltins) _alBuiltins = AL_LEVELS.map(alCleanLevel).filter(Boolean)
+  if (!_alBuiltins) _alBuiltins = alSortByDiff((typeof AL_LEVELS !== 'undefined' ? AL_LEVELS : []).map(alCleanLevel).filter(Boolean))
   return _alBuiltins
 }
 

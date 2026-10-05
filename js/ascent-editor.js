@@ -5,7 +5,8 @@
 //
 //  Drafts save to localStorage (AL_DRAFTS_KEY) and also appear in the
 //  game's "Your levels" list. To ship a level, press "Copy as JS" and
-//  paste it into AL_LEVELS in js/ascent-levels.js.
+//  add it to the Built-in list and press "Save built-in file" — that writes
+//  a complete js/ascent-builtin.js to replace the one in the repo.
 //
 //  Canvas: click with a tool to place; with Select, drag things around —
 //  a column's gap edges resize it, inside a gap moves the gap, the spikes
@@ -21,6 +22,7 @@ const AE = {
   scrollX: -150,
   undo: [], redo: [],
   issues: [],             // x positions of columns ✓ Check flagged
+  builtin: [],            // working copy of the built-in list (see _aeLoadBuiltin)
   armDelete: -1,          // draft armed by a first Delete click
 }
 
@@ -68,6 +70,7 @@ window.aeOpen = function() {
   document.getElementById('ae-panel').style.display = 'flex'
   document.querySelectorAll('.ed-gametab').forEach(b => b.classList.toggle('active', b.dataset.game === 'ascent'))
   AE.drafts = alLoadDrafts()
+  _aeLoadBuiltin()
   let s = -1
   try { s = +sessionStorage.getItem('ae_sel') } catch {}
   AE.sel = AE.drafts[s] ? s : (AE.drafts.length ? 0 : -1)
@@ -109,10 +112,103 @@ window.aeDelete = function() {
   AE.drafts.splice(AE.sel, 1); _aeSave()
   aeSelect(Math.min(AE.sel, AE.drafts.length - 1))
 }
+// ── Built-in list ────────────────────────────────────────
+// A page can't write to the repo, so the editor keeps a working copy of the
+// built-in list in this browser and exports the whole of js/ascent-builtin.js
+// for you to drop in and commit.
+const AE_BUILTIN_KEY = 'qg_ascent_builtin_work_v1'
+function _aeShipped() { return alSortByDiff(AL_LEVELS.map(alCleanLevel).filter(Boolean)) }
+function _aeLoadBuiltin() {
+  let w = null
+  try { w = JSON.parse(localStorage.getItem(AE_BUILTIN_KEY) || 'null') } catch {}
+  AE.builtin = alSortByDiff((Array.isArray(w) ? w : AL_LEVELS).map(alCleanLevel).filter(Boolean))
+}
+function _aeSaveBuiltin() {
+  AE.builtin = alSortByDiff(AE.builtin)
+  try { localStorage.setItem(AE_BUILTIN_KEY, JSON.stringify(AE.builtin)) } catch {}
+  _aeRenderList()
+}
+function _aeBuiltinDirty() { return JSON.stringify(AE.builtin) !== JSON.stringify(_aeShipped()) }
+
+function _aeAddBuiltin(levels) {
+  let n = 0
+  for (const raw of levels) {
+    const lv = alCleanLevel(raw); if (!lv) continue
+    const at = AE.builtin.findIndex(b => b.name === lv.name)
+    if (at >= 0) AE.builtin[at] = lv; else AE.builtin.push(lv)      // same name = update it
+    n++
+  }
+  _aeSaveBuiltin()
+  return n
+}
+
+// Accepts level JSON, an array of levels, or the "Copy as JS" snippet
+function _aeParseLevels(text) {
+  const tries = [text, text.trim().replace(/,\s*$/, '')]
+  tries.push(tries[1].replace(/([{,\[]\s*)([A-Za-z_]\w*)\s*:/g, '$1"$2":').replace(/'([^'"]*)'/g, '"$1"'))
+  for (const t of tries) for (const wrap of [t, '[' + t + ']']) {
+    try {
+      const v = JSON.parse(wrap)
+      const list = Array.isArray(v) ? v : (v && Array.isArray(v.levels)) ? v.levels : [v]
+      if (list.some(l => l && Array.isArray(l.objects))) return list
+    } catch {}
+  }
+  return null
+}
+
+window.aeBuiltinAddDraft = function() {
+  const lv = _aeCur(); if (!lv) { _aeMsg('Select a draft first'); return }
+  _aeAddBuiltin([lv]); _aeMsg(`“${lv.name}” added to Built-in — Save built-in file to ship it`)
+}
+window.aeBuiltinPaste = function() {
+  _aeIoShow('', text => {
+    const list = _aeParseLevels(text)
+    if (!list) { _aeMsg('That isn\u2019t a level'); return }
+    const n = _aeAddBuiltin(list); aeIoClose()
+    _aeMsg(`${n} level${n === 1 ? '' : 's'} added to Built-in — Save built-in file to ship`)
+  }, 'Paste one or more levels (Copy JSON or Copy as JS output), then press Add', 'Add to Built-in')
+}
+window.aeBuiltinRemove = function(i, ev) {
+  if (ev) ev.stopPropagation()
+  AE.builtin.splice(i, 1); _aeSaveBuiltin()
+}
+window.aeBuiltinReset = function() { try { localStorage.removeItem(AE_BUILTIN_KEY) } catch {}; _aeLoadBuiltin(); _aeRenderList() }
+
+function _aeBuiltinFile() {
+  const fmt = lv => {
+    const objs = lv.objects.map(o => '    ' + JSON.stringify(o).replace(/"(\w+)":/g, '$1:')).join(',\n')
+    return `  { name: ${JSON.stringify(lv.name)}, diff: '${lv.diff}', speed: ${lv.speed}, length: ${Math.round(lv.length)}, objects: [\n${objs}\n  ] },`
+  }
+  return `// ═══════════════════════════════════════════════════════
+//  ENTANGLED ASCENT — built-in levels
+//  This whole file is written by the level editor: editor.html →
+//  🔗 Entangled Ascent → Built-in → "⬇ Save built-in file". Replace this
+//  file with the one it gives you and commit it — that is what players get.
+//  The game sorts levels from Easy to Frame Perfect; each unlocks the next.
+// ═══════════════════════════════════════════════════════
+const AL_LEVELS = [
+${alSortByDiff(AE.builtin).map(fmt).join('\n')}
+]
+`
+}
+window.aeBuiltinExport = function() {
+  const text = _aeBuiltinFile()
+  try {
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }))
+    a.download = 'ascent-builtin.js'
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000)
+  } catch {}
+  // Also shown in the box, in case this browser blocks downloads
+  _aeIoShow(text, null, 'Saved as ascent-builtin.js — replace js/ascent-builtin.js in the repo with it and commit. (Full text below if the download was blocked.)')
+}
+
 window.aeLoadBuiltin = function(i) {
-  const src = AL_LEVELS[i]; if (!src) return
-  const c = alCleanLevel(JSON.parse(JSON.stringify(src))); c.name += ' (edit)'
+  const src = AE.builtin[i]; if (!src) return
+  const c = JSON.parse(JSON.stringify(src))
   AE.drafts.push(c); _aeSave(); aeSelect(AE.drafts.length - 1)
+  _aeMsg('Editing a copy — “+ Add current draft” puts it back, replacing the one with the same name')
 }
 window.aeSetTool = function(t) { AE.tool = t; aeRender() }
 
@@ -129,7 +225,7 @@ window.aeExportJS = function() {
   const lv = _aeClean(); if (!lv) return
   const objs = lv.objects.map(o => '    ' + JSON.stringify(o).replace(/"(\w+)":/g, '$1:')).join(',\n')
   const js = `  { name: ${JSON.stringify(lv.name)}, diff: '${lv.diff}', speed: ${lv.speed}, length: ${Math.round(lv.length)}, objects: [\n${objs}\n  ] },`
-  _aeCopy(js, 'Level code (paste into AL_LEVELS in js/ascent-levels.js)')
+  _aeCopy(js, 'Level code')
 }
 window.aeImport = function() {
   _aeIoShow('', aeImportText, 'Paste level JSON, then press Import')
@@ -144,13 +240,14 @@ window.aeImportText = function(text) {
 }
 
 // Inline text box for import and for copying when the clipboard is blocked
-function _aeIoShow(text, onOk, label) {
+function _aeIoShow(text, onOk, label, okLabel) {
   const box = document.getElementById('ae-io')
   document.getElementById('ae-io-label').textContent = label
   const ta = document.getElementById('ae-io-text')
   ta.value = text
   const ok = document.getElementById('ae-io-ok')
   ok.style.display = onOk ? '' : 'none'
+  ok.textContent = okLabel || 'Import'
   ok.onclick = onOk ? () => onOk(ta.value) : null
   box.style.display = 'flex'
   ta.focus(); if (text) ta.select()
@@ -233,7 +330,7 @@ function _aeRenderProps() {
     `<label class="ae-field"><span>${label}</span><input ${extra} value="${_aeEsc(val)}" onchange="${on}(this.value)"></label>`
   let h = inp('Name', lv.name, "aeSetLevelProp.bind(null,'name')")
        + `<label class="ae-field"><span>Difficulty</span><select onchange="aeSetLevelProp('diff',this.value)">${
-           AL_DIFFS.map(d => `<option value="${d.id}" ${d.id === alDiff(lv.diff).id ? 'selected' : ''}>${d.label} (${d.pts} pt${d.pts > 1 ? 's' : ''})</option>`).join('')}</select></label>`
+           AL_DIFFS.map(d => `<option value="${d.id}" ${d.id === alDiff(lv.diff).id ? 'selected' : ''}>${d.label}</option>`).join('')}</select></label>`
        + inp('Speed', lv.speed, "aeSetLevelProp.bind(null,'speed')", 'type="number" min="60" max="400" step="5"')
        + inp('Finish x', Math.round(lv.length), "aeSetLevelProp.bind(null,'length')", 'type="number" step="50"')
   const o = typeof AE.pick === 'number' ? lv.objects[AE.pick] : null
@@ -265,9 +362,15 @@ function _aeRenderList() {
        <span class="ed-item-name">${_aeEsc(d.name || 'Untitled')}</span></div>`).join('')
     : '<div class="ed-empty">No drafts yet.</div>'
   const bi = document.getElementById('ae-builtin')
-  bi.innerHTML = AL_LEVELS.length ? AL_LEVELS.map((d, i) =>
-    `<div class="ed-item" onclick="aeLoadBuiltin(${i})"><span class="ed-item-diff" style="background:${alDiff(d.diff).col}"></span><span class="ed-item-name">${i + 1}. ${_aeEsc(d.name || 'Untitled')}</span></div>`).join('')
-    : '<div class="ed-empty">None yet — paste levels into AL_LEVELS.</div>'
+  bi.innerHTML = (AE.builtin.length ? AE.builtin.map((d, i) =>
+    `<div class="ed-item" onclick="aeLoadBuiltin(${i})" title="Click to edit a copy">
+       <span class="ed-item-diff" style="background:${alDiff(d.diff).col}" title="${alDiff(d.diff).label}"></span>
+       <span class="ed-item-name">${i + 1}. ${_aeEsc(d.name || 'Untitled')}</span>
+       <button class="ed-mini danger" onclick="aeBuiltinRemove(${i}, event)" title="Remove from Built-in">✕</button></div>`).join('')
+    : '<div class="ed-empty">None yet — add a draft or paste levels.</div>')
+    + (_aeBuiltinDirty()
+        ? '<div class="ae-dirty">Not shipped yet — <b>Save built-in file</b>, replace js/ascent-builtin.js, commit. <a href="#" onclick="aeBuiltinReset();return false">discard</a></div>'
+        : '')
 }
 
 function _aeRenderTools() {

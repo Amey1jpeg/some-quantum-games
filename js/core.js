@@ -936,7 +936,7 @@ function scoreToDisplay(game, score) {
   if (game === 'deltae') return score + ' pts'
   if (game === 'typing') return score + ' WPM'
   if (game === 'ascent') return score + ' columns'
-  if (game === 'ascentlevels') return score + ' pts'
+  if (game === 'ascentlevels') return score + (score === 1 ? ' level' : ' levels')
   return score.toLocaleString()
 }
 
