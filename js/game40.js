@@ -974,7 +974,7 @@ function _g40TrailCard() {
   g.fillStyle = 'rgba(255,255,255,0.45)'; g.font = '12px monospace'
   const att = G40.attempts ? (G40.attempts + 1) + ' attempts' : 'first try'
   const secs = G40.clearAt / (G40.speed || 160)
-  g.fillText((G40.taps || 0) + ' taps  \u00b7  ' + att + '  \u00b7  ' + secs.toFixed(1) + 's  \u00b7  UFO Flap', W - 16, 30)
+  g.fillText((G40.taps || 0) + ' taps  \u00b7  ' + att + '  \u00b7  ' + secs.toFixed(1) + 's  \u00b7  Quantum Tunnel', W - 16, 30)
 
   const wrap = document.getElementById('g40-card')
   const img  = document.getElementById('g40-card-img')

@@ -174,11 +174,11 @@ function _quantumSrc() { return QG_ROOT + 'data/quantum.bin' }
 // ═══════════════════════════════════════════════════════
 
 const STALL_GAMES = new Set([
-  15,  // Entanglement
   39,  // LIMBO
   40,  // UFO
   43,  // Wave Gauntlet
   44,  // Spider
+  48,  // Entangled Ascent
 ])
 
 // ── How to play ─────────────────────────────────────────
@@ -188,26 +188,26 @@ const STALL_GAMES = new Set([
 // take in while standing up. Shown on the stall cards only; the
 // main site has the card description and the start screen instead.
 const STALL_HOWTO = {
-  15: { keys: 'Arrow keys \u00B7 SPACE',
-        steps: ['Arrows move you; your twin mirrors you on the other side',
-                'Grab the BLUE orbs, your twin grabs the PINK ones',
-                'The glowing link between you cuts attackers \u2014 sweep it through them'] },
   39: { keys: 'Click / tap',
         steps: ['One key lights up \u2014 remember which one it is',
-                'It gets shuffled 20 times, fast',
-                'Click the key you think it ended up as'] },
+                'It gets shuffled 20 times, fast, and you lose sight of it',
+                'Pick where it ended up \u2014 guess wrong and it was never anywhere'] },
+  48: { keys: 'Drag \u00B7 or arrow keys',
+        steps: ['Drag in the top half to steer you, the bottom half for your twin',
+                'Both of you have to fit through the gaps \u2014 one spike ends the run',
+                'Tap BREAK LINK when the two gaps do not line up'] },
   40: { keys: 'Tap / click / SPACE',
-        steps: ['Each tap fires the thruster and lifts you',
-                'Let go and you fall \u2014 nothing holds you up',
-                'Fly through the gaps; green pillars are safe to land on'] },
+        steps: ['Each tap fires the thruster, let go and you fall',
+                'Slip through the gaps in each barrier \u2014 that is the tunnelling bit',
+                'Green pillars are solid ground, you can land on them'] },
   43: { keys: 'Hold / release',
         steps: ['Hold to climb, let go to dive',
                 'You are always moving diagonally, never flat',
                 'Stay inside the corridor \u2014 touching a wall ends the run'] },
   44: { keys: 'Tap / click / SPACE',
-        steps: ['Each tap snaps you between floor and ceiling',
-                'There is no in-between \u2014 you are on one or the other',
-                'Time the snap so the blocks pass on the empty side'] },
+        steps: ['Each tap flips you between the two states, up and down',
+                'There is no in-between \u2014 you are one or the other',
+                'Time the flip so the blocks pass on the empty side'] },
 }
 
 let QG_STALL = false
@@ -243,7 +243,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=8'
+    link.href = QG_ROOT + 'css/stall.css?v=10'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -563,6 +563,7 @@ const GAME_SLUGS = {
   'cps':              36,
   'spider':           44,
   'limbo':            39,
+  'ascent':           48,
   'freighter':        45,
   'trap-race':        46,
   'chsh':             47,
@@ -598,7 +599,6 @@ window.showGame = function(n) {
   // On the stall, only the listed games exist — a stale link or a typed
   // ?game= slug for anything else lands back on the home screen
   if (QG_STALL && !STALL_GAMES.has(n)) { if (typeof goHome === 'function') goHome(); return }
-  if (n === 48) { location.href = QG_ROOT + 'ascent.html'; return }   // Entangled Ascent is its own page
   document.getElementById('home').classList.remove('active')
   document.getElementById(`game${n}`).classList.add('active')
   pushGameUrl(n)
@@ -638,6 +638,7 @@ window.showGame = function(n) {
   if (n === 45) initGame45()
   if (n === 46) initGame46()
   if (n === 47) initGame47()
+  if (n === 48) initGame48()
 }
 
 window.goHome = function() {
@@ -667,6 +668,7 @@ window.goHome = function() {
   if (typeof stopGame42    === 'function') stopGame42()
   if (typeof stopGame43    === 'function') stopGame43()
   if (typeof stopGame47    === 'function') stopGame47()
+  if (typeof stopGame48    === 'function') stopGame48()
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
   document.getElementById('home').classList.add('active')
   pushHomeUrl()
@@ -758,7 +760,9 @@ const MEDALS = {
   spider:       { bronze: 4,  silver: 10, gold: 18 },
   freighter:    { bronze: 15, silver: 40, gold: 80 },
   traprace:     { bronze: 3,  silver: 7,  gold: 10 },
-  ascent:       { bronze: 10, silver: 25, gold: 50 },
+  // Total best-% across every built-in level, so 100 per level cleared.
+  // Placeholders until there are levels to tune against.
+  ascent:       { bronze: 100, silver: 300, gold: 500 },
 }
 
 let authorScores   = { equation: null, aim: null, reaction: null, dodge: null, flash: null, deltae: null, gravity: null, typing: null, mrts: null, runsnake: null, gravflip: null, memseq: null, manualsort: null, wavedash: null, cps: null }
@@ -935,8 +939,6 @@ function scoreToDisplay(game, score) {
   if (game === 'flash') return score + '/10'
   if (game === 'deltae') return score + ' pts'
   if (game === 'typing') return score + ' WPM'
-  if (game === 'ascent') return score + ' columns'
-  if (game === 'ascentlevels') return score + (score === 1 ? ' level' : ' levels')
   return score.toLocaleString()
 }
 
@@ -972,13 +974,12 @@ const LB_TABS = [
   { id: 'lb-tab-36', game: 'cps',         label: 'CPS',          color: '#6366f1'  },
   { id: 'lb-tab-37', game: 'rhythm',     label: 'Rhythm',     color: '#f472b6' },
   { id: 'lb-tab-42', game: 'typerracer', label: 'Typer',      color: '#06b6d4' },
-  { id: 'lb-tab-40', game: 'ufo',        label: 'UFO Flap', color: '#a855f7' },
+  { id: 'lb-tab-40', game: 'ufo',        label: 'Tunnel', color: '#a855f7' },
   { id: 'lb-tab-43', game: 'wavegauntlet', label: 'Wave Gauntlet', color: '#22c55e' },
-  { id: 'lb-tab-44', game: 'spider',       label: 'Spider',        color: '#a855f7' },
+  { id: 'lb-tab-44', game: 'spider',       label: 'Spin Flip',     color: '#a855f7' },
   { id: 'lb-tab-45', game: 'freighter',    label: 'Freighter',     color: '#22d3ee' },
   { id: 'lb-tab-46', game: 'traprace',     label: 'Trap Race',     color: '#fb923c' },
   { id: 'lb-tab-48', game: 'ascent',       label: 'Ascent',        color: '#a78bfa' },
-  { id: 'lb-tab-49', game: 'ascentlevels', label: 'Ascent Levels', color: '#c084fc' },
 ]
 
 window.switchLbTab = function(game) {
@@ -1184,7 +1185,6 @@ const SCORE_COLORS = {
   freighter:     '#22d3ee',
   traprace:      '#fb923c',
   ascent:        '#a78bfa',
-  ascentlevels:  '#c084fc',
 }
 
 window.openSubmit = function(game) {
@@ -1228,7 +1228,7 @@ window.openSubmit = function(game) {
   else if (game === 'spider')       score = window._spdScore  || 0
   else if (game === 'freighter')    score = window._g45Score  || 0
   else if (game === 'traprace')     score = window._g46Score  || 0
-  else if (game === 'ascent' || game === 'ascentlevels') score = window._ascentSubmit || 0
+  else if (game === 'ascent')       score = (typeof gaLeaderboardScore === 'function') ? gaLeaderboardScore() : 0
 
   pendingSubmit = { game, score }
   document.getElementById('sub-score-display').textContent = scoreToDisplay(game, score)
@@ -1347,7 +1347,7 @@ window.submitScore = async function() {
         entanglement:'g15-over', qsnake:'g17-over',
         qwhip:'g18-over', gravitysling:'g22-over', chargerush:'g23-over',
         pulse:'g24-over', orbit:'g26-over', parkour:'g28-over', qblaster:'g29-over',
-        mrts:'g30-over', runsnake:'g31-over', gravflip:'g32-over', memseq:'g33-over', manualsort:'g34-over', wavedash:'g35-over', cps:'g36-over', crossy:'g38-over', ufo:'g40-over', jetrush:'g41-over', typerracer:'g42-over', rhythm:'g37-over', wavegauntlet:'g43-over', spider:'spd-over', freighter:'g45-over', traprace:'g46-over',
+        mrts:'g30-over', runsnake:'g31-over', gravflip:'g32-over', memseq:'g33-over', manualsort:'g34-over', wavedash:'g35-over', cps:'g36-over', crossy:'g38-over', ufo:'g40-over', jetrush:'g41-over', typerracer:'g42-over', rhythm:'g37-over', wavegauntlet:'g43-over', spider:'spd-over', freighter:'g45-over', traprace:'g46-over', ascent:'ga-over',
       }
       const overId = overMap[pendingSubmit.game]
       if (overId) document.getElementById(overId).classList.remove('show')
@@ -1366,19 +1366,6 @@ window.skipSubmit = function() {
   if (pendingSubmit) setPB(pendingSubmit.game, pendingSubmit.score)
   document.getElementById('submit-overlay').classList.remove('show')
 }
-
-// Entangled Ascent runs on its own page (ascent.html) and hands a finished
-// score over through sessionStorage, so it uses the same submit flow as
-// every other game instead of a second copy of it.
-window.addEventListener('load', () => {
-  let h = null
-  try { h = JSON.parse(sessionStorage.getItem('qg_submit') || 'null'); sessionStorage.removeItem('qg_submit') } catch {}
-  if (!h || (h.game !== 'ascent' && h.game !== 'ascentlevels')) return
-  const score = Math.floor(+h.score)
-  if (!(score > 0)) return
-  window._ascentSubmit = score
-  setTimeout(() => openSubmit(h.game), 700)   // give sign-in a moment to restore
-})
 
 // Load on page start
 initCurby()
