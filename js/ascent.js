@@ -1,13 +1,29 @@
 // ═══════════════════════════════════════════════════════
-//  ENTANGLED ASCENT — horizontal runner
+//  ENTANGLED GAUNTLET — horizontal runner
 //  Quantum Entanglement meets Jet Rush. You (blue, top half) and your
 //  twin (pink, bottom half) fly forward on their own; the camera follows.
 //  Touch a spike and the run ends.
-//    W / S   — mirrored: you and the twin move in opposite directions
+//    W / S   — mirrored: W thrusts each ship against its gravity, S with it
 //    ↑ / ↓   — aligned: both move the same way, shifting how they line up
 //    SPACE   — break the link: W/S moves only you, ↑/↓ moves only the twin
+//  The ships have momentum: keys are thrust, so they fly in curved arcs.
+//  Gravity: you (blue) are pulled up, the twin (pink) is pulled down, and
+//  each keeps its own pull after a swap.
+//  While linked, pushing the two together at the middle line swaps them:
+//  each crosses into the other's half and keeps going the way it was.
 //  Speed portals are optional: only a dot that flies through one changes
 //  the speed, and it holds until the next portal you take.
+//
+//  The main mode is the Gauntlet: built-in levels back to back, drawn from
+//  harder pools the more you clear (the same score gates as Wave Gauntlet).
+//  One death ends the run; the score is how many levels you cleared.
+//  Endless is an unscored side mode. Single levels are played from the
+//  Practice picker (laid out like Wave Gauntlet's and Spider's): every level
+//  is open, nothing is ever scored, and dying puts you back at the start.
+//    Noclip   obstacles don't kill, hits are counted
+//    Bot      flies the level with as few inputs as it can
+//    Evilbot  flies the level making as many inputs as it can
+//  The bots live in ascent-bot.js.
 //
 //  Modes: built-in levels (unlock in order), Endless (quantum-generated),
 //  your own levels from the editor, and ?test=1 for the editor's Test Play.
@@ -16,11 +32,15 @@
 
 const GA_FWD0      = 150    // endless: starting forward speed
 const GA_FWD_MAX   = 330
+// Applied to forward speed in every mode — the one dial for overall pace.
+// Level speeds and generator spacing are untouched, so slowing down only
+// ever leaves more room than a level was built for.
+const GA_PACE      = 0.88
 const GA_BREAK_DUR = 2.4
 const GA_BREAK_CD  = 5.5
 const GA_CAM_LEAD  = 0.28   // dots sit this far across the screen
-const GA_PROG_KEY  = 'qg_ascent_progress_v2'
 const GA_BEST_KEY  = 'qg_ascent_best'
+const GA_GBEST_KEY = 'qg_ascent_gauntlet_best'
 
 
 // Quantum entropy: same pool and rejection sampling as core.js, which this
@@ -60,8 +80,9 @@ function gaRand(max) {
 const GA = {
   phase: 'idle', raf: null, last: 0,
   W: 0, H: AL_H, scale: 1,
-  mode: 'endless',          // 'level' | 'custom' | 'test' | 'endless'
-  levelIdx: -1, level: null, gen: null,
+  mode: 'gauntlet',         // 'gauntlet' | 'endless' | 'practice' | 'test'
+  clears: 0,                // gauntlet: levels cleared this run
+  level: null, gen: null,
   x: 0, camX: 0, fwd: GA_FWD0, mult: 1, multTarget: 1,
   py: 0, ty: 0,
   broken: false, breakT: 0, breakCD: 0,
@@ -73,15 +94,8 @@ const GA = {
 
 let _gaCanvas, _gaCtx
 
-// Best % per built-in level, keyed by level name so it survives levels being
-// added or reordered. A level is unlocked once the one before it is cleared.
-function gaProgress() {
-  try {
-    const p = JSON.parse(localStorage.getItem(GA_PROG_KEY) || '{}')
-    return { best: (p.best && typeof p.best === 'object') ? p.best : {} }
-  } catch { return { best: {} } }
-}
-function gaSaveProgress(p) { try { localStorage.setItem(GA_PROG_KEY, JSON.stringify(p)) } catch {} }
+function gaGBest() { try { return +localStorage.getItem(GA_GBEST_KEY) || 0 } catch { return 0 } }
+function gaSetGBest(v) { try { localStorage.setItem(GA_GBEST_KEY, String(v)) } catch {} }
 function gaBest() { try { return +localStorage.getItem(GA_BEST_KEY) || 0 } catch { return 0 } }
 function gaSetBest(v) { try { localStorage.setItem(GA_BEST_KEY, String(v)) } catch {} }
 
@@ -148,32 +162,86 @@ window.gaBreak = function() {
 // ── Menu ─────────────────────────────────────────────────
 function _gaEsc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])) }
 
+// ── Practice picker ──────────────────────────────────────
+// Same layout and classes as the Wave Gauntlet / Spider pickers: toggles on
+// top, then one row per difficulty with a button per level.
+const GA_PRAC_KEY = 'qg_ascent_practice'
+const gaPrac = { noclip: true, bot: false, evil: false }
+try { Object.assign(gaPrac, JSON.parse(localStorage.getItem(GA_PRAC_KEY) || '{}')) } catch {}
+window.gaTogglePrac = function(k) {
+  gaPrac[k] = !gaPrac[k]
+  if (k === 'evil' && gaPrac.evil) gaPrac.bot = true        // Evilbot is a kind of bot
+  if (k === 'bot' && !gaPrac.bot) gaPrac.evil = false
+  try { localStorage.setItem(GA_PRAC_KEY, JSON.stringify(gaPrac)) } catch {}
+  gaBuildPractice()
+}
+
+function gaBuildPractice() {
+  const el = document.getElementById('ga-practice'); if (!el) return
+  el.innerHTML = ''
+  const toggle = (key, cls, on, off, title) => {
+    const b = document.createElement('button')
+    b.className = 'pp-toggle' + (gaPrac[key] ? ' ' + cls : '')
+    b.textContent = gaPrac[key] ? on : off
+    b.title = title
+    b.addEventListener('click', () => gaTogglePrac(key))
+    el.appendChild(b)
+  }
+  toggle('bot', 'bot', '\ud83e\udd16 Bot ON — watch it fly the level', '\ud83e\udd16 Bot OFF — you play',
+    'Flies the level with as few inputs as it can. Portals and swapping are off for bot runs.')
+  toggle('evil', 'bot', '\ud83d\ude08 Evilbot ON — as many inputs as possible', '\ud83d\ude08 Evilbot OFF',
+    'Same level, but the bot changes input whenever it safely can.')
+  toggle('noclip', 'on', '\ud83d\udee1 Noclip ON — spikes won\u2019t kill', '\ud83d\udc80 Noclip OFF — spikes kill',
+    'Either way, practice never counts towards the leaderboard')
+
+  const row = (label, col, levels, any) => {
+    if (!levels.length) return
+    const mk = (text, get, isAny) => {
+      const b = document.createElement('button')
+      b.className = 'pp-btn' + (isAny ? ' pp-any' : '')
+      b.style.color = col; b.style.borderColor = isAny ? col : col + '55'; b.style.background = col + (isAny ? '28' : '18')
+      b.textContent = text
+      b.addEventListener('click', () => gaPlayPractice(get))
+      return b
+    }
+    const tier = document.createElement('span'); tier.className = 'pp-tier'; tier.style.color = col; tier.textContent = label
+    const box = document.createElement('span'); box.className = 'pp-levels'
+    if (any) box.appendChild(mk('Any', () => levels[gaRand(levels.length)], true))
+    for (const l of levels) box.appendChild(mk(l.name, () => l, false))
+    const r = document.createElement('div'); r.className = 'pp-row'; r.appendChild(tier); r.appendChild(box)
+    el.appendChild(r)
+  }
+  if (GA_TEST) { const t = gaTestLevel(); if (t) row('Test', '#22d3ee', [t], false); return }
+  const all = alBuiltinLevels()
+  for (const d of AL_DIFFS) row(d.id === 'fp' ? 'Frame P.' : d.label, d.col, all.filter(l => l.diff === d.id), true)
+  row('Yours', '#22d3ee', alLoadDrafts().map(alCleanLevel).filter(Boolean), false)
+}
+
+// Start a practice run. `get` returns the level, so "Any" re-rolls on retry.
+window.gaPlayPractice = function(get) {
+  const lv = get(); if (!lv) return
+  GA.mode = 'practice'; GA.pracGet = get; GA.attempts = 1; _gaPracticeNext = true
+  gaStart(lv)
+}
+// Dying in practice puts you straight back at the start of the same level
+function gaRespawn() {
+  GA.attempts++; _gaPracticeNext = true
+  gaStart(GA.level)
+}
+let _gaPracticeNext = false
+
 function gaShowMenu() {
   GA.phase = 'idle'
+  gaBuildPractice()
   document.getElementById('ga-over').classList.remove('show')
   document.getElementById('ga-overlay').style.display = 'flex'
-  const prog = gaProgress()
-  const lv = alBuiltinLevels()
-  const grid = document.getElementById('ga-levels')
-  grid.innerHTML = lv.map((l, i) => {
-    const locked = i > 0 && !(prog.best[lv[i - 1].name] >= 100)
-    const best = prog.best[l.name]
-    const sub = locked ? '🔒 locked' : best >= 100 ? '✓ cleared' : best ? best + '%' : 'new'
-    return `<button class="ga-lvl${locked ? ' locked' : ''}${best >= 100 ? ' done' : ''}" ${locked ? 'disabled' : ''}
-      onclick="gaPlayLevel(${i})"><b>${i + 1}</b><span>${_gaEsc(l.name)}</span>${gaDiffBadge(l.diff)}<small>${sub}</small></button>`
-  }).join('') || '<div class="ga-sub">No levels yet — play Endless, or build one in the editor.</div>'
   document.getElementById('ga-endless-best').textContent = gaBest()
-
-  const drafts = alLoadDrafts()
+  const gb = document.getElementById('ga-gauntlet-best'); if (gb) gb.textContent = gaGBest()
   const cust = document.getElementById('ga-custom')
-  cust.innerHTML = drafts.length
-    ? '<div class="ga-sub">Your levels</div>' + drafts.map((d, i) =>
-        `<button class="ga-chip" onclick="gaPlayCustom(${i})"><i class="ga-dot" style="background:${alDiff(d.diff).col}"></i>${_gaEsc(d.name || 'Untitled')}</button>`).join('')
-    : '<div class="ga-sub">Make your own in the <a href="editor.html?game=ascent">level editor</a>.</div>'
+  cust.innerHTML = '<div class="ga-sub">Make your own levels in the <a href="editor.html?game=ascent">level editor</a> — they show up under Practice.</div>'
 
   if (GA_TEST) {
     const t = gaTestLevel()
-    grid.innerHTML = ''
     cust.innerHTML = t ? `<div class="ga-sub">Testing “${_gaEsc(t.name)}”</div>` : '<div class="ga-sub">No test level found.</div>'
     document.getElementById('ga-endless-row').style.display = 'none'
     document.getElementById('ga-test-row').style.display = t ? 'flex' : 'none'
@@ -189,18 +257,40 @@ function gaTestLevel() {
   try { return alCleanLevel(JSON.parse(localStorage.getItem(AL_TEST_KEY) || 'null')) } catch { return null }
 }
 
-window.gaPlayLevel  = function(i) { GA.mode = 'level';  GA.levelIdx = i; gaStart(alBuiltinLevels()[i]) }
-window.gaPlayEndless = function() { GA.mode = 'endless'; GA.levelIdx = -1; gaStart(null) }
-window.gaPlayCustom = function(i) {
-  const lv = alCleanLevel(alLoadDrafts()[i]); if (!lv) return
-  GA.mode = 'custom'; GA.levelIdx = i; gaStart(lv)
+// ── Gauntlet ─────────────────────────────────────────────
+// Which levels the next one is drawn from, by how many you have cleared.
+// These are Wave Gauntlet's score gates (_g43GetPool), tier for tier; this
+// game has no boss tier yet, so its slots fall through to what exists.
+function gaGauntletPool(clears) {
+  const all = alBuiltinLevels(), T = d => all.filter(l => l.diff === d)
+  const easy = T('easy'), medium = T('medium'), hard = T('hard'), extreme = T('extreme'), fp = T('fp')
+  let pool
+  if      (clears < 3)  pool = easy
+  else if (clears < 5)  pool = [...easy, ...medium]
+  else if (clears < 9)  pool = [...medium, ...hard, ...extreme.slice(0, 1)]
+  else if (clears < 13) pool = [...hard, ...extreme]
+  else if (clears < 17) pool = extreme
+  else                  pool = fp
+  if (!pool.length) pool = extreme.length ? extreme : all      // a tier with nothing in it yet
+  return pool
 }
+function gaGauntletNext() {
+  let pool = gaGauntletPool(GA.clears)
+  if (pool.length > 1 && GA.level) pool = pool.filter(l => l.name !== GA.level.name)   // never the same level twice running
+  const lv = pool[gaRand(pool.length)]
+  if (!lv) return gaPlayEndless()                              // no built-in levels at all
+  const cleared = GA.clears
+  gaStart(lv)
+  GA.banner = { text: (cleared ? '✓ ' + cleared + ' · ' : '') + lv.name + ' — ' + alDiff(lv.diff).label.toUpperCase(), col: alDiff(lv.diff).col, t: 2.4 }
+}
+window.gaPlayGauntlet = function() { GA.mode = 'gauntlet'; GA.clears = 0; GA.level = null; gaGauntletNext() }
+window.gaPlayEndless = function() { GA.mode = 'endless'; gaStart(null) }
 window.gaPlayTest = function() { const lv = gaTestLevel(); if (lv) { GA.mode = 'test'; gaStart(lv) } }
 window.gaRetry = function() {
-  if (GA.mode === 'level') gaPlayLevel(GA.levelIdx)
-  else if (GA.mode === 'custom') gaPlayCustom(GA.levelIdx)
-  else if (GA.mode === 'test') gaPlayTest()
-  else gaPlayEndless()
+  if (GA.mode === 'test') gaPlayTest()
+  else if (GA.mode === 'practice') gaPlayPractice(GA.pracGet)
+  else if (GA.mode === 'endless') gaPlayEndless()
+  else gaPlayGauntlet()
 }
 window.gaMenu = function() { gaEndRun(); gaShowMenu() }
 
@@ -213,7 +303,7 @@ function gaStart(level) {
   Object.assign(GA, {
     phase: 'playing', level, gen: null,
     x: 0, camX: -GA.W * GA_CAM_LEAD, fwd: level ? level.speed : GA_FWD0, mult: 1, multTarget: 1,
-    py: AL_HALF * 0.5, ty: AL_HALF * 1.5,
+    py: AL_HALF * 0.5, ty: AL_HALF * 1.5, swapped: false, swapCD: 0, pv: 0, tv: 0,
     broken: false, breakT: 0, breakCD: 0,
     cols: [], blocks: [], portals: [], orbs: [], pending: [], saws: [], strips: [], triggers: [], forced: false,
     parts: [], trail: [],
@@ -227,10 +317,22 @@ function gaStart(level) {
     r: Math.random() * 1.3 + 0.2, par: Math.random() * 0.5 + 0.1, a: Math.random() * 0.45 + 0.25,
   }))
   GA.endX = level ? alEndX(level) : Infinity
+  // Practice: never scored. Noclip turns deaths into counted hits; the bots
+  // plan the whole level first, and a bot run is always noclip so that a
+  // rare clipped corner shows up as a hit instead of ending the demo.
+  GA.practice = _gaPracticeNext; _gaPracticeNext = false
+  GA.hits = 0; GA.hitNow = false; GA.plan = null; GA.evil = false
+  GA.noclip = GA.practice && gaPrac.noclip
+  if (GA.practice && gaPrac.bot) {
+    GA.plan = typeof abPlan === 'function' ? abPlan(level, GA.W, level.speed * GA_PACE) : null
+    if (GA.plan) { GA.evil = gaPrac.evil; GA.noclip = true }
+    else GA.banner = { text: 'Bot found no route — you fly', col: '#facc15', t: 2.5 }
+  }
   if (level) GA.pending = level.objects.map(o => Object.assign({}, o)).sort((a, b) => a.x - b.x)
   else { GA.gen = alGenerator(gaRand, {}); GA.gen.x = 900 }
-  document.getElementById('ga-score-label').textContent = level ? 'Progress' : 'Columns'
-  document.getElementById('ga-score').textContent = level ? '0%' : '0'
+  const gauntlet = GA.mode === 'gauntlet'
+  document.getElementById('ga-score-label').textContent = gauntlet ? 'Clears' : level ? 'Progress' : 'Columns'
+  document.getElementById('ga-score').textContent = gauntlet ? GA.clears : level ? '0%' : '0'
   cancelAnimationFrame(GA.raf)
   GA.last = performance.now()
   GA.raf = requestAnimationFrame(gaLoop)
@@ -269,11 +371,13 @@ function gaLoop(ts) {
   if (GA.phase === 'playing') gaUpdate(dt)
   else if (GA.phase === 'dead' || GA.phase === 'won') {
     GA.deadT += dt
-    if (GA.phase === 'won') { GA.x += GA.fwd * GA.mult * dt; GA.camX += GA.fwd * GA.mult * dt * 0.4 }
+    if (GA.phase === 'won') { const v = GA.fwd * GA.mult * GA_PACE; GA.x += v * dt; GA.camX += v * dt * 0.4 }
     for (const p of GA.parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt }
     GA.parts = GA.parts.filter(p => p.life > 0)
     if (GA.shake > 0) GA.shake = Math.max(0, GA.shake - dt * 30)
-    if (GA.deadT > 1.1) gaShowOver()
+    if (GA.phase === 'dead' && GA.practice) { if (GA.deadT > 0.55) return gaRespawn() }
+    else if (GA.phase === 'won' && GA.mode === 'gauntlet') { if (GA.deadT > 0.7) return gaGauntletNext() }   // straight into the next level
+    else if (GA.deadT > 1.1) gaShowOver()
   }
   if (GA.phase === 'idle') return
   gaDraw()
@@ -285,7 +389,7 @@ function gaUpdate(dt) {
 
   if (!GA.level) GA.fwd = Math.min(GA_FWD_MAX, GA_FWD0 + GA.score * 4)
   GA.mult += (GA.multTarget - GA.mult) * Math.min(1, dt * 8)
-  const v = GA.fwd * GA.mult
+  const v = GA.fwd * GA.mult * GA_PACE
   GA.x += v * dt
   GA.camX = GA.x - GA.W * GA_CAM_LEAD
   for (const s of GA.stars) {
@@ -312,18 +416,57 @@ function gaUpdate(dt) {
 
   // Input. Positive = down the screen.
   const k = GA.keys
-  const mir = (k.KeyS ? 1 : 0) - (k.KeyW ? 1 : 0)            // W/S
+  // W is the thrust key: it pushes each ship against its own gravity (blue
+  // down, pink up — toward each other from their home sides). S is the
+  // opposite, pushing with gravity.
+  const mir = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0)
   const ali = (k.ArrowDown ? 1 : 0) - (k.ArrowUp ? 1 : 0)    // ↑/↓
   let pdy, tdy
   if (GA.broken || GA.forced) { pdy = mir; tdy = ali }
   else           { pdy = mir + ali; tdy = -mir + ali }
+  // A finger steers whichever dot is in the half it touches
   for (const t of GA.touches.values()) {
-    if (t.y < half) pdy = Math.abs(t.y - GA.py) > 6 ? Math.sign(t.y - GA.py) : 0
-    else            tdy = Math.abs(t.y - GA.ty) > 6 ? Math.sign(t.y - GA.ty) : 0
+    const blue = (t.y < half) !== GA.swapped
+    if (blue) pdy = Math.abs(t.y - GA.py) > 6 ? Math.sign(t.y - GA.py) : 0
+    else      tdy = Math.abs(t.y - GA.ty) > 6 ? Math.sign(t.y - GA.ty) : 0
   }
   pdy = Math.max(-1, Math.min(1, pdy)); tdy = Math.max(-1, Math.min(1, tdy))
-  GA.py = Math.max(AL_R, Math.min(half - AL_R - 2, GA.py + pdy * AL_SPD_Y * dt))
-  GA.ty = Math.max(half + AL_R + 2, Math.min(H - AL_R, GA.ty + tdy * AL_SPD_Y * dt))
+  if (GA.plan) [pdy, tdy] = abControl(GA.plan, GA.evil, GA.x, GA.py, GA.pv, GA.ty, GA.tv)
+
+  // Thrust + gravity → velocity. Gravity belongs to the ship, not the half:
+  // blue falls up, pink falls down.
+  const lim = v => Math.max(-AL_VMAX, Math.min(AL_VMAX, v))
+  GA.pv = lim(GA.pv + (pdy * AL_THRUST - AL_GRAV) * dt)
+  GA.tv = lim(GA.tv + (tdy * AL_THRUST + AL_GRAV) * dt)
+
+  // Swap: while linked, whenever the two meet at the middle line moving
+  // toward each other they pass through and trade halves — whichever colour
+  // is on which side, and whether thrust or gravity brought them together.
+  // Each keeps its own controls, speed and gravity, so a swapped pair falls
+  // back through the line to its home side unless you hold it apart. Not in
+  // desync sections.
+  if (GA.swapCD > 0) GA.swapCD -= dt
+  const closing = Math.sign(GA.pv) === Math.sign(GA.ty - GA.py) && Math.sign(GA.tv) === Math.sign(GA.py - GA.ty)
+  if (!GA.plan && !GA.broken && !GA.forced && GA.swapCD <= 0 && closing &&
+      // reach ahead by this frame's travel, so they cross at speed instead of bumping the line first
+      Math.abs(GA.ty - GA.py) < AL_R * 2 + 8 + (Math.abs(GA.pv) + Math.abs(GA.tv)) * dt) {
+    const y = GA.py; GA.py = GA.ty; GA.ty = y
+    GA.swapped = !GA.swapped
+    GA.swapCD = 0.2
+    GA.flash = Math.max(GA.flash, 0.6)
+    gaBurst(GA.x, half, '#c4b5fd', 10)
+    if (typeof SFX !== 'undefined') SFX.whoosh()
+  }
+
+  // Velocity → position. Each ship stays in the half it is currently in,
+  // and stops dead against an edge.
+  const move = (y, v, top) => {
+    const lo = top ? AL_R : half + AL_R + 2, hi = top ? half - AL_R - 2 : H - AL_R
+    const ny = y + v * dt
+    return ny < lo ? [lo, Math.max(0, v)] : ny > hi ? [hi, Math.min(0, v)] : [ny, v]
+  }
+  ;[GA.py, GA.pv] = move(GA.py, GA.pv, !GA.swapped)
+  ;[GA.ty, GA.tv] = move(GA.ty, GA.tv, GA.swapped)
 
   gaFeed()
 
@@ -348,7 +491,7 @@ function gaUpdate(dt) {
 
   // Portals: only a dot that actually flies through one takes effect
   for (const p of GA.portals) {
-    if (p.used) continue
+    if (p.used || GA.plan) continue
     const inX = Math.abs(GA.x - p.x) < AL_PORTAL_W / 2 + AL_R
     const hit = inX && (Math.abs(GA.py - p.y) < AL_PORTAL_H / 2 + AL_R - 4 || Math.abs(GA.ty - p.y) < AL_PORTAL_H / 2 + AL_R - 4)
     if (!hit) continue
@@ -373,14 +516,22 @@ function gaUpdate(dt) {
 
   if (GA.level) {
     const pct = Math.max(0, Math.min(100, Math.floor(GA.x / GA.endX * 100)))
-    document.getElementById('ga-score').textContent = pct + '%'
-    if (GA.x >= GA.endX) return gaWin()
+    if (GA.mode !== 'gauntlet') document.getElementById('ga-score').textContent = pct + '%'
+    if (GA.x >= GA.endX) {
+      if (GA.mode === 'gauntlet') { GA.clears++; document.getElementById('ga-score').textContent = GA.clears }
+      return gaWin()
+    }
   }
 
-  for (const c of GA.cols) if (gaHitsCol(c, GA.x, GA.py) || gaHitsCol(c, GA.x, GA.ty)) return gaDie()
-  for (const b of GA.blocks) if (gaHitsBlock(b, GA.x, GA.py) || gaHitsBlock(b, GA.x, GA.ty)) return gaDie()
-  for (const w of GA.saws) if (Math.hypot(GA.x - w.x, GA.py - w.y) < w.r + AL_R - 3 || Math.hypot(GA.x - w.x, GA.ty - w.y) < w.r + AL_R - 3) return gaDie()
-  for (const st of GA.strips) { const r = alStripRect(st); if (_gaCircleRect(GA.x, GA.py, ...r) || _gaCircleRect(GA.x, GA.ty, ...r)) return gaDie() }
+  const hit = GA.cols.some(c => gaHitsCol(c, GA.x, GA.py) || gaHitsCol(c, GA.x, GA.ty)) ||
+    GA.blocks.some(b => gaHitsBlock(b, GA.x, GA.py) || gaHitsBlock(b, GA.x, GA.ty)) ||
+    GA.saws.some(w => Math.hypot(GA.x - w.x, GA.py - w.y) < w.r + AL_R - 3 || Math.hypot(GA.x - w.x, GA.ty - w.y) < w.r + AL_R - 3) ||
+    GA.strips.some(st => { const r = alStripRect(st); return _gaCircleRect(GA.x, GA.py, ...r) || _gaCircleRect(GA.x, GA.ty, ...r) })
+  if (GA.noclip) {
+    // Noclip never ends a run: count each separate touch instead
+    if (hit && !GA.hitNow) { GA.hits++; GA.shake = 6; if (typeof SFX !== 'undefined') SFX.error() }
+    GA.hitNow = hit
+  } else if (hit) return gaDie()
 }
 
 function gaColRects(c) {
@@ -425,38 +576,42 @@ function gaShowOver() {
   const sub   = document.getElementById('ga-final-best')
   const btns  = document.getElementById('ga-over-btns')
   let html = ''
-  if (GA.level) {
+  if (GA.mode === 'gauntlet') {
+    const best = Math.max(gaGBest(), GA.clears)
+    gaSetGBest(best)
+    title.textContent = 'Decohered!'
+    final.textContent = GA.clears
+    sub.innerHTML = `level${GA.clears === 1 ? '' : 's'} cleared · fell on ${_gaEsc(GA.level.name)} ${gaDiffBadge(GA.level.diff)}<br>` +
+      (GA.clears >= best && GA.clears > 0 ? 'New best!' : 'Best: ' + best)
+  } else if (GA.level) {
     const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.endX * 100)))
     title.textContent = won ? 'Level complete!' : 'Decohered!'
     final.textContent = pct + '%'
     sub.innerHTML = _gaEsc(GA.level.name) + ' ' + gaDiffBadge(GA.level.diff)
-    if (GA.mode === 'level') {
-      const prog = gaProgress()
-      prog.best[GA.level.name] = Math.max(prog.best[GA.level.name] || 0, pct)
-      gaSaveProgress(prog)
-      if (won && GA.levelIdx + 1 < alBuiltinLevels().length)
-        html += `<button class="btn-primary" onclick="gaPlayLevel(${GA.levelIdx + 1})">Next level →</button><br><br>`
-      else if (won) sub.innerHTML += '<br>All levels cleared — try Endless!'
-    }
   } else {
-    const best = Math.max(gaBest(), GA.score)
-    gaSetBest(best)
+    const best = GA.practice ? gaBest() : Math.max(gaBest(), GA.score)
+    if (!GA.practice) gaSetBest(best)
     title.textContent = 'Decohered!'
     final.textContent = GA.score
     sub.textContent = GA.score >= best && GA.score > 0 ? 'New best!' : 'Best: ' + best
   }
   // Submit Score, same as every other game. Custom and test levels are
   // whatever the player made them, so they never count.
-  if ((GA.mode === 'level' || GA.mode === 'endless') && typeof openSubmit === 'function') {
-    GA.submit = (GA.mode === 'endless') ? GA.score : null   // see gaLeaderboardScore
+  const medal = document.getElementById('ga-medal-display'); if (medal) medal.innerHTML = ''
+  if (GA.practice) {
+    // Nothing from a practice run is saved or submitted
+    title.textContent = GA.plan ? (GA.evil ? 'Evilbot run' : 'Bot run') : won ? 'Practice clear!' : 'Practice run'
+    sub.innerHTML += '<br>' + [GA.plan ? GA.plan.inputs + ' inputs' : '', GA.noclip ? GA.hits + ' hit' + (GA.hits === 1 ? '' : 's') : '', 'not scored'].filter(Boolean).join(' · ')
+  } else if (GA.mode === 'gauntlet' && typeof openSubmit === 'function') {
+    GA.submit = GA.clears
     const n = gaLeaderboardScore()
     html += `<button class="btn-primary" style="background:#a78bfa;border-color:#a78bfa;color:#13092b" onclick="openSubmit('ascent')">Submit Score</button><br><br>`
     if (typeof renderMedalDisplay === 'function') renderMedalDisplay('ga-medal-display', 'ascent', n)
   }
-  html += `<button class="btn-primary${won && GA.mode === 'level' ? ' ga-ghost' : ''}" onclick="gaRetry()">${won ? 'Play again' : 'Retry'}</button><br><br>`
+  html += `<button class="btn-primary" onclick="gaRetry()">${won ? 'Play again' : 'Retry'}</button><br><br>`
   html += GA_TEST
     ? `<button class="btn-back" onclick="location.href='editor.html?game=ascent'">← Back to editor</button>`
-    : `<button class="btn-back" onclick="gaMenu()">☰ Levels</button>`
+    : `<button class="btn-back" onclick="gaMenu()">☰ Menu</button>`
   btns.innerHTML = html
   document.getElementById('ga-over').classList.add('show')
 }
@@ -524,8 +679,8 @@ function gaDraw() {
       ctx.beginPath(); ctx.moveTo(sx(GA.x), GA.py); ctx.quadraticCurveTo(midX, half, sx(GA.x), GA.ty); ctx.stroke()
       ctx.shadowBlur = 0
     }
-    gaDot(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd')
-    gaDot(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4')
+    gaShip(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd', -1, GA.pv / AL_VMAX)
+    gaShip(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4', 1, GA.tv / AL_VMAX)
   }
 
   for (const p of GA.parts) {
@@ -562,6 +717,13 @@ function gaDraw() {
   ctx.textAlign = 'center'; ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(226,232,240,0.7)'
   ctx.fillText(label, bx + bw / 2, by + 19)
 
+  if (GA.practice) {
+    const txt = GA.plan ? `${GA.evil ? '😈 EVILBOT' : '🤖 BOT'} · inputs ${GA.plan.inputs}${GA.hits ? ' · hits ' + GA.hits : ''}`
+              : GA.noclip ? `PRACTICE · NOCLIP · hits ${GA.hits}` : `PRACTICE · attempt ${GA.attempts || 1}`
+    ctx.textAlign = 'left'; ctx.font = 'bold 13px monospace'
+    ctx.fillStyle = GA.hitNow || GA.evil ? '#f87171' : '#38bdf8'
+    ctx.fillText(txt, 16, 52)
+  }
   if (Math.abs(GA.mult - 1) > 0.05 && alive) {
     ctx.textAlign = 'left'; ctx.font = 'bold 14px monospace'
     ctx.fillStyle = GA.mult > 1 ? '#fb923c' : '#22d3ee'
@@ -575,7 +737,7 @@ function gaDraw() {
   }
   if (GA.score < 3 && GA.phase === 'playing' && GA.x < 1200) {
     ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(167,139,250,0.75)'; ctx.font = '12px monospace'
-    ctx.fillText('W/S = mirror · ↑/↓ = move both together · portals are optional', W / 2, H - 14)
+    ctx.fillText('W = thrust · S = other way · ↑/↓ = move both together · portals are optional', W / 2, H - 14)
   }
 }
 
@@ -672,10 +834,36 @@ function gaSpikes(ctx, x, y, w, h, col, block) {
   }
 }
 
-function gaDot(ctx, x, y, fill, ring) {
-  ctx.beginPath(); ctx.arc(x, y, AL_R, 0, Math.PI * 2)
+// A small ship flying right. grav: -1 = falls up, 1 = falls down — the ship
+// is drawn belly-toward-gravity, so blue flies upside down and you can read
+// each one's pull at a glance. tilt (-1..1) noses it toward where it is
+// heading (its vertical speed). The hit area is still the AL_R circle around (x, y).
+function gaShip(ctx, x, y, fill, ring, grav, tilt) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.rotate((tilt || 0) * 0.6)
+  ctx.scale(1, grav)                       // flip so the fin points away from gravity
+  // Engine flame
+  const fl = 9 + Math.random() * 7
+  const g = ctx.createLinearGradient(-AL_R, 0, -AL_R - fl, 0)
+  g.addColorStop(0, 'rgba(253,224,71,0.95)'); g.addColorStop(1, 'rgba(249,115,22,0)')
+  ctx.fillStyle = g
+  ctx.beginPath(); ctx.moveTo(-AL_R + 2, -4); ctx.lineTo(-AL_R - fl, 0); ctx.lineTo(-AL_R + 2, 4); ctx.closePath(); ctx.fill()
+  // Hull
+  ctx.beginPath()
+  ctx.moveTo(AL_R + 4, 0)                  // nose
+  ctx.lineTo(1, -6); ctx.lineTo(-AL_R + 1, -7)
+  ctx.lineTo(-AL_R - 2, -AL_R - 2)         // tail fin
+  ctx.lineTo(-AL_R + 3, -2)
+  ctx.lineTo(-AL_R, 0)
+  ctx.lineTo(-AL_R + 1, 7); ctx.lineTo(2, 6)
+  ctx.closePath()
   ctx.fillStyle = fill; ctx.shadowBlur = 12; ctx.shadowColor = ring; ctx.fill()
-  ctx.shadowBlur = 0; ctx.strokeStyle = ring; ctx.lineWidth = 2; ctx.stroke()
+  ctx.shadowBlur = 0; ctx.strokeStyle = ring; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.stroke()
+  // Cockpit
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'
+  ctx.beginPath(); ctx.ellipse(3, -1.5, 4, 2.4, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.restore()
 }
 
 // ── Site integration ─────────────────────────────────────
@@ -695,25 +883,7 @@ window.stopGame48 = function() {
   if (GA.raf) { cancelAnimationFrame(GA.raf); GA.raf = null }
 }
 
-// What the leaderboard ranks. Two eras, and it switches by itself:
-//
-//   no built-in levels yet -> the columns you passed in the Endless run
-//     just played, which is one number from one run like every other
-//     game on the board.
-//
-//   once levels exist -> total progress across all of them, 100 per
-//     level cleared plus partial credit on the rest, so every level
-//     counts toward a single score.
-//
-// Nothing to change when Amey's levels land; the board just starts
-// meaning the other thing. Worth clearing the old Endless scores off it
-// at that point, or the two eras sit side by side looking comparable
-// when they are not.
-window.gaLeaderboardScore = function() {
-  const n = alBuiltinLevels().length
-  if (!n) return Math.max(0, GA.submit || 0)
-  const prog = gaProgress()
-  let total = 0
-  for (const l of alBuiltinLevels()) total += Math.max(0, Math.min(100, prog.best[l.name] || 0))
-  return Math.round(total)
-}
+// What the leaderboard ranks: levels cleared in the Gauntlet run just played
+// — one number from one run, like Wave Gauntlet. Endless and Practice never
+// score.
+window.gaLeaderboardScore = function() { return Math.max(0, GA.submit || 0) }

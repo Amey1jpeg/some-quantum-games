@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  ENTANGLED ASCENT — level format, generator and built-in levels
+//  ENTANGLED GAUNTLET — level format, generator and built-in levels
 //  Shared by index.html (the game) and editor.html (the editor).
 //
 //  Levels live in a fixed 600-unit-tall world and are scaled to the
@@ -29,7 +29,21 @@ const AL_H        = 600
 const AL_HALF     = 300
 const AL_PAD      = 6
 const AL_R        = 11      // dot radius
-const AL_SPD_Y    = 230     // vertical steering speed
+// Ship physics (vertical). Steering is thrust, not a fixed speed: a key
+// press accelerates the ship, so it swings through a curved arc and carries
+// momentum. Each ship has its own gravity and keeps it for the whole run,
+// including after a swap: blue falls UP, pink falls DOWN.
+const AL_GRAV     = 400     // gravity, units/s²
+const AL_THRUST   = 1050    // steering thrust, units/s² (more than gravity, so you can climb against it)
+const AL_VMAX     = 250     // top vertical speed, units/s
+
+// Seconds to move `d` units vertically in the worst case: from rest, pushing
+// against gravity the whole way.
+function alTravelTime(d) {
+  const a = AL_THRUST - AL_GRAV
+  const tv = AL_VMAX / a, dv = 0.5 * a * tv * tv
+  return d <= dv ? Math.sqrt(2 * Math.max(0, d) / a) : tv + (d - dv) / AL_VMAX
+}
 const AL_COL_W    = 18
 const AL_BLOCK    = 26
 const AL_PORTAL_W = 26
@@ -74,7 +88,8 @@ function alStripRect(o) {
 }
 
 // Forward distance covered while steering `travel` units vertically
-function alReach(travel, fwd) { return (travel / AL_SPD_Y) * fwd * 1.3 + 50 }
+// Assumes the worst case (see alTravelTime).
+function alReach(travel, fwd) { return alTravelTime(travel) * fwd * 1.3 + 50 }
 
 // ── Generator ────────────────────────────────────────────
 // Streams objects chunk by chunk. Spacing is worked out from how far the
