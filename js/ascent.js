@@ -3,7 +3,7 @@
 //  Quantum Entanglement meets Jet Rush. You (blue, top half) and your
 //  twin (pink, bottom half) fly forward on their own; the camera follows.
 //  Touch a spike and the run ends.
-//    W / S   — mirrored: you and the twin move in opposite directions
+//    W / S   — mirrored: W thrusts each ship against its gravity, S with it
 //    ↑ / ↓   — aligned: both move the same way, shifting how they line up
 //    SPACE   — break the link: W/S moves only you, ↑/↓ moves only the twin
 //  The ships have momentum: keys are thrust, so they fly in curved arcs.
@@ -321,7 +321,10 @@ function gaUpdate(dt) {
 
   // Input. Positive = down the screen.
   const k = GA.keys
-  const mir = (k.KeyS ? 1 : 0) - (k.KeyW ? 1 : 0)            // W/S
+  // W is the thrust key: it pushes each ship against its own gravity (blue
+  // down, pink up — toward each other from their home sides). S is the
+  // opposite, pushing with gravity.
+  const mir = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0)
   const ali = (k.ArrowDown ? 1 : 0) - (k.ArrowUp ? 1 : 0)    // ↑/↓
   let pdy, tdy
   if (GA.broken || GA.forced) { pdy = mir; tdy = ali }
@@ -619,7 +622,7 @@ function gaDraw() {
   }
   if (GA.score < 3 && GA.phase === 'playing' && GA.x < 1200) {
     ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(167,139,250,0.75)'; ctx.font = '12px monospace'
-    ctx.fillText('W/S = mirror · ↑/↓ = move both together · portals are optional', W / 2, H - 14)
+    ctx.fillText('W = thrust · S = other way · ↑/↓ = move both together · portals are optional', W / 2, H - 14)
   }
 }
 
