@@ -29,12 +29,21 @@ const AL_H        = 600
 const AL_HALF     = 300
 const AL_PAD      = 6
 const AL_R        = 11      // dot radius
-const AL_SPD_Y    = 230     // vertical steering speed
-// Each dot has its own gravity and keeps it for the whole run, including
-// after a swap: you (blue) fall UP, the twin (pink) falls DOWN. It is a
-// steady pull, well under steering speed, so it shapes where the dots rest
-// rather than taking control away.
-const AL_GRAV     = 50
+// Ship physics (vertical). Steering is thrust, not a fixed speed: a key
+// press accelerates the ship, so it swings through a curved arc and carries
+// momentum. Each ship has its own gravity and keeps it for the whole run,
+// including after a swap: blue falls UP, pink falls DOWN.
+const AL_GRAV     = 480     // gravity, units/s²
+const AL_THRUST   = 1050    // steering thrust, units/s² (more than gravity, so you can climb against it)
+const AL_VMAX     = 250     // top vertical speed, units/s
+
+// Seconds to move `d` units vertically in the worst case: from rest, pushing
+// against gravity the whole way.
+function alTravelTime(d) {
+  const a = AL_THRUST - AL_GRAV
+  const tv = AL_VMAX / a, dv = 0.5 * a * tv * tv
+  return d <= dv ? Math.sqrt(2 * Math.max(0, d) / a) : tv + (d - dv) / AL_VMAX
+}
 const AL_COL_W    = 18
 const AL_BLOCK    = 26
 const AL_PORTAL_W = 26
@@ -79,8 +88,8 @@ function alStripRect(o) {
 }
 
 // Forward distance covered while steering `travel` units vertically
-// Assumes the worst case, steering against gravity the whole way.
-function alReach(travel, fwd) { return (travel / (AL_SPD_Y - AL_GRAV)) * fwd * 1.3 + 50 }
+// Assumes the worst case (see alTravelTime).
+function alReach(travel, fwd) { return alTravelTime(travel) * fwd * 1.3 + 50 }
 
 // ── Generator ────────────────────────────────────────────
 // Streams objects chunk by chunk. Spacing is worked out from how far the

@@ -279,7 +279,7 @@ window.aeCheck = function() {
     const v = lv.speed * (fast ? AL_MULT.fast : 1)
     const time = (c.x - c.w / 2 - (p.x + p.w / 2)) / v
     const dist = (a, b) => Math.max(0, a[0] - b[1], b[0] - a[1])
-    const need = Math.max(dist(range(p.top), range(c.top)), dist(range(p.bot), range(c.bot))) / (AL_SPD_Y - AL_GRAV)   // worst case: steering against gravity
+    const need = alTravelTime(Math.max(dist(range(p.top), range(c.top)), dist(range(p.bot), range(c.bot))))   // worst case: against gravity, from rest
     if (need > time) { issues.push(c.x); notes.push(`Column at x=${Math.round(c.x)}: needs ${need.toFixed(2)}s of steering but only ${Math.max(0, time).toFixed(2)}s to get there${fast ? ' (at fast-portal speed)' : ''}`) }
   }
   AE.issues = issues

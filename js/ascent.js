@@ -6,6 +6,7 @@
 //    W / S   — mirrored: you and the twin move in opposite directions
 //    ↑ / ↓   — aligned: both move the same way, shifting how they line up
 //    SPACE   — break the link: W/S moves only you, ↑/↓ moves only the twin
+//  The ships have momentum: keys are thrust, so they fly in curved arcs.
 //  Gravity: you (blue) are pulled up, the twin (pink) is pulled down, and
 //  each keeps its own pull after a swap.
 //  While linked, pushing the two together at the middle line swaps them:
@@ -221,7 +222,7 @@ function gaStart(level) {
   Object.assign(GA, {
     phase: 'playing', level, gen: null,
     x: 0, camX: -GA.W * GA_CAM_LEAD, fwd: level ? level.speed : GA_FWD0, mult: 1, multTarget: 1,
-    py: AL_HALF * 0.5, ty: AL_HALF * 1.5, swapped: false, swapCD: 0, pTilt: 0, tTilt: 0,
+    py: AL_HALF * 0.5, ty: AL_HALF * 1.5, swapped: false, swapCD: 0, pv: 0, tv: 0,
     broken: false, breakT: 0, breakCD: 0,
     cols: [], blocks: [], portals: [], orbs: [], pending: [], saws: [], strips: [], triggers: [], forced: false,
     parts: [], trail: [],
@@ -339,7 +340,8 @@ function gaUpdate(dt) {
   // them apart on the far side, still mirrored. Not in desync sections.
   if (GA.swapCD > 0) GA.swapCD -= dt
   const closing = Math.sign(pdy) === Math.sign(GA.ty - GA.py) && Math.sign(tdy) === Math.sign(GA.py - GA.ty)
-  if (!GA.broken && !GA.forced && GA.swapCD <= 0 && closing && Math.abs(GA.ty - GA.py) < AL_R * 2 + 8) {
+  if (!GA.broken && !GA.forced && GA.swapCD <= 0 && closing &&
+      Math.abs(GA.ty - GA.py) < AL_R * 2 + 8 + (Math.abs(GA.pv) + Math.abs(GA.tv)) * dt) {   // reach ahead by this frame's travel, so they cross at speed instead of bumping the line first
     const y = GA.py; GA.py = GA.ty; GA.ty = y
     GA.swapped = !GA.swapped
     GA.swapCD = 0.2
@@ -348,15 +350,19 @@ function gaUpdate(dt) {
     if (typeof SFX !== 'undefined') SFX.whoosh()
   }
 
-  // Each dot stays in the half it is currently in
-  const topLo = AL_R, topHi = half - AL_R - 2, botLo = half + AL_R + 2, botHi = H - AL_R
-  const clamp = (v, top) => Math.max(top ? topLo : botLo, Math.min(top ? topHi : botHi, v))
-  // Gravity belongs to the dot, not the half: blue falls up, pink falls down
-  GA.py = clamp(GA.py + (pdy * AL_SPD_Y - AL_GRAV) * dt, !GA.swapped)
-  GA.ty = clamp(GA.ty + (tdy * AL_SPD_Y + AL_GRAV) * dt, GA.swapped)
-  // Steering eased into a tilt for the ships (drawing only)
-  GA.pTilt += (pdy - GA.pTilt) * Math.min(1, dt * 10)
-  GA.tTilt += (tdy - GA.tTilt) * Math.min(1, dt * 10)
+  // Thrust + gravity → velocity → position. Gravity belongs to the ship, not
+  // the half: blue falls up, pink falls down. Each stays in the half it is
+  // currently in, and stops dead against an edge.
+  const lim = v => Math.max(-AL_VMAX, Math.min(AL_VMAX, v))
+  GA.pv = lim(GA.pv + (pdy * AL_THRUST - AL_GRAV) * dt)
+  GA.tv = lim(GA.tv + (tdy * AL_THRUST + AL_GRAV) * dt)
+  const move = (y, v, top) => {
+    const lo = top ? AL_R : half + AL_R + 2, hi = top ? half - AL_R - 2 : H - AL_R
+    const ny = y + v * dt
+    return ny < lo ? [lo, Math.max(0, v)] : ny > hi ? [hi, Math.min(0, v)] : [ny, v]
+  }
+  ;[GA.py, GA.pv] = move(GA.py, GA.pv, !GA.swapped)
+  ;[GA.ty, GA.tv] = move(GA.ty, GA.tv, GA.swapped)
 
   gaFeed()
 
@@ -557,8 +563,8 @@ function gaDraw() {
       ctx.beginPath(); ctx.moveTo(sx(GA.x), GA.py); ctx.quadraticCurveTo(midX, half, sx(GA.x), GA.ty); ctx.stroke()
       ctx.shadowBlur = 0
     }
-    gaShip(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd', -1, GA.pTilt)
-    gaShip(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4', 1, GA.tTilt)
+    gaShip(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd', -1, GA.pv / AL_VMAX)
+    gaShip(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4', 1, GA.tv / AL_VMAX)
   }
 
   for (const p of GA.parts) {
@@ -708,11 +714,11 @@ function gaSpikes(ctx, x, y, w, h, col, block) {
 // A small ship flying right. grav: -1 = falls up, 1 = falls down — the ship
 // is drawn belly-toward-gravity, so blue flies upside down and you can read
 // each one's pull at a glance. tilt (-1..1) noses it toward where it is
-// steering. The hit area is still the AL_R circle around (x, y).
+// heading (its vertical speed). The hit area is still the AL_R circle around (x, y).
 function gaShip(ctx, x, y, fill, ring, grav, tilt) {
   ctx.save()
   ctx.translate(x, y)
-  ctx.rotate((tilt || 0) * 0.38)
+  ctx.rotate((tilt || 0) * 0.6)
   ctx.scale(1, grav)                       // flip so the fin points away from gravity
   // Engine flame
   const fl = 9 + Math.random() * 7
