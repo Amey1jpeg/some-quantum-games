@@ -14,7 +14,10 @@
 //  Speed portals are optional: only a dot that flies through one changes
 //  the speed, and it holds until the next portal you take.
 //
-//  Endless is the scored mode. The built-in levels are played from the
+//  The main mode is the Gauntlet: built-in levels back to back, drawn from
+//  harder pools the more you clear (the same score gates as Wave Gauntlet).
+//  One death ends the run; the score is how many levels you cleared.
+//  Endless is an unscored side mode. Single levels are played from the
 //  Practice picker (laid out like Wave Gauntlet's and Spider's): every level
 //  is open, nothing is ever scored, and dying puts you back at the start.
 //    Noclip   obstacles don't kill, hits are counted
@@ -37,6 +40,7 @@ const GA_BREAK_DUR = 2.4
 const GA_BREAK_CD  = 5.5
 const GA_CAM_LEAD  = 0.28   // dots sit this far across the screen
 const GA_BEST_KEY  = 'qg_ascent_best'
+const GA_GBEST_KEY = 'qg_ascent_gauntlet_best'
 
 
 // Quantum entropy: same pool and rejection sampling as core.js, which this
@@ -76,7 +80,8 @@ function gaRand(max) {
 const GA = {
   phase: 'idle', raf: null, last: 0,
   W: 0, H: AL_H, scale: 1,
-  mode: 'endless',          // 'endless' | 'practice' | 'test'
+  mode: 'gauntlet',         // 'gauntlet' | 'endless' | 'practice' | 'test'
+  clears: 0,                // gauntlet: levels cleared this run
   level: null, gen: null,
   x: 0, camX: 0, fwd: GA_FWD0, mult: 1, multTarget: 1,
   py: 0, ty: 0,
@@ -89,6 +94,8 @@ const GA = {
 
 let _gaCanvas, _gaCtx
 
+function gaGBest() { try { return +localStorage.getItem(GA_GBEST_KEY) || 0 } catch { return 0 } }
+function gaSetGBest(v) { try { localStorage.setItem(GA_GBEST_KEY, String(v)) } catch {} }
 function gaBest() { try { return +localStorage.getItem(GA_BEST_KEY) || 0 } catch { return 0 } }
 function gaSetBest(v) { try { localStorage.setItem(GA_BEST_KEY, String(v)) } catch {} }
 
@@ -229,6 +236,7 @@ function gaShowMenu() {
   document.getElementById('ga-over').classList.remove('show')
   document.getElementById('ga-overlay').style.display = 'flex'
   document.getElementById('ga-endless-best').textContent = gaBest()
+  const gb = document.getElementById('ga-gauntlet-best'); if (gb) gb.textContent = gaGBest()
   const cust = document.getElementById('ga-custom')
   cust.innerHTML = '<div class="ga-sub">Make your own levels in the <a href="editor.html?game=ascent">level editor</a> — they show up under Practice.</div>'
 
@@ -249,12 +257,40 @@ function gaTestLevel() {
   try { return alCleanLevel(JSON.parse(localStorage.getItem(AL_TEST_KEY) || 'null')) } catch { return null }
 }
 
+// ── Gauntlet ─────────────────────────────────────────────
+// Which levels the next one is drawn from, by how many you have cleared.
+// These are Wave Gauntlet's score gates (_g43GetPool), tier for tier; this
+// game has no boss tier yet, so its slots fall through to what exists.
+function gaGauntletPool(clears) {
+  const all = alBuiltinLevels(), T = d => all.filter(l => l.diff === d)
+  const easy = T('easy'), medium = T('medium'), hard = T('hard'), extreme = T('extreme'), fp = T('fp')
+  let pool
+  if      (clears < 3)  pool = easy
+  else if (clears < 5)  pool = [...easy, ...medium]
+  else if (clears < 9)  pool = [...medium, ...hard, ...extreme.slice(0, 1)]
+  else if (clears < 13) pool = [...hard, ...extreme]
+  else if (clears < 17) pool = extreme
+  else                  pool = fp
+  if (!pool.length) pool = extreme.length ? extreme : all      // a tier with nothing in it yet
+  return pool
+}
+function gaGauntletNext() {
+  let pool = gaGauntletPool(GA.clears)
+  if (pool.length > 1 && GA.level) pool = pool.filter(l => l.name !== GA.level.name)   // never the same level twice running
+  const lv = pool[gaRand(pool.length)]
+  if (!lv) return gaPlayEndless()                              // no built-in levels at all
+  const cleared = GA.clears
+  gaStart(lv)
+  GA.banner = { text: (cleared ? '✓ ' + cleared + ' · ' : '') + lv.name + ' — ' + alDiff(lv.diff).label.toUpperCase(), col: alDiff(lv.diff).col, t: 2.4 }
+}
+window.gaPlayGauntlet = function() { GA.mode = 'gauntlet'; GA.clears = 0; GA.level = null; gaGauntletNext() }
 window.gaPlayEndless = function() { GA.mode = 'endless'; gaStart(null) }
 window.gaPlayTest = function() { const lv = gaTestLevel(); if (lv) { GA.mode = 'test'; gaStart(lv) } }
 window.gaRetry = function() {
   if (GA.mode === 'test') gaPlayTest()
   else if (GA.mode === 'practice') gaPlayPractice(GA.pracGet)
-  else gaPlayEndless()
+  else if (GA.mode === 'endless') gaPlayEndless()
+  else gaPlayGauntlet()
 }
 window.gaMenu = function() { gaEndRun(); gaShowMenu() }
 
@@ -294,8 +330,9 @@ function gaStart(level) {
   }
   if (level) GA.pending = level.objects.map(o => Object.assign({}, o)).sort((a, b) => a.x - b.x)
   else { GA.gen = alGenerator(gaRand, {}); GA.gen.x = 900 }
-  document.getElementById('ga-score-label').textContent = level ? 'Progress' : 'Columns'
-  document.getElementById('ga-score').textContent = level ? '0%' : '0'
+  const gauntlet = GA.mode === 'gauntlet'
+  document.getElementById('ga-score-label').textContent = gauntlet ? 'Clears' : level ? 'Progress' : 'Columns'
+  document.getElementById('ga-score').textContent = gauntlet ? GA.clears : level ? '0%' : '0'
   cancelAnimationFrame(GA.raf)
   GA.last = performance.now()
   GA.raf = requestAnimationFrame(gaLoop)
@@ -339,6 +376,7 @@ function gaLoop(ts) {
     GA.parts = GA.parts.filter(p => p.life > 0)
     if (GA.shake > 0) GA.shake = Math.max(0, GA.shake - dt * 30)
     if (GA.phase === 'dead' && GA.practice) { if (GA.deadT > 0.55) return gaRespawn() }
+    else if (GA.phase === 'won' && GA.mode === 'gauntlet') { if (GA.deadT > 0.7) return gaGauntletNext() }   // straight into the next level
     else if (GA.deadT > 1.1) gaShowOver()
   }
   if (GA.phase === 'idle') return
@@ -478,8 +516,11 @@ function gaUpdate(dt) {
 
   if (GA.level) {
     const pct = Math.max(0, Math.min(100, Math.floor(GA.x / GA.endX * 100)))
-    document.getElementById('ga-score').textContent = pct + '%'
-    if (GA.x >= GA.endX) return gaWin()
+    if (GA.mode !== 'gauntlet') document.getElementById('ga-score').textContent = pct + '%'
+    if (GA.x >= GA.endX) {
+      if (GA.mode === 'gauntlet') { GA.clears++; document.getElementById('ga-score').textContent = GA.clears }
+      return gaWin()
+    }
   }
 
   const hit = GA.cols.some(c => gaHitsCol(c, GA.x, GA.py) || gaHitsCol(c, GA.x, GA.ty)) ||
@@ -535,7 +576,14 @@ function gaShowOver() {
   const sub   = document.getElementById('ga-final-best')
   const btns  = document.getElementById('ga-over-btns')
   let html = ''
-  if (GA.level) {
+  if (GA.mode === 'gauntlet') {
+    const best = Math.max(gaGBest(), GA.clears)
+    gaSetGBest(best)
+    title.textContent = 'Decohered!'
+    final.textContent = GA.clears
+    sub.innerHTML = `level${GA.clears === 1 ? '' : 's'} cleared · fell on ${_gaEsc(GA.level.name)} ${gaDiffBadge(GA.level.diff)}<br>` +
+      (GA.clears >= best && GA.clears > 0 ? 'New best!' : 'Best: ' + best)
+  } else if (GA.level) {
     const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.endX * 100)))
     title.textContent = won ? 'Level complete!' : 'Decohered!'
     final.textContent = pct + '%'
@@ -554,8 +602,8 @@ function gaShowOver() {
     // Nothing from a practice run is saved or submitted
     title.textContent = GA.plan ? (GA.evil ? 'Evilbot run' : 'Bot run') : won ? 'Practice clear!' : 'Practice run'
     sub.innerHTML += '<br>' + [GA.plan ? GA.plan.inputs + ' inputs' : '', GA.noclip ? GA.hits + ' hit' + (GA.hits === 1 ? '' : 's') : '', 'not scored'].filter(Boolean).join(' · ')
-  } else if (GA.mode === 'endless' && typeof openSubmit === 'function') {
-    GA.submit = GA.score
+  } else if (GA.mode === 'gauntlet' && typeof openSubmit === 'function') {
+    GA.submit = GA.clears
     const n = gaLeaderboardScore()
     html += `<button class="btn-primary" style="background:#a78bfa;border-color:#a78bfa;color:#13092b" onclick="openSubmit('ascent')">Submit Score</button><br><br>`
     if (typeof renderMedalDisplay === 'function') renderMedalDisplay('ga-medal-display', 'ascent', n)
@@ -835,7 +883,7 @@ window.stopGame48 = function() {
   if (GA.raf) { cancelAnimationFrame(GA.raf); GA.raf = null }
 }
 
-// What the leaderboard ranks: the columns passed in the Endless run just
-// played — one number from one run, like every other game on the board.
-// The built-in levels are practice only, so they never score.
+// What the leaderboard ranks: levels cleared in the Gauntlet run just played
+// — one number from one run, like Wave Gauntlet. Endless and Practice never
+// score.
 window.gaLeaderboardScore = function() { return Math.max(0, GA.submit || 0) }

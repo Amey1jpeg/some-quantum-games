@@ -1391,7 +1391,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/sfx.js?v=2"></script>
-<script src="js/core.js?v=29"></script>
+<script src="js/core.js?v=30"></script>
 <script src="js/auth.js"></script>
 <script src="js/game1.js?v=2"></script>
 <script src="js/game2.js?v=2"></script>
@@ -2015,15 +2015,20 @@
         <span style="color:#a78bfa">normal</span>) only count if you fly through them.
       </p>
       <div class="ga-row" id="ga-endless-row">
-        <button class="btn-primary" onclick="gaPlayEndless()">∞ Endless</button>
-        <small>Best <span id="ga-endless-best">0</span> columns</small>
+        <button class="btn-primary" style="background:#a78bfa;border-color:#a78bfa;color:#13092b;font-weight:700;" onclick="gaPlayGauntlet()">▶ Start Gauntlet</button>
+        <button class="btn-primary ga-ghost" onclick="gaPlayEndless()">∞ Endless</button>
       </div>
+      <p class="ga-howto" style="font-size:.78rem;margin-top:-.3rem">
+        Gauntlet: levels back to back, one life. Score = how many you clear.<br>
+        Easy → Medium → Hard → Extreme &nbsp;·&nbsp; best <b id="ga-gauntlet-best">0</b>
+        &nbsp;·&nbsp; Endless (unscored) best <span id="ga-endless-best">0</span> columns
+      </p>
       <div class="ga-row" id="ga-test-row" style="display:none">
         <button class="btn-primary" onclick="gaPlayTest()">▶ Test level</button>
       </div>
       <div id="ga-custom"></div>
       <div class="ga-practice-wrap">
-        <p>🔵 Practice Mode — all 22 levels, no leaderboard. Die and you restart the level.</p>
+        <p>🔵 Practice Mode — any level on its own, no leaderboard. Die and you restart the level.</p>
         <!-- Built from the level list (js/ascent.js gaBuildPractice), like the Wave Gauntlet and Spider pickers -->
         <div id="ga-practice" class="practice-picker"></div>
       </div>
@@ -2044,7 +2049,7 @@
 <script src="js/ascent-builtin.js?v=4"></script>
 <script src="js/ascent-levels.js?v=10"></script>
 <script src="js/ascent-bot.js?v=7"></script>
-<script src="js/ascent.js?v=21"></script>
+<script src="js/ascent.js?v=22"></script>
 
 
 

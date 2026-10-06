@@ -760,10 +760,9 @@ const MEDALS = {
   spider:       { bronze: 4,  silver: 10, gold: 18 },
   freighter:    { bronze: 15, silver: 40, gold: 80 },
   traprace:     { bronze: 3,  silver: 7,  gold: 10 },
-  // Total best-% across every built-in level, so 100 per level cleared.
-  // Columns passed in one Endless run (the built-in levels are practice
-  // only and never score). Starting guesses — tune against real scores.
-  ascent:       { bronze: 10, silver: 25, gold: 50 },
+  // Levels cleared in one Gauntlet run — same gates as Wave Gauntlet, so
+  // the same thresholds. Tune against real scores.
+  ascent:       { bronze: 5,  silver: 12, gold: 20 },
 }
 
 let authorScores   = { equation: null, aim: null, reaction: null, dodge: null, flash: null, deltae: null, gravity: null, typing: null, mrts: null, runsnake: null, gravflip: null, memseq: null, manualsort: null, wavedash: null, cps: null }
