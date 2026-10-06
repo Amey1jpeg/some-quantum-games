@@ -20,6 +20,10 @@
 
 const GA_FWD0      = 150    // endless: starting forward speed
 const GA_FWD_MAX   = 330
+// Applied to forward speed in every mode — the one dial for overall pace.
+// Level speeds and generator spacing are untouched, so slowing down only
+// ever leaves more room than a level was built for.
+const GA_PACE      = 0.88
 const GA_BREAK_DUR = 2.4
 const GA_BREAK_CD  = 5.5
 const GA_CAM_LEAD  = 0.28   // dots sit this far across the screen
@@ -217,7 +221,7 @@ function gaStart(level) {
   Object.assign(GA, {
     phase: 'playing', level, gen: null,
     x: 0, camX: -GA.W * GA_CAM_LEAD, fwd: level ? level.speed : GA_FWD0, mult: 1, multTarget: 1,
-    py: AL_HALF * 0.5, ty: AL_HALF * 1.5, swapped: false, swapCD: 0,
+    py: AL_HALF * 0.5, ty: AL_HALF * 1.5, swapped: false, swapCD: 0, pTilt: 0, tTilt: 0,
     broken: false, breakT: 0, breakCD: 0,
     cols: [], blocks: [], portals: [], orbs: [], pending: [], saws: [], strips: [], triggers: [], forced: false,
     parts: [], trail: [],
@@ -273,7 +277,7 @@ function gaLoop(ts) {
   if (GA.phase === 'playing') gaUpdate(dt)
   else if (GA.phase === 'dead' || GA.phase === 'won') {
     GA.deadT += dt
-    if (GA.phase === 'won') { GA.x += GA.fwd * GA.mult * dt; GA.camX += GA.fwd * GA.mult * dt * 0.4 }
+    if (GA.phase === 'won') { const v = GA.fwd * GA.mult * GA_PACE; GA.x += v * dt; GA.camX += v * dt * 0.4 }
     for (const p of GA.parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt }
     GA.parts = GA.parts.filter(p => p.life > 0)
     if (GA.shake > 0) GA.shake = Math.max(0, GA.shake - dt * 30)
@@ -289,7 +293,7 @@ function gaUpdate(dt) {
 
   if (!GA.level) GA.fwd = Math.min(GA_FWD_MAX, GA_FWD0 + GA.score * 4)
   GA.mult += (GA.multTarget - GA.mult) * Math.min(1, dt * 8)
-  const v = GA.fwd * GA.mult
+  const v = GA.fwd * GA.mult * GA_PACE
   GA.x += v * dt
   GA.camX = GA.x - GA.W * GA_CAM_LEAD
   for (const s of GA.stars) {
@@ -350,6 +354,9 @@ function gaUpdate(dt) {
   // Gravity belongs to the dot, not the half: blue falls up, pink falls down
   GA.py = clamp(GA.py + (pdy * AL_SPD_Y - AL_GRAV) * dt, !GA.swapped)
   GA.ty = clamp(GA.ty + (tdy * AL_SPD_Y + AL_GRAV) * dt, GA.swapped)
+  // Steering eased into a tilt for the ships (drawing only)
+  GA.pTilt += (pdy - GA.pTilt) * Math.min(1, dt * 10)
+  GA.tTilt += (tdy - GA.tTilt) * Math.min(1, dt * 10)
 
   gaFeed()
 
@@ -550,8 +557,8 @@ function gaDraw() {
       ctx.beginPath(); ctx.moveTo(sx(GA.x), GA.py); ctx.quadraticCurveTo(midX, half, sx(GA.x), GA.ty); ctx.stroke()
       ctx.shadowBlur = 0
     }
-    gaDot(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd', -1)
-    gaDot(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4', 1)
+    gaShip(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd', -1, GA.pTilt)
+    gaShip(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4', 1, GA.tTilt)
   }
 
   for (const p of GA.parts) {
@@ -698,15 +705,36 @@ function gaSpikes(ctx, x, y, w, h, col, block) {
   }
 }
 
-// grav: -1 = falls up, 1 = falls down — drawn as a small arrow on the dot
-function gaDot(ctx, x, y, fill, ring, grav) {
-  ctx.beginPath(); ctx.arc(x, y, AL_R, 0, Math.PI * 2)
+// A small ship flying right. grav: -1 = falls up, 1 = falls down — the ship
+// is drawn belly-toward-gravity, so blue flies upside down and you can read
+// each one's pull at a glance. tilt (-1..1) noses it toward where it is
+// steering. The hit area is still the AL_R circle around (x, y).
+function gaShip(ctx, x, y, fill, ring, grav, tilt) {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.rotate((tilt || 0) * 0.38)
+  ctx.scale(1, grav)                       // flip so the fin points away from gravity
+  // Engine flame
+  const fl = 9 + Math.random() * 7
+  const g = ctx.createLinearGradient(-AL_R, 0, -AL_R - fl, 0)
+  g.addColorStop(0, 'rgba(253,224,71,0.95)'); g.addColorStop(1, 'rgba(249,115,22,0)')
+  ctx.fillStyle = g
+  ctx.beginPath(); ctx.moveTo(-AL_R + 2, -4); ctx.lineTo(-AL_R - fl, 0); ctx.lineTo(-AL_R + 2, 4); ctx.closePath(); ctx.fill()
+  // Hull
+  ctx.beginPath()
+  ctx.moveTo(AL_R + 4, 0)                  // nose
+  ctx.lineTo(1, -6); ctx.lineTo(-AL_R + 1, -7)
+  ctx.lineTo(-AL_R - 2, -AL_R - 2)         // tail fin
+  ctx.lineTo(-AL_R + 3, -2)
+  ctx.lineTo(-AL_R, 0)
+  ctx.lineTo(-AL_R + 1, 7); ctx.lineTo(2, 6)
+  ctx.closePath()
   ctx.fillStyle = fill; ctx.shadowBlur = 12; ctx.shadowColor = ring; ctx.fill()
-  ctx.shadowBlur = 0; ctx.strokeStyle = ring; ctx.lineWidth = 2; ctx.stroke()
-  if (grav) {
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.beginPath(); ctx.moveTo(x - 4.5, y - grav * 1.5); ctx.lineTo(x + 4.5, y - grav * 1.5); ctx.lineTo(x, y + grav * 5); ctx.closePath(); ctx.fill()
-  }
+  ctx.shadowBlur = 0; ctx.strokeStyle = ring; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.stroke()
+  // Cockpit
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'
+  ctx.beginPath(); ctx.ellipse(3, -1.5, 4, 2.4, 0, 0, Math.PI * 2); ctx.fill()
+  ctx.restore()
 }
 
 // ── Site integration ─────────────────────────────────────
