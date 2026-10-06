@@ -6,6 +6,8 @@
 //    W / S   — mirrored: you and the twin move in opposite directions
 //    ↑ / ↓   — aligned: both move the same way, shifting how they line up
 //    SPACE   — break the link: W/S moves only you, ↑/↓ moves only the twin
+//  Gravity: you (blue) are pulled up, the twin (pink) is pulled down, and
+//  each keeps its own pull after a swap.
 //  While linked, pushing the two together at the middle line swaps them:
 //  each crosses into the other's half and keeps going the way it was.
 //  Speed portals are optional: only a dot that flies through one changes
@@ -345,8 +347,9 @@ function gaUpdate(dt) {
   // Each dot stays in the half it is currently in
   const topLo = AL_R, topHi = half - AL_R - 2, botLo = half + AL_R + 2, botHi = H - AL_R
   const clamp = (v, top) => Math.max(top ? topLo : botLo, Math.min(top ? topHi : botHi, v))
-  GA.py = clamp(GA.py + pdy * AL_SPD_Y * dt, !GA.swapped)
-  GA.ty = clamp(GA.ty + tdy * AL_SPD_Y * dt, GA.swapped)
+  // Gravity belongs to the dot, not the half: blue falls up, pink falls down
+  GA.py = clamp(GA.py + (pdy * AL_SPD_Y - AL_GRAV) * dt, !GA.swapped)
+  GA.ty = clamp(GA.ty + (tdy * AL_SPD_Y + AL_GRAV) * dt, GA.swapped)
 
   gaFeed()
 
@@ -547,8 +550,8 @@ function gaDraw() {
       ctx.beginPath(); ctx.moveTo(sx(GA.x), GA.py); ctx.quadraticCurveTo(midX, half, sx(GA.x), GA.ty); ctx.stroke()
       ctx.shadowBlur = 0
     }
-    gaDot(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd')
-    gaDot(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4')
+    gaDot(ctx, sx(GA.x), GA.py, '#3b82f6', '#93c5fd', -1)
+    gaDot(ctx, sx(GA.x), GA.ty, '#ec4899', '#f9a8d4', 1)
   }
 
   for (const p of GA.parts) {
@@ -695,10 +698,15 @@ function gaSpikes(ctx, x, y, w, h, col, block) {
   }
 }
 
-function gaDot(ctx, x, y, fill, ring) {
+// grav: -1 = falls up, 1 = falls down — drawn as a small arrow on the dot
+function gaDot(ctx, x, y, fill, ring, grav) {
   ctx.beginPath(); ctx.arc(x, y, AL_R, 0, Math.PI * 2)
   ctx.fillStyle = fill; ctx.shadowBlur = 12; ctx.shadowColor = ring; ctx.fill()
   ctx.shadowBlur = 0; ctx.strokeStyle = ring; ctx.lineWidth = 2; ctx.stroke()
+  if (grav) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    ctx.beginPath(); ctx.moveTo(x - 4.5, y - grav * 1.5); ctx.lineTo(x + 4.5, y - grav * 1.5); ctx.lineTo(x, y + grav * 5); ctx.closePath(); ctx.fill()
+  }
 }
 
 // ── Site integration ─────────────────────────────────────

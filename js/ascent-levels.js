@@ -30,6 +30,11 @@ const AL_HALF     = 300
 const AL_PAD      = 6
 const AL_R        = 11      // dot radius
 const AL_SPD_Y    = 230     // vertical steering speed
+// Each dot has its own gravity and keeps it for the whole run, including
+// after a swap: you (blue) fall UP, the twin (pink) falls DOWN. It is a
+// steady pull, well under steering speed, so it shapes where the dots rest
+// rather than taking control away.
+const AL_GRAV     = 50
 const AL_COL_W    = 18
 const AL_BLOCK    = 26
 const AL_PORTAL_W = 26
@@ -74,7 +79,8 @@ function alStripRect(o) {
 }
 
 // Forward distance covered while steering `travel` units vertically
-function alReach(travel, fwd) { return (travel / AL_SPD_Y) * fwd * 1.3 + 50 }
+// Assumes the worst case, steering against gravity the whole way.
+function alReach(travel, fwd) { return (travel / (AL_SPD_Y - AL_GRAV)) * fwd * 1.3 + 50 }
 
 // ── Generator ────────────────────────────────────────────
 // Streams objects chunk by chunk. Spacing is worked out from how far the
