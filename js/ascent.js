@@ -334,14 +334,23 @@ function gaUpdate(dt) {
   }
   pdy = Math.max(-1, Math.min(1, pdy)); tdy = Math.max(-1, Math.min(1, tdy))
 
-  // Swap: while linked, the two pressed together at the middle line pass
-  // through each other. They trade halves by exchanging positions, and each
-  // keeps its own controls and heading — so holding the same key carries
-  // them apart on the far side, still mirrored. Not in desync sections.
+  // Thrust + gravity → velocity. Gravity belongs to the ship, not the half:
+  // blue falls up, pink falls down.
+  const lim = v => Math.max(-AL_VMAX, Math.min(AL_VMAX, v))
+  GA.pv = lim(GA.pv + (pdy * AL_THRUST - AL_GRAV) * dt)
+  GA.tv = lim(GA.tv + (tdy * AL_THRUST + AL_GRAV) * dt)
+
+  // Swap: while linked, whenever the two meet at the middle line moving
+  // toward each other they pass through and trade halves — whichever colour
+  // is on which side, and whether thrust or gravity brought them together.
+  // Each keeps its own controls, speed and gravity, so a swapped pair falls
+  // back through the line to its home side unless you hold it apart. Not in
+  // desync sections.
   if (GA.swapCD > 0) GA.swapCD -= dt
-  const closing = Math.sign(pdy) === Math.sign(GA.ty - GA.py) && Math.sign(tdy) === Math.sign(GA.py - GA.ty)
+  const closing = Math.sign(GA.pv) === Math.sign(GA.ty - GA.py) && Math.sign(GA.tv) === Math.sign(GA.py - GA.ty)
   if (!GA.broken && !GA.forced && GA.swapCD <= 0 && closing &&
-      Math.abs(GA.ty - GA.py) < AL_R * 2 + 8 + (Math.abs(GA.pv) + Math.abs(GA.tv)) * dt) {   // reach ahead by this frame's travel, so they cross at speed instead of bumping the line first
+      // reach ahead by this frame's travel, so they cross at speed instead of bumping the line first
+      Math.abs(GA.ty - GA.py) < AL_R * 2 + 8 + (Math.abs(GA.pv) + Math.abs(GA.tv)) * dt) {
     const y = GA.py; GA.py = GA.ty; GA.ty = y
     GA.swapped = !GA.swapped
     GA.swapCD = 0.2
@@ -350,12 +359,8 @@ function gaUpdate(dt) {
     if (typeof SFX !== 'undefined') SFX.whoosh()
   }
 
-  // Thrust + gravity → velocity → position. Gravity belongs to the ship, not
-  // the half: blue falls up, pink falls down. Each stays in the half it is
-  // currently in, and stops dead against an edge.
-  const lim = v => Math.max(-AL_VMAX, Math.min(AL_VMAX, v))
-  GA.pv = lim(GA.pv + (pdy * AL_THRUST - AL_GRAV) * dt)
-  GA.tv = lim(GA.tv + (tdy * AL_THRUST + AL_GRAV) * dt)
+  // Velocity → position. Each ship stays in the half it is currently in,
+  // and stops dead against an edge.
   const move = (y, v, top) => {
     const lo = top ? AL_R : half + AL_R + 2, hi = top ? half - AL_R - 2 : H - AL_R
     const ny = y + v * dt

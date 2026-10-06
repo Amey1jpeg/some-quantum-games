@@ -33,7 +33,7 @@ const AL_R        = 11      // dot radius
 // press accelerates the ship, so it swings through a curved arc and carries
 // momentum. Each ship has its own gravity and keeps it for the whole run,
 // including after a swap: blue falls UP, pink falls DOWN.
-const AL_GRAV     = 480     // gravity, units/s²
+const AL_GRAV     = 400     // gravity, units/s²
 const AL_THRUST   = 1050    // steering thrust, units/s² (more than gravity, so you can climb against it)
 const AL_VMAX     = 250     // top vertical speed, units/s
 
