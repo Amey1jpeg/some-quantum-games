@@ -178,7 +178,7 @@ const STALL_GAMES = new Set([
   40,  // UFO
   43,  // Wave Gauntlet
   44,  // Spider
-  48,  // Entangled Ascent
+  48,  // Entangled Gauntlet
 ])
 
 // ── How to play ─────────────────────────────────────────
@@ -979,7 +979,7 @@ const LB_TABS = [
   { id: 'lb-tab-44', game: 'spider',       label: 'Spin Flip',     color: '#a855f7' },
   { id: 'lb-tab-45', game: 'freighter',    label: 'Freighter',     color: '#22d3ee' },
   { id: 'lb-tab-46', game: 'traprace',     label: 'Trap Race',     color: '#fb923c' },
-  { id: 'lb-tab-48', game: 'ascent',       label: 'Ascent',        color: '#a78bfa' },
+  { id: 'lb-tab-48', game: 'ascent',       label: 'Ent. Gauntlet', color: '#a78bfa' },
 ]
 
 window.switchLbTab = function(game) {

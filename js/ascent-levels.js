@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  ENTANGLED ASCENT — level format, generator and built-in levels
+//  ENTANGLED GAUNTLET — level format, generator and built-in levels
 //  Shared by index.html (the game) and editor.html (the editor).
 //
 //  Levels live in a fixed 600-unit-tall world and are scaled to the

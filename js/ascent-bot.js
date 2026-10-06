@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  ENTANGLED ASCENT — practice bots
+//  ENTANGLED GAUNTLET — practice bots
 //
 //  abPlan(level, W) works out, for every stretch of the level, which ship
 //  states (height + vertical speed) can still reach the finish. The bot then

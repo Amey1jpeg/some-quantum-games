@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  LEVEL EDITOR — Entangled Ascent (game 48 in index.html)
+//  LEVEL EDITOR — Entangled Gauntlet (game 48 in index.html)
 //  Its own tab and panel in editor.html, separate from the
 //  Wave Gauntlet / Spider / UFO editor in editor.js.
 //
@@ -180,9 +180,9 @@ function _aeBuiltinFile() {
     return `  { name: ${JSON.stringify(lv.name)}, diff: '${lv.diff}', speed: ${lv.speed}, length: ${Math.round(lv.length)}, objects: [\n${objs}\n  ] },`
   }
   return `// ═══════════════════════════════════════════════════════
-//  ENTANGLED ASCENT — built-in levels
+//  ENTANGLED GAUNTLET — built-in levels
 //  This whole file is written by the level editor: editor.html →
-//  🔗 Entangled Ascent → Built-in → "⬇ Save built-in file". Replace this
+//  🔗 Entangled Gauntlet → Built-in → "⬇ Save built-in file". Replace this
 //  file with the one it gives you and commit it — that is what players get.
 //  The game sorts levels from Easy to Frame Perfect; each unlocks the next.
 // ═══════════════════════════════════════════════════════

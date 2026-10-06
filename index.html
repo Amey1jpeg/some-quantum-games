@@ -36,8 +36,8 @@
   <div class="game-cards">
     <div class="game-card" onclick="showGame(48)" style="border-color:#a78bfa44;">
       <div class="card-icon">🔗</div>
-      <div class="card-title">Entangled Ascent</div>
-      <div class="card-desc">Entanglement meets Jet Rush. You and your mirrored twin fly forward through spike columns — W/S mirrors you, ↑/↓ moves you both, and SPACE breaks the link when the gaps don't line up.</div>
+      <div class="card-title">Entangled Gauntlet</div>
+      <div class="card-desc">Two entangled ships, one pilot. Blue falls up, pink falls down — thrust them through a gauntlet of spike levels that gets harder the further you go. One life; how many can you clear?</div>
       <span class="card-tag" style="background:rgba(167,139,250,.15);color:#a78bfa;border-color:#a78bfa44;">Entanglement</span>
     </div>
     <div class="game-card" onclick="showGame(46)">
@@ -308,7 +308,7 @@
         <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-44" onclick="switchLbTab('spider')">Spin Flip</button>
         <button class="lb-tab" style="border-color:#22d3ee;color:#22d3ee;" id="lb-tab-45" onclick="switchLbTab('freighter')">Freighter</button>
         <button class="lb-tab" style="border-color:#fb923c;color:#fb923c;" id="lb-tab-46" onclick="switchLbTab('traprace')">Trap Race</button>
-        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-48" onclick="switchLbTab('ascent')">Ascent</button>
+        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-48" onclick="switchLbTab('ascent')">Ent. Gauntlet</button>
         <button class="lb-tab" style="border-color:#06b6d4;color:#06b6d4;" id="lb-tab-42" onclick="switchLbTab('typerracer')">Type Racer</button>
         <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-mp" onclick="switchLbTab('mp')">⚔️ MP Wins</button>
       </div>
@@ -1391,7 +1391,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/sfx.js?v=2"></script>
-<script src="js/core.js?v=30"></script>
+<script src="js/core.js?v=31"></script>
 <script src="js/auth.js"></script>
 <script src="js/game1.js?v=2"></script>
 <script src="js/game2.js?v=2"></script>
@@ -1985,7 +1985,7 @@
 <script src="js/game47.js?v=3"></script>
 
 <!-- ══════════════════════════════════
-     GAME 48 — ENTANGLED ASCENT
+     GAME 48 — ENTANGLED GAUNTLET
      Moved in from the standalone ascent.html so it behaves like
      every other game: leaderboard, submit modal, sign-in, stall
      allowlist and theme all come for free.
@@ -1997,7 +1997,7 @@
          title → score → entropy exactly like every other game. SPACE does
          the same thing; the button is there for touch. -->
     <button class="btn-back ga-break-btn" onclick="gaBreak()">⚡ Break link</button>
-    <span class="game-title">🔗 Entangled Ascent</span>
+    <span class="game-title">🔗 Entangled Gauntlet</span>
     <div class="score-badge" style="border-color:#a78bfa;color:#a78bfa;"><span id="ga-score-label">Columns</span> <span id="ga-score">0</span></div>
     <div class="entropy-indicator"><div class="entropy-dot" id="ga-entropy-dot"></div><span id="ga-entropy-label">loading…</span></div>
   </div>
@@ -2005,7 +2005,7 @@
   <div class="canvas-arena" id="ga-arena">
     <canvas id="ga-canvas"></canvas>
     <div class="canvas-overlay" id="ga-overlay">
-      <h3>🔗 Entangled Ascent</h3>
+      <h3>🔗 Entangled Gauntlet</h3>
       <p class="ga-howto">
         You (blue, top) and your twin (pink, bottom) fly forward — <b>touch a spike and it's over</b>.
         <b>W</b> thrusts both ships against their gravity (<b>S</b> the other way), <b>↑/↓</b> moves you both the same way.
@@ -2046,10 +2046,10 @@
   </div>
 </section>
 
-<script src="js/ascent-builtin.js?v=4"></script>
-<script src="js/ascent-levels.js?v=10"></script>
-<script src="js/ascent-bot.js?v=7"></script>
-<script src="js/ascent.js?v=22"></script>
+<script src="js/ascent-builtin.js?v=5"></script>
+<script src="js/ascent-levels.js?v=11"></script>
+<script src="js/ascent-bot.js?v=8"></script>
+<script src="js/ascent.js?v=23"></script>
 
 
 
