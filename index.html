@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Games — Powered by real qubits</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=5" />
 </head>
 <body>
 
@@ -34,6 +34,12 @@
     Built a level? Make one in the <a href="editor.html" style="color:var(--accent2)">level editor</a> and submit it.
   </p>
   <div class="game-cards">
+    <div class="game-card" onclick="showGame(48)" style="border-color:#a78bfa44;">
+      <div class="card-icon">🔗</div>
+      <div class="card-title">Entangled Gauntlet</div>
+      <div class="card-desc">Two entangled ships, one pilot. Blue falls up, pink falls down — thrust them through a gauntlet of spike levels that gets harder the further you go. One life; how many can you clear?</div>
+      <span class="card-tag" style="background:rgba(167,139,250,.15);color:#a78bfa;border-color:#a78bfa44;">Entanglement</span>
+    </div>
     <div class="game-card" onclick="showGame(46)">
       <div class="card-icon">🪤</div>
       <div class="card-title">Trap Race</div>
@@ -223,14 +229,14 @@
     <div class="game-card" onclick="showGame(39)" style="border-color:#a855f744;">
       <div class="card-icon">🗝️</div>
       <div class="card-title">LIMBO</div>
-      <div class="card-desc">Pure key-memory. Memorise the glowing key, track it through 20 fast shuffles, then click the correct one. Can you beat your streak?</div>
-      <span class="card-tag" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:#a855f744;">Memory</span>
+      <div class="card-desc">The key is in limbo — neither here nor there until you look. Memorise the glowing one, track it through 20 fast shuffles, then pick where it collapsed.</div>
+      <span class="card-tag" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:#a855f744;">Superposition</span>
     </div>
     <div class="game-card" onclick="showGame(40)" style="border-color:#a855f744;">
       <div class="card-icon">🛸</div>
-      <div class="card-title">UFO Flap</div>
-      <div class="card-desc">Flappy Bird in space. Tap or Space to thrust up — dodge the neon pillars. Gets faster and tighter the further you go!</div>
-      <span class="card-tag" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:#a855f744;">Dodge</span>
+      <div class="card-title">Quantum Tunnel</div>
+      <div class="card-desc">Quantum tunnelling, the arcade version. Tap or Space to thrust — slip your saucer through the barrier gaps. A classical particle would bounce off; you get through.</div>
+      <span class="card-tag" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:#a855f744;">Quantum Tunnelling</span>
     </div>
     <div class="game-card" onclick="showGame(41)" style="border-color:#f9731644;">
       <div class="card-icon">🚀</div>
@@ -242,13 +248,13 @@
       <div class="card-icon">🌊</div>
       <div class="card-title">Wave Gauntlet</div>
       <div class="card-desc">Survive a series of random wave challenges — easy, medium, hard, frame perfect, and Ol' Death Corridor. How many can you clear in a row?</div>
-      <span class="card-tag" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:#22c55e44;">Wave · FP</span>
+      <span class="card-tag" style="background:rgba(34,197,94,.15);color:#22c55e;border-color:#22c55e44;">Wavefunction</span>
     </div>
     <div class="game-card" onclick="showGame(44)" style="border-color:#a855f744;">
       <div class="card-icon">🕷</div>
-      <div class="card-title">Spider</div>
-      <div class="card-desc">Snap between floor and ceiling to dodge blocks. Tap once to teleport to the opposite surface — web threads mark every flip.</div>
-      <span class="card-tag" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:#a855f744;">GD · Endless</span>
+      <div class="card-title">Spin Flip</div>
+      <div class="card-desc">A two-state system, like a real particle’s spin: you are up or down, never between. Each tap flips you to the other state — time them so the blocks pass on the empty side.</div>
+      <span class="card-tag" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:#a855f744;">Quantum Spin</span>
     </div>
     <div class="game-card" onclick="showGame(47)" style="border-color:#38bdf844;">
       <div class="card-icon">🔗</div>
@@ -297,11 +303,12 @@
         <button class="lb-tab" style="border-color:#06b6d4;color:#06b6d4;" id="lb-tab-35" onclick="switchLbTab('wavedash')">Wave Dash</button>
         <button class="lb-tab" style="border-color:#6366f1;color:#6366f1;" id="lb-tab-36" onclick="switchLbTab('cps')">CPS</button>
         <button class="lb-tab" style="border-color:#f472b6;color:#f472b6;" id="lb-tab-37" onclick="switchLbTab('rhythm')">Rhythm</button>
-        <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-40" onclick="switchLbTab('ufo')">UFO Flap</button>
+        <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-40" onclick="switchLbTab('ufo')">Tunnel</button>
         <button class="lb-tab" style="border-color:#22c55e;color:#22c55e;" id="lb-tab-43" onclick="switchLbTab('wavegauntlet')">Wave Gauntlet</button>
-        <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-44" onclick="switchLbTab('spider')">Spider</button>
+        <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-44" onclick="switchLbTab('spider')">Spin Flip</button>
         <button class="lb-tab" style="border-color:#22d3ee;color:#22d3ee;" id="lb-tab-45" onclick="switchLbTab('freighter')">Freighter</button>
         <button class="lb-tab" style="border-color:#fb923c;color:#fb923c;" id="lb-tab-46" onclick="switchLbTab('traprace')">Trap Race</button>
+        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-48" onclick="switchLbTab('ascent')">Ent. Gauntlet</button>
         <button class="lb-tab" style="border-color:#06b6d4;color:#06b6d4;" id="lb-tab-42" onclick="switchLbTab('typerracer')">Type Racer</button>
         <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-mp" onclick="switchLbTab('mp')">⚔️ MP Wins</button>
       </div>
@@ -1384,7 +1391,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/sfx.js?v=2"></script>
-<script src="js/core.js?v=22"></script>
+<script src="js/core.js?v=31"></script>
 <script src="js/auth.js"></script>
 <script src="js/game1.js?v=2"></script>
 <script src="js/game2.js?v=2"></script>
@@ -1624,13 +1631,13 @@
 <section id="game40" class="screen game-screen">
   <div class="top-bar">
     <button class="btn-back" onclick="goHome()">← Back</button>
-    <span class="game-title">🛸 UFO Flap</span>
+    <span class="game-title">🛸 Quantum Tunnel</span>
     <div class="score-badge" style="border-color:#a855f7;color:#a855f7;">Pipes <span id="g40-score-hud">0</span></div>
   </div>
   <div class="canvas-arena" id="g40-arena">
     <canvas id="g40-canvas"></canvas>
     <div class="canvas-overlay" id="g40-overlay">
-      <h3>🛸 UFO Flap</h3>
+      <h3>🛸 Quantum Tunnel</h3>
       <p style="color:var(--muted);font-size:.9rem;text-align:center;max-width:300px;">
         Tap, click, or press <b>Space</b> to thrust up.<br>
         Release to fall — dodge the neon pillars.<br>
@@ -1662,7 +1669,7 @@
   </div>
 </section>
 
-<script src="js/game40.js?v=17"></script>
+<script src="js/game40.js?v=18"></script>
 
 <section id="game41" class="screen game-screen">
   <div class="top-bar">
@@ -1787,13 +1794,13 @@
 <section id="game44" class="screen game-screen">
   <div class="top-bar">
     <button class="btn-back" onclick="goHome()">← Back</button>
-    <span class="game-title">🕷 Spider</span>
+    <span class="game-title">⮃ Spin Flip</span>
     <div class="score-badge" style="border-color:#a855f7;color:#a855f7;">Clears <span id="spd-score-hud">0</span></div>
   </div>
   <div class="canvas-arena" id="spd-arena">
     <canvas id="spd-canvas"></canvas>
     <div class="canvas-overlay" id="spd-overlay">
-      <h3>🕷 Spider</h3>
+      <h3>⮃ Spin Flip</h3>
       <p style="color:var(--muted);font-size:.88rem;text-align:center;max-width:300px;margin-bottom:.8rem">
         Snap between floor and ceiling to dodge blocks.<br>
         Each tap teleports you to the opposite surface.<br>
@@ -1826,7 +1833,7 @@
   </div>
 </section>
 
-<script src="js/game44.js?v=17"></script>
+<script src="js/game44.js?v=18"></script>
 
 <!-- ══════════════════════════════════
      GAME 45 — QUANTUM FREIGHTER (co-op)
@@ -1976,6 +1983,74 @@
 </section>
 
 <script src="js/game47.js?v=3"></script>
+
+<!-- ══════════════════════════════════
+     GAME 48 — ENTANGLED GAUNTLET
+     Moved in from the standalone ascent.html so it behaves like
+     every other game: leaderboard, submit modal, sign-in, stall
+     allowlist and theme all come for free.
+══════════════════════════════════ -->
+<section id="game48" class="screen game-screen">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goHome()">← Back</button>
+    <!-- Break link sits with Back on the left, so the right-hand side reads
+         title → score → entropy exactly like every other game. SPACE does
+         the same thing; the button is there for touch. -->
+    <button class="btn-back ga-break-btn" onclick="gaBreak()">⚡ Break link</button>
+    <span class="game-title">🔗 Entangled Gauntlet</span>
+    <div class="score-badge" style="border-color:#a78bfa;color:#a78bfa;"><span id="ga-score-label">Columns</span> <span id="ga-score">0</span></div>
+    <div class="entropy-indicator"><div class="entropy-dot" id="ga-entropy-dot"></div><span id="ga-entropy-label">loading…</span></div>
+  </div>
+
+  <div class="canvas-arena" id="ga-arena">
+    <canvas id="ga-canvas"></canvas>
+    <div class="canvas-overlay" id="ga-overlay">
+      <h3>🔗 Entangled Gauntlet</h3>
+      <p class="ga-howto">
+        You (blue, top) and your twin (pink, bottom) fly forward — <b>touch a spike and it's over</b>.
+        <b>W</b> thrusts both ships against their gravity (<b>S</b> the other way), <b>↑/↓</b> moves you both the same way.
+        Blue falls up, pink falls down. Whenever the two meet at the middle line they <b>swap sides</b>, each keeping its own gravity.
+        <b style="color:#fca5a5">Red DESYNC</b> columns need re-aligning, or <b>SPACE</b> to break the link.
+        Speed portals (<span style="color:#f97316">fast</span> · <span style="color:#22d3ee">slow</span> ·
+        <span style="color:#a78bfa">normal</span>) only count if you fly through them.
+      </p>
+      <div class="ga-row" id="ga-endless-row">
+        <button class="btn-primary" style="background:#a78bfa;border-color:#a78bfa;color:#13092b;font-weight:700;" onclick="gaPlayGauntlet()">▶ Start Gauntlet</button>
+        <button class="btn-primary ga-ghost" onclick="gaPlayEndless()">∞ Endless</button>
+      </div>
+      <p class="ga-howto" style="font-size:.78rem;margin-top:-.3rem">
+        Gauntlet: levels back to back, one life. Score = how many you clear.<br>
+        Easy → Medium → Hard → Extreme &nbsp;·&nbsp; best <b id="ga-gauntlet-best">0</b>
+        &nbsp;·&nbsp; Endless (unscored) best <span id="ga-endless-best">0</span> columns
+      </p>
+      <div class="ga-row" id="ga-test-row" style="display:none">
+        <button class="btn-primary" onclick="gaPlayTest()">▶ Test level</button>
+      </div>
+      <div id="ga-custom"></div>
+      <div class="ga-practice-wrap">
+        <p>🔵 Practice Mode — any level on its own, no leaderboard. Die and you restart the level.</p>
+        <!-- Built from the level list (js/ascent.js gaBuildPractice), like the Wave Gauntlet and Spider pickers -->
+        <div id="ga-practice" class="practice-picker"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-over-overlay" id="ga-over">
+    <div class="game-over-card">
+      <h2 id="ga-over-title">Decohered!</h2>
+      <div class="final-score" id="ga-final" style="color:#a78bfa">0</div>
+      <p id="ga-final-best"></p>
+      <div id="ga-medal-display"></div>
+      <div id="ga-over-btns"></div>
+    </div>
+  </div>
+</section>
+
+<script src="js/ascent-builtin.js?v=5"></script>
+<script src="js/ascent-levels.js?v=11"></script>
+<script src="js/ascent-bot.js?v=8"></script>
+<script src="js/ascent.js?v=23"></script>
+
 
 
 
