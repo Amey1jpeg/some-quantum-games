@@ -1181,19 +1181,6 @@ body {
 #ga-score-label { color: inherit; font-weight: 400 }
 .ga-howto { color: var(--muted); font-size: .84rem; text-align: center; max-width: 560px; line-height: 1.5 }
 .ga-break-btn { font-size: .8rem; padding: .35rem .8rem }
-.ga-levels { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: .5rem; width: min(640px, 92%) }
-.ga-lvl {
-  display: flex; flex-direction: column; align-items: flex-start; gap: .1rem; text-align: left;
-  background: var(--card); border: 1px solid var(--border); color: var(--text);
-  border-radius: 10px; padding: .5rem .65rem; cursor: pointer; font-family: inherit;
-}
-.ga-lvl:hover:not(:disabled) { border-color: #a78bfa }
-.ga-lvl b { font-size: 1.1rem; color: #a78bfa }
-.ga-lvl span { font-size: .8rem }
-.ga-lvl small { font-size: .68rem; color: var(--muted) }
-.ga-lvl.done { border-color: rgba(34,197,94,.45) }
-.ga-lvl.done small { color: var(--success) }
-.ga-lvl.locked { opacity: .45; cursor: not-allowed }
 .ga-row { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; justify-content: center }
 .ga-row small { color: var(--muted) }
 .ga-sub { width: 100%; text-align: center; color: var(--muted); font-size: .76rem; margin-bottom: .2rem }

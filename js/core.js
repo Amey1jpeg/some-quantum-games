@@ -192,10 +192,10 @@ const STALL_HOWTO = {
         steps: ['One key lights up \u2014 remember which one it is',
                 'It gets shuffled 20 times, fast, and you lose sight of it',
                 'Pick where it ended up \u2014 guess wrong and it was never anywhere'] },
-  48: { keys: 'Drag \u00B7 or arrow keys',
-        steps: ['Drag in the top half to steer you, the bottom half for your twin',
-                'Both of you have to fit through the gaps \u2014 one spike ends the run',
-                'Tap BREAK LINK when the two gaps do not line up'] },
+  48: { keys: 'Drag \u00B7 or W and S',
+        steps: ['Two ships fall apart from each other; thrust pushes them together',
+                'Drag in either half to steer the ship there, or hold W to thrust',
+                'One spike ends the run \u2014 clear as many levels as you can'] },
   40: { keys: 'Tap / click / SPACE',
         steps: ['Each tap fires the thruster, let go and you fall',
                 'Slip through the gaps in each barrier \u2014 that is the tunnelling bit',
@@ -243,7 +243,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=10'
+    link.href = QG_ROOT + 'css/stall.css?v=11'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {

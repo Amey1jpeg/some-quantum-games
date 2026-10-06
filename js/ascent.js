@@ -25,8 +25,9 @@
 //    Evilbot  flies the level making as many inputs as it can
 //  The bots live in ascent-bot.js.
 //
-//  Modes: built-in levels (unlock in order), Endless (quantum-generated),
-//  your own levels from the editor, and ?test=1 for the editor's Test Play.
+//  Modes: Gauntlet (the scored one), Endless (quantum-generated), Practice
+//  (every level, always open), your own levels from the editor, and ?test=1
+//  for the editor's Test Play.
 //  Level format and generator live in ascent-levels.js.
 // ═══════════════════════════════════════════════════════
 
