@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Games — Powered by real qubits</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=3" />
+  <link rel="stylesheet" href="css/style.css?v=5" />
 </head>
 <body>
 
@@ -1391,7 +1391,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/sfx.js?v=2"></script>
-<script src="js/core.js?v=28"></script>
+<script src="js/core.js?v=29"></script>
 <script src="js/auth.js"></script>
 <script src="js/game1.js?v=2"></script>
 <script src="js/game2.js?v=2"></script>
@@ -2014,7 +2014,6 @@
         Speed portals (<span style="color:#f97316">fast</span> · <span style="color:#22d3ee">slow</span> ·
         <span style="color:#a78bfa">normal</span>) only count if you fly through them.
       </p>
-      <div id="ga-levels" class="ga-levels"></div>
       <div class="ga-row" id="ga-endless-row">
         <button class="btn-primary" onclick="gaPlayEndless()">∞ Endless</button>
         <small>Best <span id="ga-endless-best">0</span> columns</small>
@@ -2023,6 +2022,11 @@
         <button class="btn-primary" onclick="gaPlayTest()">▶ Test level</button>
       </div>
       <div id="ga-custom"></div>
+      <div class="ga-practice-wrap">
+        <p>🔵 Practice Mode — all 22 levels, no leaderboard. Die and you restart the level.</p>
+        <!-- Built from the level list (js/ascent.js gaBuildPractice), like the Wave Gauntlet and Spider pickers -->
+        <div id="ga-practice" class="practice-picker"></div>
+      </div>
     </div>
   </div>
 
@@ -2039,7 +2043,8 @@
 
 <script src="js/ascent-builtin.js?v=4"></script>
 <script src="js/ascent-levels.js?v=10"></script>
-<script src="js/ascent.js?v=18"></script>
+<script src="js/ascent-bot.js?v=7"></script>
+<script src="js/ascent.js?v=21"></script>
 
 
 

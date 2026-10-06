@@ -761,10 +761,9 @@ const MEDALS = {
   freighter:    { bronze: 15, silver: 40, gold: 80 },
   traprace:     { bronze: 3,  silver: 7,  gold: 10 },
   // Total best-% across every built-in level, so 100 per level cleared.
-  // There are two levels (DRIFT, JUMPSCARES), so 200 is the maximum:
-  // bronze is clearing one, gold is clearing both. These need raising
-  // whenever a level is added, or gold stops meaning "finished it".
-  ascent:       { bronze: 100, silver: 150, gold: 200 },
+  // Columns passed in one Endless run (the built-in levels are practice
+  // only and never score). Starting guesses — tune against real scores.
+  ascent:       { bronze: 10, silver: 25, gold: 50 },
 }
 
 let authorScores   = { equation: null, aim: null, reaction: null, dodge: null, flash: null, deltae: null, gravity: null, typing: null, mrts: null, runsnake: null, gravflip: null, memseq: null, manualsort: null, wavedash: null, cps: null }
