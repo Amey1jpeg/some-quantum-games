@@ -199,7 +199,7 @@ const STALL_HOWTO = {
   40: { keys: 'Tap / click / SPACE',
         steps: ['Each tap fires the thruster, let go and you fall',
                 'Slip through the gaps in each barrier \u2014 that is the tunnelling bit',
-                'Green pillars are solid ground, you can land on them'] },
+                'Blinking pillars are solid ground, you can land on them'] },
   43: { keys: 'Hold / release',
         steps: ['Hold to climb, let go to dive',
                 'You are always moving diagonally, never flat',

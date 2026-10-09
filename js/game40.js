@@ -18,6 +18,10 @@ const G40_ACCEL     = 3.5
 const G40_SIM_DT    = 1 / 240
 const G40_MAX_STEPS = 16
 const G40_RETRY_WAIT = 0.5   // beat to see the crash before it resets
+// Every pillar is rolled off the quantum bit pool as it is laid out. One that
+// comes up a tunnel barrier does not kill: fly into it and you come out the
+// far side, level with its gap.
+const G40_TUNNEL_PCT = 20
 
 const G40 = {
   active:   false,
@@ -187,7 +191,7 @@ function _g40LoadLevel(w, h) {
   G40.portalCool = 0
   G40.pipes     = tmpl.pipes.map(p => ({
     x: p.at + ufoX0, cy: p.cyf * h, gap: (p.gapf || tmpl.gapf) * h,
-    safe: p.safe || null, passed: false,
+    safe: p.safe || null, passed: false, tunnel: _g40RollTunnel(),
   }))
   G40.y   = h / 2; G40.vy   = 0
   G40.p2y = h / 2; G40.p2vy = 0
@@ -432,11 +436,13 @@ function _g40DoThrust() {
   SFX.tap()
 }
 
+function _g40RollTunnel() { return qRandInt(100) < G40_TUNNEL_PCT }
+
 function _g40Spawn(x, h) {
   const margin = Math.floor(h * 0.18)
   const range  = Math.floor(h * 0.64)
   const cy = margin + (range > 0 ? qRandInt(range + 1) : 0)
-  G40.pipes.push({ x, cy, passed: false })
+  G40.pipes.push({ x, cy, passed: false, tunnel: _g40RollTunnel() })
 }
 
 function _g40Loop(ts) {
@@ -578,18 +584,31 @@ function _g40Loop(ts) {
           const inX  = ufoX + RX > p.x && ufoX - RX < p.x + G40_PIPE_W
           if (!inX) continue
           if (y + RY > p.cy + half) {           // came down onto the lower pillar
-            if (p.safe !== 'bottom') return { dead: true, y, vy }
-            return { dead: false, y: p.cy + half - RY, vy: 0, rest: true }
+            if (p.safe === 'bottom') return { dead: false, y: p.cy + half - RY, vy: 0, rest: true }
+            if (p.tunnel) return { dead: false, y: p.cy, vy: 0, tunnel: p }
+            return { dead: true, y, vy }
           }
           if (y - RY < p.cy - half) {           // went up into the upper pillar
-            if (p.safe !== 'top') return { dead: true, y, vy }
-            return { dead: false, y: p.cy - half + RY, vy: 0, rest: true }
+            if (p.safe === 'top') return { dead: false, y: p.cy - half + RY, vy: 0, rest: true }
+            if (p.tunnel) return { dead: false, y: p.cy, vy: 0, tunnel: p }
+            return { dead: true, y, vy }
           }
         }
         return { dead: false, y, vy }
       }
+      // Tunnelling: the world jumps so the ship sits just clear of the pillar.
+      // Pillars are in screen space, so they shift by what the scroll jumps —
+      // the same move a portal makes.
+      const tunnelPast = (p) => {
+        const jump = p.x + G40_PIPE_W - (ufoX - RX) + 1
+        for (const q of G40.pipes) q.x -= jump
+        if (G40.gauntlet) G40.scrollX += jump
+        G40.portalFlash = 0.3
+        SFX.powerup()
+      }
       if (!G40.p1dead) {
         const r = resolve(G40.y, G40.vy)
+        if (r.tunnel) tunnelPast(r.tunnel)
         if (r.dead && G40.noclip) {
           // Editor test play: show the hit, keep flying
           G40.y = Math.max(RY + 2, Math.min(h - RY - 2, G40.y)); G40.vy = 0
@@ -598,6 +617,7 @@ function _g40Loop(ts) {
       }
       if (G40.multi && !G40.p2dead) {
         const r = resolve(G40.p2y, G40.p2vy)
+        if (r.tunnel) tunnelPast(r.tunnel)
         if (r.dead) G40.p2dead = true
         else { G40.p2y = r.y; G40.p2vy = r.vy }
       }
@@ -709,8 +729,8 @@ function _g40Draw(ctx, w, h) {
 
   for (const p of G40.pipes) {
     const halfGap = (p.gap != null ? p.gap : G40.gap) / 2
-    _g40DrawPipe(ctx, p.x, 0,              G40_PIPE_W, p.cy - halfGap,            true,  p.safe === 'top')
-    _g40DrawPipe(ctx, p.x, p.cy + halfGap, G40_PIPE_W, h - (p.cy + halfGap), false, p.safe === 'bottom')
+    _g40DrawPipe(ctx, p.x, 0,              G40_PIPE_W, p.cy - halfGap,            true,  p.safe === 'top', p.tunnel)
+    _g40DrawPipe(ctx, p.x, p.cy + halfGap, G40_PIPE_W, h - (p.cy + halfGap), false, p.safe === 'bottom', p.tunnel)
   }
 
   const ufoX  = w * 0.20
@@ -806,10 +826,38 @@ function _g40Draw(ctx, w, h) {
 
 // `safe` draws the pillar green: landing on it is allowed, so it has to be
 // obvious at a glance which side you can rest on and which will kill you.
-function _g40DrawPipe(ctx, x, y, pw, ph, isTop, safe) {
+// `tunnel` draws it as a see-through blue barrier with a crawling dashed edge,
+// the same blue as a portal mouth: it will carry you through, not kill you.
+function _g40DrawPipe(ctx, x, y, pw, ph, isTop, safe, tunnel) {
   if (ph <= 0) return
   const capH = 18, capX = x - 5, capW = pw + 10
   const capY = isTop ? y + ph - capH : y
+  if (tunnel && !safe) {
+    ctx.save()
+    ctx.globalAlpha = 0.45
+    ctx.fillStyle = '#082f49'
+    ctx.fillRect(x, y, pw, ph)
+    ctx.fillRect(capX, capY, capW, capH)
+    ctx.globalAlpha = 1
+    ctx.strokeStyle = '#38bdf8'
+    ctx.lineWidth   = 1.8
+    ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 14
+    ctx.setLineDash([7, 5])
+    ctx.lineDashOffset = -performance.now() / 40
+    ctx.strokeRect(x + 0.9, y, pw - 1.8, ph)
+    ctx.strokeRect(capX + 0.9, capY, capW - 1.8, capH)
+    ctx.restore()
+    return
+  }
+  // The stall shows a rest pillar as an ordinary pillar that blinks, rather
+  // than a green one.
+  if (safe && window.QG_STALL) {
+    ctx.save()
+    ctx.globalAlpha = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(performance.now() / 130))
+    _g40DrawPipe(ctx, x, y, pw, ph, isTop, false, false)
+    ctx.restore()
+    return
+  }
   const edge = safe ? '#22c55e' : '#a855f7'
 
   ctx.fillStyle = safe ? '#04140b' : '#06091a'
