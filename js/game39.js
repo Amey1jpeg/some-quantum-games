@@ -115,10 +115,14 @@ function _g39StartRound() {
   G39.keyPx      = Array.from({length: 8}, (_, k) => _g39SlotPx(k, w, h))
 
   if (G39.audio) { try { G39.audio.pause() } catch(e) {}; G39.audio = null }
-  try {
-    G39.audio = new Audio('limbo-keys-made-with-Voicemod.mp3')
-    G39.audio.play().catch(() => {})
-  } catch(e) {}
+  // The stand runs this on loop all day next to other games and people
+  // talking, so the track is off there. Everywhere else it plays as usual.
+  if (!window.QG_STALL) {
+    try {
+      G39.audio = new Audio('limbo-keys-made-with-Voicemod.mp3')
+      G39.audio.play().catch(() => {})
+    } catch(e) {}
+  }
 
   c.removeEventListener('click', _g39Click)
   c.removeEventListener('touchend', _g39Click)
