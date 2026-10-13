@@ -520,7 +520,7 @@ const G43 = {
   score:0, challenge:null,
   keyframes:[], clearAt:0, scrollX:0, deco:[],
   trail:[],
-  announceT:0, clearedT:0, t:0, banner:null, nextLv:null,
+  announceT:0, clearedT:0, t:0, banner:null, nextLv:null, prevLv:null,
   deadT:0, showOver:false, shake:0,
   // practice = this run never scores. noclip = walls don't kill.
   // They used to be one flag; separating them lets you practise a level
@@ -656,7 +656,7 @@ function _g43Start(practice, practiceDiff, multi, noclip) {
     waveR:G43_WAVE_R_NRM,
     score:0, challenge:null, keyframes:[], clearAt:0, scrollX:0,
     trail:[],
-    announceT:0, clearedT:0, t:0, banner:null, nextLv:null,
+    announceT:0, clearedT:0, t:0, banner:null, nextLv:null, prevLv:null,
     deadT:0, showOver:false, shake:0,
     practice:!!practice, noclip:practice ? (noclip !== false) : false,
     practiceDiff:practiceDiff||null, practiceLevel:G43.practiceLevel || null, hitFlash:0,
@@ -935,6 +935,12 @@ function _g43GetPool(score) {
 function _g43Merge(w, h) {
   const lv = G43.nextLv || _g43SetSeam(_g43BuildChallenge(h, G43.score), G43, h)
   const was = G43.clearAt
+  // Hold on to the level just finished so the corridor behind the wave is
+  // still the one it came out of, rather than cutting off at the flag.
+  G43.prevLv = {
+    challenge: G43.challenge, keyframes: G43.keyframes, clearAt: was,
+    seamDy: G43.seamDy, seamSpan: G43.seamSpan,
+  }
   _g43Apply(lv)
   G43.scrollX   -= was
   G43.nextLv     = _g43SetSeam(_g43BuildChallenge(h, G43.score + 1), lv, h)
@@ -1029,6 +1035,7 @@ function _g43LoadChallenge(w, h) {
   // One level ahead is kept built so it can be drawn past the finish line.
   // Practice and test play fly a single level, and online is driven by the
   // host, so neither looks ahead.
+  G43.prevLv = null
   G43.nextLv = (!G43.practice && !G43.testLevel && !G43_roomCode)
     ? _g43SetSeam(_g43BuildChallenge(h, G43.score + 1), G43, h) : null
   if (G43_roomCode && G43_isHost) G43_pendingSyncChallenge = _g43SerializeChallenge(h)
@@ -1042,7 +1049,20 @@ function _g43LoadChallenge(w, h) {
 // clearAt — so this only ever affects what is drawn.
 function _g43WallAt(col, h) {
   if (G43.nextLv && col > G43.clearAt) return _g43WallOf(G43.nextLv, col - G43.clearAt, h)
+  // Behind the wave, columns below zero belong to the level just finished,
+  // whose own columns run up to its clearAt. Without this the corridor
+  // behind you snapped to the current level's opening height.
+  if (G43.prevLv && col < 0) return _g43WallOf(G43.prevLv, G43.prevLv.clearAt + col, h)
   return _g43WallOf(G43, col, h)
+}
+
+// Which level's colour a column should be drawn in, so the difficulty of
+// what is coming is readable before you reach it.
+function _g43ColAt(col) {
+  const of = lv => G43_DIFF_COL[lv && lv.challenge && lv.challenge.diff] || '#22c55e'
+  if (G43.nextLv && col > G43.clearAt) return of(G43.nextLv)
+  if (G43.prevLv && col < 0)           return of(G43.prevLv)
+  return G43_DIFF_COL[G43.challenge && G43.challenge.diff] || '#22c55e'
 }
 
 // Levels all open centred but some close as much as 80px off centre, and
@@ -1567,7 +1587,10 @@ function _g43Draw(ctx, w, h) {
   // Cache wall lookups (ci = actual count after loop)
   const wallCache = []
   for (let x = 0; x <= w + G43_DRAW_STEP; x += G43_DRAW_STEP) {
-    wallCache.push(_g43WallAt(scrollI + x - waveX, h))
+    const col = scrollI + x - waveX
+    const wl  = _g43WallAt(col, h)
+    wl.col    = _g43ColAt(col)
+    wallCache.push(wl)
   }
   const wc = wallCache.length
 
@@ -1585,27 +1608,32 @@ function _g43Draw(ctx, w, h) {
   }
   ctx.lineTo(w+1, h+1); ctx.closePath(); ctx.fill()
 
-  // Top inner edge (glowing line — shows the slope geometry)
-  ctx.beginPath()
-  for (let i = 0; i < wc; i++) {
-    const x = i * G43_DRAW_STEP
-    const y = wallCache[i].cy - wallCache[i].gapH / 2
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+  // Inner edges (the glowing lines that show the slope geometry).
+  //
+  // Stroked in runs of one colour rather than one path, so the stretch past
+  // the finish line carries the next level's difficulty colour and the
+  // stretch behind the wave keeps the last one's. Each run starts on the
+  // sample the previous run ended on, or there would be a gap at the join.
+  const _edge = pick => {
+    let i = 0
+    while (i < wc) {
+      const col = wallCache[i].col
+      let j = i
+      while (j + 1 < wc && wallCache[j + 1].col === col) j++
+      const end = Math.min(j + 1, wc - 1)
+      ctx.beginPath()
+      for (let k = i; k <= end; k++) {
+        const x = k * G43_DRAW_STEP, y = pick(wallCache[k])
+        k === i ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+      }
+      ctx.strokeStyle = col; ctx.lineWidth = 1.8
+      ctx.shadowColor = col; ctx.shadowBlur = 10
+      ctx.stroke(); ctx.shadowBlur = 0
+      i = j + 1
+    }
   }
-  ctx.strokeStyle = mainCol; ctx.lineWidth = 1.8
-  ctx.shadowColor = mainCol; ctx.shadowBlur = 10
-  ctx.stroke(); ctx.shadowBlur = 0
-
-  // Bottom inner edge
-  ctx.beginPath()
-  for (let i = 0; i < wc; i++) {
-    const x = i * G43_DRAW_STEP
-    const y = wallCache[i].cy + wallCache[i].gapH / 2
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
-  }
-  ctx.strokeStyle = mainCol; ctx.lineWidth = 1.8
-  ctx.shadowColor = mainCol; ctx.shadowBlur = 10
-  ctx.stroke(); ctx.shadowBlur = 0
+  _edge(wl => wl.cy - wl.gapH / 2)
+  _edge(wl => wl.cy + wl.gapH / 2)
 
   // ── Wave trails ──────────────────────────────────────
   // Same look as Wave Dash: one wide translucent pass for the glow,
