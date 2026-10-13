@@ -111,6 +111,19 @@ window.mpFindMatch = function(game, { onQueued, onMatched, onLeft, statusEl, btn
 
 let qBits      = null   // Uint8Array of packed quantum bits
 let qBitPos    = 0      // read cursor, in bits
+let qUsed      = 0      // bits actually consumed this session
+
+// Where in the pool to start reading. Only the starting point comes from
+// the browser's own RNG; everything drawn afterwards is quantum.
+function _qStartOffset(totalBits) {
+  try {
+    const a = new Uint32Array(1)
+    crypto.getRandomValues(a)
+    return a[0] % totalBits
+  } catch {
+    return Math.floor(Math.random() * totalBits)
+  }
+}
 let qWraps     = 0      // times the pool has been reused
 let qInitPromise = null
 
@@ -243,7 +256,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=14'
+    link.href = QG_ROOT + 'css/stall.css?v=15'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -420,7 +433,15 @@ async function initCurby() {
       if (!res.ok) throw new Error('HTTP ' + res.status)
       qBits = new Uint8Array(await res.arrayBuffer())
       if (!qBits.length) throw new Error('empty')
-      qBitPos = 0
+      // Start somewhere random in the pool rather than at bit zero.
+      //
+      // The file never changes, so reading it from the start meant every
+      // page load replayed the identical sequence of numbers — the same
+      // levels in the same order in Wave Gauntlet, the same shuffles, the
+      // same everything. The bits handed out are still the measured ones;
+      // only where we begin reading is chosen locally.
+      qBitPos = _qStartOffset(qBits.length * 8)
+      qUsed   = 0
       setEntropyLive(true)
       return true
     } catch (e) {
@@ -440,6 +461,7 @@ function qBit() {
   const byte = qBits[(qBitPos >> 3) % qBits.length]
   const bit  = (byte >> (7 - (qBitPos & 7))) & 1
   qBitPos++
+  qUsed++
   if (qBitPos >= qBits.length * 8) { qBitPos = 0; qWraps++ }
   return bit
 }
@@ -459,9 +481,11 @@ window.qEntropyStatus = function() {
   if (!qBits) return { live:false }
   const total = qBits.length * 8
   return {
-    live: true, totalBits: total, used: qBitPos, wraps: qWraps,
-    remaining: total - qBitPos,
-    percent: +(100 * (1 - qBitPos / total)).toFixed(1),
+    // Counted from what this session has consumed, not the cursor — the
+    // cursor now starts at a random point, so it is not a usage figure.
+    live: true, totalBits: total, used: qUsed, wraps: qWraps, cursor: qBitPos,
+    remaining: Math.max(0, total - qUsed),
+    percent: +(100 * (1 - qUsed / total)).toFixed(1),
   }
 }
 

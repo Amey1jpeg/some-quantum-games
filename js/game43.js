@@ -898,8 +898,16 @@ function _g43CustomEligible(score) {
 }
 
 // Weighted random pick — weight 1 is normal, 3 is 3× as likely
-function _g43Pick(pool) {
+// `avoid` is the level just played. Drawing from a tier of three or four
+// meant the same one could come up several times running, which reads as
+// the gauntlet being stuck rather than unlucky. Skipped only when there is
+// something else to pick.
+function _g43Pick(pool, avoid) {
   if (!pool.length) return null
+  if (avoid) {
+    const others = pool.filter(t => t.name !== avoid)
+    if (others.length) pool = others
+  }
   const total = pool.reduce((s, t) => s + (t.weight ?? 1), 0)
   if (total <= 0) return pool[qRandInt(pool.length)]
   let r = (qRandInt(10000) / 10000) * total
@@ -933,7 +941,8 @@ function _g43GetPool(score) {
 // keeps flying exactly where it was. Then the level after that is built,
 // so there is always one more to see ahead.
 function _g43Merge(w, h) {
-  const lv = G43.nextLv || _g43SetSeam(_g43BuildChallenge(h, G43.score), G43, h)
+  const lv = G43.nextLv ||
+    _g43SetSeam(_g43BuildChallenge(h, G43.score, G43.challenge && G43.challenge.name), G43, h)
   const was = G43.clearAt
   // Hold on to the level just finished so the corridor behind the wave is
   // still the one it came out of, rather than cutting off at the flag.
@@ -943,7 +952,7 @@ function _g43Merge(w, h) {
   }
   _g43Apply(lv)
   G43.scrollX   -= was
-  G43.nextLv     = _g43SetSeam(_g43BuildChallenge(h, G43.score + 1), lv, h)
+  G43.nextLv     = _g43SetSeam(_g43BuildChallenge(h, G43.score + 1, lv.challenge.name), lv, h)
   G43.phase      = 'playing'
   G43.portalCool = 0
   G43.laps       = 0
@@ -958,7 +967,7 @@ function _g43Merge(w, h) {
 // level after this one can be built early and drawn past the finish line.
 // `score` is which gate to draw the pool from — for the next level that is
 // one higher, since you will have cleared this one by the time it arrives.
-function _g43BuildChallenge(h, score) {
+function _g43BuildChallenge(h, score, prevName) {
   let pool
   if (G43.testLevel) {
     pool = [G43.testLevel]
@@ -973,7 +982,8 @@ function _g43BuildChallenge(h, score) {
     pool = _g43GetPool(score)
   }
   if (!pool.length) pool = [...G43_POOL.easy]
-  const tmpl   = _g43Pick(pool)
+  // Practice repeats one level on purpose, so it is the only mode that may
+  const tmpl   = _g43Pick(pool, (G43.practice || G43.testLevel) ? null : prevName)
   const kfData = tmpl.gen(h)
   // Portals: { at, cf, toAt, toCf, mouth }. You have to fly through the
   // mouth — an opening of `mouth` of the height, centred on cf — and you
@@ -1037,7 +1047,7 @@ function _g43LoadChallenge(w, h) {
   // host, so neither looks ahead.
   G43.prevLv = null
   G43.nextLv = (!G43.practice && !G43.testLevel && !G43_roomCode)
-    ? _g43SetSeam(_g43BuildChallenge(h, G43.score + 1), G43, h) : null
+    ? _g43SetSeam(_g43BuildChallenge(h, G43.score + 1, G43.challenge && G43.challenge.name), G43, h) : null
   if (G43_roomCode && G43_isHost) G43_pendingSyncChallenge = _g43SerializeChallenge(h)
 }
 
