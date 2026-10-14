@@ -314,12 +314,6 @@ function qgApplyStall() {
     card.insertBefore(box, tag || null)
   })
 
-  // Leaderboard tabs for games that are not on the stall, and the MP-wins
-  // tab, would otherwise sit there listing games nobody can reach from here.
-  document.querySelectorAll('[id^="lb-tab-"]').forEach(tab => {
-    const m = tab.id.match(/^lb-tab-(\d+)$/)
-    if (!m || !STALL_GAMES.has(+m[1])) tab.remove()
-  })
   // Building a level is not a stand activity
   document.querySelectorAll('a[href^="editor.html"]').forEach(a => {
     const line = a.closest('p') || a
@@ -410,11 +404,6 @@ function qgApplyBeta() {
       card.appendChild(f)
     }
   })
-  // Leaderboard tabs for beta games
-  for (const id of BETA_GAMES) {
-    const tab = document.getElementById('lb-tab-' + id)
-    if (tab && !QG_BETA) tab.remove()
-  }
   const banner = document.getElementById('beta-banner')
   if (banner) banner.style.display = QG_BETA ? 'flex' : 'none'
 }
@@ -966,91 +955,106 @@ function scoreToDisplay(game, score) {
   return score.toLocaleString()
 }
 
-let lbCurrentGame = 'parkour'
-
-const LB_TABS = [
-  { id: 'lb-tab-1',  game: 'equation', label: 'Equation', color: null,        cls: '' },
-  { id: 'lb-tab-2',  game: 'aim',      label: 'Aim',      color: null,        cls: 'cyan' },
-  { id: 'lb-tab-3',  game: 'reaction', label: 'Reaction', color: 'var(--success)' },
-  { id: 'lb-tab-4',  game: 'dodge',    label: 'Dodge',    color: 'var(--danger)'  },
-  { id: 'lb-tab-5',  game: 'flash',    label: 'Flash',    color: '#f59e0b'         },
-  { id: 'lb-tab-6',  game: 'deltae',   label: 'Delta E',  color: '#ec4899'         },
-  { id: 'lb-tab-10', game: 'gravity',      label: 'Gravity',  color: 'var(--accent)'   },
-  { id: 'lb-tab-11', game: 'typing',       label: 'Typing',   color: '#34d399'          },
-  { id: 'lb-tab-16', game: 'qclicker',    label: 'Clicker',  color: '#fbbf24'          },
-  { id: 'lb-tab-13', game: 'collider',     label: 'Collider',     color: '#22d3ee'  },
-  { id: 'lb-tab-14', game: 'wavecollapse', label: 'Wave',         color: '#c084fc'  },
-  { id: 'lb-tab-15', game: 'entanglement', label: 'Entanglement', color: '#a78bfa'  },
-  { id: 'lb-tab-17', game: 'qsnake',       label: 'Snake',        color: '#4ade80'  },
-  { id: 'lb-tab-18', game: 'qwhip',        label: 'Whip',         color: '#a78bfa'  },
-  { id: 'lb-tab-22', game: 'gravitysling', label: 'Sling',        color: '#fca5a5'  },
-  { id: 'lb-tab-23', game: 'chargerush',   label: 'Charge',       color: '#818cf8'  },
-  { id: 'lb-tab-24', game: 'pulse',        label: 'Pulse',        color: '#fbbf24'  },
-  { id: 'lb-tab-26', game: 'orbit',        label: 'Orbit',        color: '#34d399'  },
-  { id: 'lb-tab-28', game: 'parkour',      label: 'Parkour',      color: '#fb923c'  },
-  { id: 'lb-tab-29', game: 'qblaster',    label: 'Blaster',      color: '#e879f9'  },
-  { id: 'lb-tab-30', game: 'mrts',        label: 'Micro RTS',    color: '#60a5fa'  },
-  { id: 'lb-tab-31', game: 'runsnake',    label: 'Run Snake',    color: '#4ade80'  },
-  { id: 'lb-tab-32', game: 'gravflip',    label: 'Grav Flip',    color: '#f472b6'  },
-  { id: 'lb-tab-33', game: 'memseq',      label: 'Memory',       color: '#a78bfa'  },
-  { id: 'lb-tab-34', game: 'manualsort',  label: 'Manual Sort',  color: '#4a7c59'  },
-  { id: 'lb-tab-35', game: 'wavedash',    label: 'Wave Dash',    color: '#06b6d4'  },
-  { id: 'lb-tab-36', game: 'cps',         label: 'CPS',          color: '#6366f1'  },
-  { id: 'lb-tab-37', game: 'rhythm',     label: 'Rhythm',     color: '#f472b6' },
-  { id: 'lb-tab-42', game: 'typerracer', label: 'Typer',      color: '#06b6d4' },
-  { id: 'lb-tab-40', game: 'ufo',        label: 'Tunnel', color: '#a855f7' },
-  { id: 'lb-tab-43', game: 'wavegauntlet', label: 'Wave Gauntlet', color: '#22c55e' },
-  { id: 'lb-tab-44', game: 'spider',       label: 'Spin Flip',     color: '#a855f7' },
-  { id: 'lb-tab-45', game: 'freighter',    label: 'Freighter',     color: '#22d3ee' },
-  { id: 'lb-tab-46', game: 'traprace',     label: 'Trap Race',     color: '#fb923c' },
-  { id: 'lb-tab-48', game: 'ascent',       label: 'Ent. Gauntlet', color: '#a78bfa' },
+// Every game with a board, keyed by its showGame number, in panel order
+const LB_GAMES = [
+  { n: 1,  game: 'equation',     label: 'Equation' },
+  { n: 2,  game: 'aim',          label: 'Aim' },
+  { n: 3,  game: 'reaction',     label: 'Reaction' },
+  { n: 4,  game: 'dodge',        label: 'Dodge' },
+  { n: 5,  game: 'flash',        label: 'Flash' },
+  { n: 6,  game: 'deltae',       label: 'Delta E' },
+  { n: 10, game: 'gravity',      label: 'Gravity' },
+  { n: 11, game: 'typing',       label: 'Typing' },
+  { n: 16, game: 'qclicker',     label: 'Clicker' },
+  { n: 13, game: 'collider',     label: 'Collider' },
+  { n: 14, game: 'wavecollapse', label: 'Wave' },
+  { n: 15, game: 'entanglement', label: 'Entanglement' },
+  { n: 17, game: 'qsnake',       label: 'Snake' },
+  { n: 18, game: 'qwhip',        label: 'Whip' },
+  { n: 22, game: 'gravitysling', label: 'Sling' },
+  { n: 23, game: 'chargerush',   label: 'Charge' },
+  { n: 24, game: 'pulse',        label: 'Pulse' },
+  { n: 26, game: 'orbit',        label: 'Orbit' },
+  { n: 28, game: 'parkour',      label: 'Parkour' },
+  { n: 29, game: 'qblaster',     label: 'Blaster' },
+  { n: 30, game: 'mrts',         label: 'Micro RTS' },
+  { n: 31, game: 'runsnake',     label: 'Run Snake' },
+  { n: 32, game: 'gravflip',     label: 'Grav Flip' },
+  { n: 33, game: 'memseq',       label: 'Memory' },
+  { n: 34, game: 'manualsort',   label: 'Manual Sort' },
+  { n: 35, game: 'wavedash',     label: 'Wave Dash' },
+  { n: 36, game: 'cps',          label: 'CPS' },
+  { n: 37, game: 'rhythm',       label: 'Rhythm' },
+  { n: 40, game: 'ufo',          label: 'Tunnel' },
+  { n: 43, game: 'wavegauntlet', label: 'Wave Gauntlet' },
+  { n: 44, game: 'spider',       label: 'Spin Flip' },
+  { n: 45, game: 'freighter',    label: 'Freighter' },
+  { n: 46, game: 'traprace',     label: 'Trap Race' },
+  { n: 48, game: 'ascent',       label: 'Ent. Gauntlet' },
+  { n: 42, game: 'typerracer',   label: 'Type Racer' },
 ]
 
-window.switchLbTab = function(game) {
-  lbCurrentGame = game
-  // MP wins tab is special
-  const mpBtn = document.getElementById('lb-tab-mp')
-  if (mpBtn) mpBtn.style.cssText = game === 'mp'
-    ? 'background:#a78bfa;border-color:#a78bfa;color:#fff;'
-    : 'border-color:#a78bfa;color:#a78bfa;'
-  if (game === 'mp') { loadMpLeaderboard(); return }
-  for (const tab of LB_TABS) {
-    const el = document.getElementById(tab.id)
-    if (!el) continue
-    const active = tab.game === game
-    if (tab.color) {
-      el.style.cssText = active
-        ? `background:${tab.color};border-color:${tab.color};color:#fff;`
-        : `border-color:${tab.color};color:${tab.color};`
-      el.className = 'lb-tab'
-    } else if (tab.cls === 'cyan') {
-      el.className = 'lb-tab cyan' + (active ? ' active' : '')
-      el.style.cssText = ''
-    } else {
-      el.className = 'lb-tab' + (active ? ' active' : '')
-      el.style.cssText = ''
-    }
-  }
-  loadLeaderboard(game)
+// The boards this site can reach: the stall shows only its own games and
+// no MP wins, the main site leaves out beta games
+function lbAvailableGames() {
+  const list = LB_GAMES.filter(g =>
+    !(QG_STALL && !STALL_GAMES.has(g.n)) && !(BETA_GAMES.has(g.n) && !QG_BETA))
+  if (!QG_STALL) list.push({ n: null, game: 'mp', label: '⚔️ MP Wins' })
+  return list
 }
 
-async function loadLeaderboard(game) {
-  const list = document.getElementById('lb-list')
+// ── Names vs accounts ─────────────────────────────────
+// A signed-in player can post scores under any number of names; every
+// row still carries their user_id. 'names' ranks each name on its own,
+// 'accounts' folds every name an account has used into one entry.
+let lbView = 'names'
+try { if (localStorage.getItem('qg_lb_view') === 'accounts') lbView = 'accounts' } catch {}
+
+window.setLbView = function(view) {
+  lbView = view === 'accounts' ? 'accounts' : 'names'
+  try { localStorage.setItem('qg_lb_view', lbView) } catch {}
+  syncLbViewButtons()
+  if (typeof qgLbPanelRefresh === 'function') qgLbPanelRefresh()
+}
+
+function syncLbViewButtons() {
+  document.querySelectorAll('.lb-view-btn').forEach(b => {
+    const on = b.dataset.view === lbView
+    b.classList.toggle('active', on)
+    b.setAttribute('aria-pressed', on ? 'true' : 'false')
+  })
+}
+if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', syncLbViewButtons)
+
+// Set by a name's account button; the accounts view highlights that row
+let lbFocusAccount = null
+
+// user_id → display_name, filled lazily as boards load
+const lbProfileNames = new Map()
+async function lbLoadProfileNames(ids) {
+  const missing = ids.filter(id => !lbProfileNames.has(id))
+  if (!missing.length) return
+  try {
+    const rows = await sbFetch(`/rest/v1/profiles?select=id,display_name&id=in.(${missing.join(',')})`)
+    for (const p of rows || []) lbProfileNames.set(p.id, p.display_name)
+  } catch (e) { console.warn('Profile lookup failed:', e) }
+}
+
+async function loadLeaderboard(game, list) {
   list.innerHTML = '<div class="lb-loading"><div class="spinner"></div> Loading…</div>'
   try {
-    console.log('Loading leaderboard for game:', game)
     const order = LOWER_IS_BETTER.has(game) ? 'score.asc' : 'score.desc'
-    const url = `/rest/v1/leaderboard?game=eq.${game}&order=${order}&limit=100`
-    console.log('Fetching URL:', url)
-    const rawRows = await sbFetch(url)
-    console.log('Raw response:', rawRows)
+    const rawRows = await sbFetch(`/rest/v1/leaderboard?game=eq.${game}&order=${order}&limit=100`)
     if (!rawRows || rawRows.length === 0) {
       list.innerHTML = '<div class="lb-empty">No scores yet — be the first!</div>'
       return
     }
+    const userIds = [...new Set(rawRows.map(r => r.user_id).filter(Boolean))]
+    await lbLoadProfileNames(userIds)
+    const byAccount = lbView === 'accounts'
     const seen = new Map()
     for (const r of rawRows) {
-      const key = r.name.toLowerCase()
+      const key = (byAccount && r.user_id) ? 'u:' + r.user_id : 'n:' + r.name.toLowerCase()
       if (!seen.has(key)) {
         seen.set(key, r)
       } else {
@@ -1065,11 +1069,25 @@ async function loadLeaderboard(game) {
 
     const rankLabels = ['🥇', '🥈', '🥉']
     const myName = cookieGet('player_name') || ''
+    const myId = (typeof AUTH !== 'undefined' && AUTH.user) ? AUTH.user.id : null
+    const isMine = r => (myId && r.user_id === myId) || (!!myName && r.name === myName)
     const pb = getPB(game)
     list.innerHTML = rows.map((r, i) => {
-      const isAdmin = r.name.toUpperCase() === ADMIN_NAME
-      const isMe = myName && r.name === myName
-      const isArav = _coauthorFor(r.name) !== null
+      // In accounts view the entry is the account, with the name it scored
+      // under beside it. In names view every row ends in an account button:
+      // a linked name jumps to its account, a guest name can be linked.
+      const acct  = r.user_id ? lbProfileNames.get(r.user_id) : null
+      const label = (byAccount && acct) ? acct : r.name
+      const alias = byAccount && acct && r.name.toLowerCase() !== acct.toLowerCase()
+        ? ` <span class="lb-alias">as ${escHtml(r.name)}</span>` : ''
+      const acctLink = byAccount ? '' : `<span class="lb-acct-slot">${r.user_id
+        ? `<a class="lb-acct-link" href="#" data-uid="${escHtml(r.user_id)}" title="Show ${escHtml(acct || 'this account')} in the accounts list">👤 ${escHtml(acct || 'Account')}</a>`
+        : `<a class="lb-acct-link lb-acct-claim" href="#" data-name="${escHtml(r.name)}" title="Link ${escHtml(r.name)}'s guest scores to an account">🔗 Link</a>`}</span>`
+      // Author and co-author are account titles, so they show in the
+      // accounts view only. In names view everyone gets a plain medal.
+      const isAdmin = byAccount && label.toUpperCase() === ADMIN_NAME
+      const isMe = isMine(r)
+      const isArav = byAccount && _coauthorFor(label) !== null
       const aravBadge = isArav
         ? ' <span class="medal medal-coauthor">🌟 co-author</span>' : ''
       const authorBadge = isAdmin
@@ -1089,15 +1107,26 @@ async function loadLeaderboard(game) {
         : game === 'typing' ? 'class="lb-score" style="color:#34d399"'
         : 'class="lb-score"'
       return `
-        <div class="lb-row" style="${isMe ? 'background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);' : ''}">
+        <div class="lb-row"${r.user_id ? ` data-uid="${escHtml(r.user_id)}"` : ''} style="${isMe ? 'background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);' : ''}">
           <span class="lb-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${rankLabels[i] || i+1}</span>
-          <span class="lb-name">${escHtml(r.name)}${authorBadge}${aravBadge}${youBadge}${medalBadge}</span>
+          <span class="lb-name">${escHtml(label)}${alias}${authorBadge}${aravBadge}${youBadge}${medalBadge}</span>
           <span ${scoreStyle}>${scoreDisplay}</span>
+          ${acctLink}
         </div>`
     }).join('')
 
+    // Arrived here from a name's account button: point at the account
+    if (byAccount && lbFocusAccount) {
+      const row = list.querySelector(`.lb-row[data-uid="${lbFocusAccount}"]`)
+      lbFocusAccount = null
+      if (row) {
+        row.classList.add('lb-row-focus')
+        row.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      }
+    }
+
     const pbValid = LOWER_IS_BETTER.has(game) ? pb < 99999 : pb > 0
-    if (pbValid && myName && !rows.find(r => r.name === myName)) {
+    if (pbValid && myName && !rows.find(isMine)) {
       const pbDisplay = scoreToDisplay(game, pb)
       list.innerHTML += `
         <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
@@ -1133,8 +1162,7 @@ window.recordMpResult = async function(game, won) {
   } catch(e) { console.warn('recordMpResult failed:', e) }
 }
 
-async function loadMpLeaderboard() {
-  const list = document.getElementById('lb-list')
+async function loadMpLeaderboard(list) {
   list.innerHTML = '<div class="lb-loading"><div class="spinner"></div> Loading…</div>'
   try {
     const rows = await sbFetch('/rest/v1/mp_wins?select=display_name,game,wins,losses&order=wins.desc')
@@ -1179,6 +1207,162 @@ async function loadMpLeaderboard() {
     console.warn('loadMpLeaderboard failed:', e)
   }
 }
+
+// ═══════════════════════════════════════════════════════
+//  FLOATING LEADERBOARD — 🏆 button, bottom-left, on every screen
+//  Its game list is read from the home section's tabs at open time,
+//  so whatever the stall/beta filters removed stays removed here too.
+// ═══════════════════════════════════════════════════════
+let qgLbPanelGame = null
+
+// Open = shown and actually on screen. Docked on the home screen, the
+// panel vanishes along with home when a game starts.
+function qgLbPanelOpen() {
+  const p = document.getElementById('qg-lb-panel')
+  return !!p && !p.hidden && p.getClientRects().length > 0
+}
+
+function qgLbPanelRefresh() {
+  if (!qgLbPanelOpen()) return
+  const list = document.getElementById('qg-lb-list')
+  const toggle = document.getElementById('qg-lb-view')
+  // MP wins are already one entry per account, so the toggle means nothing there
+  toggle.style.visibility = qgLbPanelGame === 'mp' ? 'hidden' : ''
+  if (qgLbPanelGame === 'mp') loadMpLeaderboard(list)
+  else loadLeaderboard(qgLbPanelGame, list)
+}
+window.qgLbPanelRefresh = qgLbPanelRefresh
+
+function qgLbStatus(msg, ok) {
+  const el = document.getElementById('qg-lb-status')
+  if (!el) return
+  el.textContent = msg || ''
+  el.style.color = ok ? 'var(--success)' : 'var(--danger)'
+}
+
+// 🔗 Link on a guest row: move every guest score under that name onto
+// the signed-in account. The ownership checks live in the database
+// (link_name_to_account in sql/leaderboard_accounts.sql).
+async function lbLinkName(name) {
+  qgLbStatus('')
+  const authName = (typeof AUTH !== 'undefined') ? AUTH.getDisplayName() : null
+  if (!authName || typeof _sb === 'undefined' || !_sb) {
+    if (confirm(`Sign in to link "${name}" to your account.\n\nGo to sign in now?`)) {
+      qgLbPanelHide()
+      AUTH.openPage('login')
+    }
+    return
+  }
+  if (!confirm(`Link every guest score posted as "${name}" to your account "${authName}"?\n\nThis can't be undone from the site.`)) return
+  const { data, error } = await _sb.rpc('link_name_to_account', { p_name: name })
+  if (error) { qgLbStatus(error.message || 'Could not link that name.'); return }
+  lbProfileNames.set(AUTH.user.id, authName)
+  qgLbStatus(data > 0
+    ? `✓ Linked ${data} score${data === 1 ? '' : 's'} as "${name}" to ${authName}.`
+    : `Nothing to link — "${name}" has no guest scores left.`, data > 0)
+  qgLbPanelRefresh()
+}
+
+function qgLbPanelShow() {
+  const panel = document.getElementById('qg-lb-panel')
+  const select = document.getElementById('qg-lb-game')
+  const games = lbAvailableGames()
+  select.innerHTML = ''
+  for (const g of games) {
+    const opt = document.createElement('option')
+    opt.value = g.game
+    opt.textContent = g.label
+    select.appendChild(opt)
+  }
+  // Default to the game on screen if it has a board, else the last one viewed
+  const screen = document.querySelector('.screen.active')
+  const m = screen && screen.id.match(/^game(\d+)$/)
+  const onScreen = m && games.find(g => g.n === +m[1])?.game
+  const fallback = QG_STALL ? 'wavegauntlet' : 'parkour'
+  const want = [onScreen, qgLbPanelGame, fallback].find(g => g && select.querySelector(`option[value="${g}"]`))
+  qgLbPanelGame = want || (select.options[0] && select.options[0].value)
+  select.value = qgLbPanelGame
+  // On the home screen it sits where the old leaderboard was, under the
+  // game cards. Anywhere else it floats bottom-left, over the game.
+  const slot = document.getElementById('qg-lb-slot')
+  const onHome = slot && document.getElementById('home').classList.contains('active')
+  const host = onHome ? slot : document.body
+  if (panel.parentNode !== host) host.appendChild(panel)
+  panel.classList.toggle('qg-lb-docked', !!onHome)
+  panel.hidden = false
+  qgLbStatus('')
+  document.getElementById('qg-lb-btn').setAttribute('aria-expanded', 'true')
+  qgLbPanelRefresh()
+  if (onHome) panel.scrollIntoView({ block: 'start', behavior: 'smooth' })
+}
+
+function qgLbPanelHide() {
+  const panel = document.getElementById('qg-lb-panel')
+  if (!panel) return
+  panel.hidden = true
+  document.getElementById('qg-lb-btn').setAttribute('aria-expanded', 'false')
+  // Give the keyboard back to the game — a focused button or select
+  // would otherwise swallow Space and the arrow keys
+  if (panel.contains(document.activeElement) || document.activeElement?.id === 'qg-lb-btn') document.activeElement.blur()
+}
+
+function qgBuildLbPanel() {
+  if (document.getElementById('qg-lb-btn')) return
+  const btn = document.createElement('button')
+  btn.id = 'qg-lb-btn'
+  btn.type = 'button'
+  btn.textContent = '🏆'
+  btn.title = 'Leaderboard'
+  btn.setAttribute('aria-label', 'Show leaderboard')
+  btn.setAttribute('aria-controls', 'qg-lb-panel')
+  btn.setAttribute('aria-expanded', 'false')
+  btn.addEventListener('click', () => {
+    qgLbPanelOpen() ? qgLbPanelHide() : qgLbPanelShow()
+    btn.blur()
+  })
+
+  const panel = document.createElement('div')
+  panel.id = 'qg-lb-panel'
+  panel.hidden = true
+  panel.setAttribute('role', 'dialog')
+  panel.setAttribute('aria-label', 'Leaderboard')
+  panel.innerHTML = `
+    <div class="qg-lb-head">
+      <strong>🏆 Leaderboard</strong>
+      <button type="button" class="qg-lb-close" aria-label="Close leaderboard">✕</button>
+    </div>
+    <div class="qg-lb-controls">
+      <select id="qg-lb-game" aria-label="Game"></select>
+      <div class="lb-view-toggle" id="qg-lb-view" role="group" aria-label="Rank by">
+        <button type="button" class="lb-view-btn" data-view="names">Names</button>
+        <button type="button" class="lb-view-btn" data-view="accounts">Accounts</button>
+      </div>
+    </div>
+    <div class="qg-lb-status" id="qg-lb-status" role="status"></div>
+    <div class="lb-list" id="qg-lb-list"></div>`
+  panel.querySelector('.qg-lb-close').addEventListener('click', qgLbPanelHide)
+  panel.querySelector('#qg-lb-list').addEventListener('click', e => {
+    const a = e.target.closest('.lb-acct-link')
+    if (!a) return
+    e.preventDefault()
+    if (a.dataset.name) { lbLinkName(a.dataset.name); return }
+    lbFocusAccount = a.dataset.uid
+    setLbView('accounts')
+  })
+  panel.querySelector('#qg-lb-game').addEventListener('change', e => {
+    qgLbPanelGame = e.target.value
+    qgLbPanelRefresh()
+  })
+  panel.querySelectorAll('.lb-view-btn').forEach(b => b.addEventListener('click', () => setLbView(b.dataset.view)))
+
+  document.body.appendChild(panel)
+  document.body.appendChild(btn)
+  syncLbViewButtons()
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && qgLbPanelOpen()) qgLbPanelHide()
+  })
+}
+if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', qgBuildLbPanel)
 
 // ═══════════════════════════════════════════════════════
 //  SUBMIT SCORE
@@ -1274,16 +1458,21 @@ window.openSubmit = function(game) {
 
   const authName = (typeof AUTH !== 'undefined') ? AUTH.getDisplayName() : null
 
-  // logged-in users skip the form entirely — submit immediately
-  if (authName) {
-    document.getElementById('sub-name-input').value = authName
-    submitScore()
-    return
-  }
-
+  // Signed-in players choose a name for every score too. Whatever they
+  // pick, the row is stamped with their account (see sql/leaderboard_accounts.sql).
   const nameInput = document.getElementById('sub-name-input')
-  nameInput.value = cookieGet('player_name') || ''
+  nameInput.value = cookieGet('player_name') || authName || ''
   nameInput.readOnly = false; nameInput.style.opacity = ''; nameInput.title = ''
+  const acctInfo = document.getElementById('sub-acct-info')
+  const chips    = document.getElementById('sub-name-chips')
+  chips.innerHTML = ''
+  if (authName) {
+    acctInfo.innerHTML = `Signed in as <b>${escHtml(authName)}</b> — every name you post under stays linked to this account.`
+    acctInfo.style.display = ''
+    lbFillNameChips(authName)
+  } else {
+    acctInfo.style.display = 'none'
+  }
   document.getElementById('sub-status').textContent = ''
   document.getElementById('sub-submit-btn').disabled = false
   document.getElementById('admin-pw-row').style.display = 'none'
@@ -1292,11 +1481,56 @@ window.openSubmit = function(game) {
   setTimeout(() => nameInput.focus(), 100)
 }
 
+// Quick-pick buttons for the names this account has posted under before
+async function lbFillNameChips(authName) {
+  const chips = document.getElementById('sub-name-chips')
+  const names = new Map([[authName.toLowerCase(), authName]])
+  try {
+    const rows = await sbFetch(`/rest/v1/leaderboard?select=name&user_id=eq.${AUTH.user.id}&limit=200`)
+    for (const r of rows || []) if (!names.has(r.name.toLowerCase())) names.set(r.name.toLowerCase(), r.name)
+  } catch {}   // column not migrated yet, or offline — the display name alone is fine
+  chips.innerHTML = ''
+  for (const n of [...names.values()].slice(0, 8)) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'sub-name-chip'
+    b.textContent = n
+    b.addEventListener('click', () => {
+      const input = document.getElementById('sub-name-input')
+      input.value = n
+      input.dispatchEvent(new Event('input'))
+      input.focus()
+    })
+    chips.appendChild(b)
+  }
+}
+
+// The admin name needs the password unless you are signed in as the admin.
+// Being signed in to just any account is not enough now that a signed-in
+// player can post under any name.
+function needsAdminPw(name) {
+  if (name.toUpperCase() !== ADMIN_NAME) return false
+  const authName = (typeof AUTH !== 'undefined') ? AUTH.getDisplayName() : null
+  return !authName || authName.toUpperCase() !== ADMIN_NAME
+}
+
+// Which account, if any, already owns a name: either as its display
+// name or as a name it has posted a score under. Returns a user id or null.
+async function lbNameOwner(name) {
+  if (typeof _sb === 'undefined' || !_sb) return null
+  const pattern = name.replace(/[\\%_]/g, c => '\\' + c)   // ilike = case-insensitive exact match
+  const { data: prof } = await _sb.from('profiles').select('id').ilike('display_name', pattern).limit(1)
+  if (prof && prof.length) return prof[0].id
+  const { data: rows, error } = await _sb.from('leaderboard').select('user_id')
+    .ilike('name', pattern).not('user_id', 'is', null).limit(1)
+  if (error) return null      // user_id column not there yet
+  return rows && rows.length ? rows[0].user_id : null
+}
+
 document.getElementById('sub-name-input').addEventListener('input', () => {
-  const val = document.getElementById('sub-name-input').value.trim().toUpperCase()
+  const val = document.getElementById('sub-name-input').value.trim()
   const pwRow = document.getElementById('admin-pw-row')
-  const alreadyAuthed = typeof AUTH !== 'undefined' && AUTH.user
-  if (val === ADMIN_NAME && !alreadyAuthed) {
+  if (needsAdminPw(val)) {
     pwRow.style.display = 'flex'
     document.getElementById('sub-admin-pw').focus()
   } else {
@@ -1318,8 +1552,8 @@ window.submitScore = async function() {
     return
   }
 
-  const isLoggedIn = typeof AUTH !== 'undefined' && AUTH.user
-  if (nameRaw.toUpperCase() === ADMIN_NAME && !isLoggedIn) {
+  const isLoggedIn = typeof AUTH !== 'undefined' && AUTH.user && typeof _sb !== 'undefined' && _sb
+  if (needsAdminPw(nameRaw)) {
     const pw = document.getElementById('sub-admin-pw').value
     if (!pw) {
       document.getElementById('sub-status').textContent = 'Enter the admin password to use this name.'
@@ -1339,12 +1573,15 @@ window.submitScore = async function() {
   btn.disabled = true
   document.getElementById('sub-status').textContent = 'Submitting…'
 
-  // anonymous users: block names claimed by registered accounts
-  if (!isLoggedIn && name.toUpperCase() !== ADMIN_NAME) {
+  // A name another account already uses is off limits — to guests, and
+  // to every account except the one that owns it
+  if (name.toUpperCase() !== ADMIN_NAME) {
     try {
-      const available = await AUTH.checkNameAvailable(name)
-      if (!available) {
-        document.getElementById('sub-status').textContent = '⚠️ That name belongs to a registered account. Choose a different name or sign in.'
+      const owner = await lbNameOwner(name)
+      if (owner && (!isLoggedIn || owner !== AUTH.user.id)) {
+        document.getElementById('sub-status').textContent = isLoggedIn
+          ? '⚠️ That name belongs to another account. Choose a different one.'
+          : '⚠️ That name belongs to a registered account. Choose a different name or sign in.'
         btn.disabled = false
         return
       }
@@ -1352,10 +1589,15 @@ window.submitScore = async function() {
   }
 
   try {
-    await sbFetch('/rest/v1/leaderboard', {
-      method: 'POST',
-      body: JSON.stringify({ name, game: pendingSubmit.game, score: pendingSubmit.score }),
-    })
+    const row = { name, game: pendingSubmit.game, score: pendingSubmit.score }
+    if (isLoggedIn) {
+      // Through the auth client so the request carries the session —
+      // that is what links the row to the account
+      const { error } = await _sb.from('leaderboard').insert(row)
+      if (error) throw error
+    } else {
+      await sbFetch('/rest/v1/leaderboard', { method: 'POST', body: JSON.stringify(row) })
+    }
 
     cookieSet('player_name', name)
     const newPB = setPB(pendingSubmit.game, pendingSubmit.score)
@@ -1376,8 +1618,9 @@ window.submitScore = async function() {
       const overId = overMap[pendingSubmit.game]
       if (overId) document.getElementById(overId).classList.remove('show')
       goHome()
-      loadLeaderboard(pendingSubmit.game)
-      switchLbTab(pendingSubmit.game)
+      // Show where the score landed
+      qgLbPanelGame = pendingSubmit.game
+      qgLbPanelShow()
     }, 1000)
   } catch (e) {
     document.getElementById('sub-status').textContent = 'Failed to submit. Try again.'
@@ -1393,4 +1636,4 @@ window.skipSubmit = function() {
 
 // Load on page start
 initCurby()
-fetchAuthorScores().then(() => switchLbTab(window.QG_STALL ? 'wavegauntlet' : 'parkour'))
+fetchAuthorScores()
