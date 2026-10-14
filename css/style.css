@@ -458,32 +458,7 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Leaderboard ── */
-.leaderboard-section {
-  width: 100%; max-width: 700px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 1.25rem; padding: 1.5rem;
-}
-.lb-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1rem; flex-wrap: wrap; gap: .5rem;
-}
-.lb-header h3 { font-size: 1rem; font-weight: 700; }
-.lb-tabs {
-  display: flex; gap: .35rem;
-  overflow-x: auto; padding-bottom: .3rem;
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
-}
-.lb-tabs::-webkit-scrollbar { height: 3px; }
-.lb-tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-.lb-tab {
-  background: transparent; border: 1px solid var(--border);
-  color: var(--muted); padding: .2rem .55rem; border-radius: 6px;
-  cursor: pointer; font-size: .72rem; transition: all .15s;
-  white-space: nowrap; flex-shrink: 0;
-}
-.lb-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-.lb-tab.active.cyan { background: var(--accent2); border-color: var(--accent2); }
+/* ── Leaderboard rows (floating panel) ── */
 .lb-list { display: flex; flex-direction: column; gap: .4rem; }
 .lb-row {
   display: flex; align-items: center; gap: .75rem;
@@ -1203,3 +1178,88 @@ body {
 }
 .ga-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: .35rem }
 .ga-ghost { background: var(--card) !important; color: var(--muted) !important; border: 1px solid var(--border) !important; box-shadow: none !important }
+
+/* ── Leaderboard: rank by name or by account ── */
+.lb-view-toggle {
+  display: inline-flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden;
+}
+.lb-view-btn {
+  background: transparent; border: 0; color: var(--muted);
+  padding: .2rem .6rem; font-size: .72rem; cursor: pointer; font-family: inherit;
+}
+.lb-view-btn + .lb-view-btn { border-left: 1px solid var(--border); }
+.lb-view-btn.active { background: var(--accent); color: #fff; }
+.lb-alias {
+  font-size: .72rem; font-weight: 500; color: var(--muted); margin-left: .2rem;
+}
+
+/* Names this account has posted under, in the submit modal */
+.sub-name-chips { display: flex; flex-wrap: wrap; gap: .3rem; justify-content: center; }
+.sub-name-chips:empty { display: none; }
+.sub-name-chip {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  padding: .15rem .55rem; border-radius: 999px; font-size: .74rem; cursor: pointer; font-family: inherit;
+}
+.sub-name-chip:hover { border-color: var(--accent); color: var(--text); }
+
+/* ── Floating leaderboard, bottom-left (the theme toggle owns bottom-right) ── */
+#qg-lb-btn {
+  position: fixed; left: 14px; bottom: 14px; z-index: 80;
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.05rem; line-height: 1; cursor: pointer;
+  background: var(--card); color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0,0,0,.28);
+  transition: transform .15s;
+  font-family: inherit;
+}
+#qg-lb-btn:hover { transform: translateY(-2px) scale(1.06); }
+#qg-lb-btn[aria-expanded="true"] { border-color: var(--accent); }
+#qg-lb-panel {
+  position: fixed; left: 14px; bottom: 66px; z-index: 90;
+  width: min(380px, calc(100vw - 28px)); max-height: min(70vh, 560px);
+  display: flex; flex-direction: column; gap: .7rem;
+  background: var(--card); border: 1px solid var(--border); border-radius: 1rem;
+  padding: 1rem; box-shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+#qg-lb-panel[hidden] { display: none; }
+/* Docked on the home screen, in the old leaderboard's place */
+#qg-lb-slot { width: 100%; max-width: 700px; }
+#qg-lb-slot:empty { display: none; }
+#qg-lb-panel.qg-lb-docked {
+  position: static; width: 100%; max-height: none;
+  border-radius: 1.25rem; padding: 1.5rem; box-shadow: none;
+  scroll-margin-top: 1rem; text-align: left;
+}
+.qg-lb-head { display: flex; align-items: center; justify-content: space-between; font-size: .95rem; }
+.qg-lb-close {
+  background: none; border: 0; color: var(--muted); cursor: pointer; font-size: .95rem; padding: .2rem .4rem;
+}
+.qg-lb-close:hover { color: var(--text); }
+.qg-lb-controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+#qg-lb-game {
+  flex: 1; min-width: 0; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: 7px; padding: .3rem .4rem; font-family: inherit; font-size: .8rem;
+}
+#qg-lb-list { overflow-y: auto; min-height: 0; }
+#qg-lb-list .lb-row { gap: .5rem; padding: .45rem .6rem; font-size: .82rem; }
+/* The big earned-medal tile repeats the small AUTHOR / CO-AUTHOR tag and
+   does not fit a panel this narrow */
+#qg-lb-list .medal-earned { display: none; }
+
+/* Names view: jump from a name to the account that posted it */
+.lb-acct-slot { flex: 0 0 5.6rem; display: flex; justify-content: flex-end; min-width: 0; }
+.lb-acct-link {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: .72rem; font-weight: 600; text-decoration: none;
+  color: var(--accent2); border: 1px solid var(--border); border-radius: 999px;
+  padding: .15rem .55rem;
+}
+.lb-acct-link:hover { border-color: var(--accent2); background: rgba(6,182,212,.08); }
+.lb-acct-claim { color: var(--muted); border-style: dashed; }
+.lb-acct-claim:hover { color: var(--text); border-color: var(--accent); background: rgba(124,58,237,.1); }
+.qg-lb-status { font-size: .76rem; min-height: 0; }
+.qg-lb-status:empty { display: none; }
+.lb-row-focus { outline: 2px solid var(--accent2); outline-offset: -2px; animation: lb-focus 1.6s ease-out; }
+@keyframes lb-focus { from { background: rgba(6,182,212,.25); } }

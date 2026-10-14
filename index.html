@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Games — Powered by real qubits</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
 </head>
 <body>
 
@@ -270,53 +270,9 @@
     </div>
   </div>
 
-  <!-- Leaderboard -->
-  <div class="leaderboard-section">
-    <div class="lb-header">
-      <h3>🏆 Leaderboard</h3>
-      <div class="lb-tabs">
-        <button class="lb-tab" id="lb-tab-1" onclick="switchLbTab('equation')">Equation</button>
-        <button class="lb-tab cyan" id="lb-tab-2" onclick="switchLbTab('aim')">Aim</button>
-        <button class="lb-tab" style="border-color:var(--success);color:var(--success);" id="lb-tab-3" onclick="switchLbTab('reaction')">Reaction</button>
-        <button class="lb-tab" style="border-color:var(--danger);color:var(--danger);" id="lb-tab-4" onclick="switchLbTab('dodge')">Dodge</button>
-        <button class="lb-tab" style="border-color:#f59e0b;color:#f59e0b;" id="lb-tab-5" onclick="switchLbTab('flash')">Flash</button>
-        <button class="lb-tab" style="border-color:#ec4899;color:#ec4899;" id="lb-tab-6" onclick="switchLbTab('deltae')">Delta E</button>
-        <button class="lb-tab" style="border-color:var(--accent);color:var(--accent);" id="lb-tab-10" onclick="switchLbTab('gravity')">Gravity</button>
-        <button class="lb-tab" style="border-color:#34d399;color:#34d399;" id="lb-tab-11" onclick="switchLbTab('typing')">Typing</button>
-        <button class="lb-tab" style="border-color:#fbbf24;color:#fbbf24;" id="lb-tab-16" onclick="switchLbTab('qclicker')">Clicker</button>
-        <button class="lb-tab" style="border-color:#22d3ee;color:#22d3ee;" id="lb-tab-13" onclick="switchLbTab('collider')">Collider</button>
-        <button class="lb-tab" style="border-color:#c084fc;color:#c084fc;" id="lb-tab-14" onclick="switchLbTab('wavecollapse')">Wave</button>
-        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-15" onclick="switchLbTab('entanglement')">Entanglement</button>
-        <button class="lb-tab" style="border-color:#4ade80;color:#4ade80;" id="lb-tab-17" onclick="switchLbTab('qsnake')">Snake</button>
-        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-18" onclick="switchLbTab('qwhip')">Whip</button>
-        <button class="lb-tab" style="border-color:#fca5a5;color:#fca5a5;" id="lb-tab-22" onclick="switchLbTab('gravitysling')">Sling</button>
-        <button class="lb-tab" style="border-color:#818cf8;color:#818cf8;" id="lb-tab-23" onclick="switchLbTab('chargerush')">Charge</button>
-        <button class="lb-tab" style="border-color:#fbbf24;color:#fbbf24;" id="lb-tab-24" onclick="switchLbTab('pulse')">Pulse</button>
-        <button class="lb-tab" style="border-color:#34d399;color:#34d399;" id="lb-tab-26" onclick="switchLbTab('orbit')">Orbit</button>
-        <button class="lb-tab active" style="border-color:#fb923c;color:#fb923c;" id="lb-tab-28" onclick="switchLbTab('parkour')">Parkour</button>
-        <button class="lb-tab" style="border-color:#e879f9;color:#e879f9;" id="lb-tab-29" onclick="switchLbTab('qblaster')">Blaster</button>
-        <button class="lb-tab" style="border-color:#60a5fa;color:#60a5fa;" id="lb-tab-30" onclick="switchLbTab('mrts')">Micro RTS</button>
-        <button class="lb-tab" style="border-color:#4ade80;color:#4ade80;" id="lb-tab-31" onclick="switchLbTab('runsnake')">Run Snake</button>
-        <button class="lb-tab" style="border-color:#f472b6;color:#f472b6;" id="lb-tab-32" onclick="switchLbTab('gravflip')">Grav Flip</button>
-        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-33" onclick="switchLbTab('memseq')">Memory</button>
-        <button class="lb-tab" style="border-color:#4a7c59;color:#4a7c59;" id="lb-tab-34" onclick="switchLbTab('manualsort')">Manual Sort</button>
-        <button class="lb-tab" style="border-color:#06b6d4;color:#06b6d4;" id="lb-tab-35" onclick="switchLbTab('wavedash')">Wave Dash</button>
-        <button class="lb-tab" style="border-color:#6366f1;color:#6366f1;" id="lb-tab-36" onclick="switchLbTab('cps')">CPS</button>
-        <button class="lb-tab" style="border-color:#f472b6;color:#f472b6;" id="lb-tab-37" onclick="switchLbTab('rhythm')">Rhythm</button>
-        <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-40" onclick="switchLbTab('ufo')">Tunnel</button>
-        <button class="lb-tab" style="border-color:#22c55e;color:#22c55e;" id="lb-tab-43" onclick="switchLbTab('wavegauntlet')">Wave Gauntlet</button>
-        <button class="lb-tab" style="border-color:#a855f7;color:#a855f7;" id="lb-tab-44" onclick="switchLbTab('spider')">Spin Flip</button>
-        <button class="lb-tab" style="border-color:#22d3ee;color:#22d3ee;" id="lb-tab-45" onclick="switchLbTab('freighter')">Freighter</button>
-        <button class="lb-tab" style="border-color:#fb923c;color:#fb923c;" id="lb-tab-46" onclick="switchLbTab('traprace')">Trap Race</button>
-        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-48" onclick="switchLbTab('ascent')">Ent. Gauntlet</button>
-        <button class="lb-tab" style="border-color:#06b6d4;color:#06b6d4;" id="lb-tab-42" onclick="switchLbTab('typerracer')">Type Racer</button>
-        <button class="lb-tab" style="border-color:#a78bfa;color:#a78bfa;" id="lb-tab-mp" onclick="switchLbTab('mp')">⚔️ MP Wins</button>
-      </div>
-    </div>
-    <div class="lb-list" id="lb-list">
-      <div class="lb-loading"><div class="spinner"></div> Loading…</div>
-    </div>
-  </div>
+  <!-- Where the leaderboard opens on the home screen. The panel itself is
+       built by qgBuildLbPanel (js/core.js) and moved in here by the 🏆 button. -->
+  <div id="qg-lb-slot"></div>
 </section>
 
 <!-- Submit score modal (shared) -->
@@ -326,7 +282,9 @@
     <div class="sub-score" id="sub-score-display">0</div>
     <p style="color:var(--muted);font-size:.875rem">Enter your name for the leaderboard</p>
     <div id="sub-pb-info" style="font-size:.8rem;min-height:1rem;"></div>
+    <div id="sub-acct-info" style="display:none;font-size:.78rem;color:var(--muted);"></div>
     <input type="text" id="sub-name-input" placeholder="Your name" maxlength="20" autocomplete="off" />
+    <div id="sub-name-chips" class="sub-name-chips"></div>
     <div id="admin-pw-row" style="display:none;flex-direction:column;gap:.4rem;">
       <input type="password" id="sub-admin-pw" placeholder="Admin password" maxlength="40" autocomplete="off" />
     </div>
@@ -1391,7 +1349,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/sfx.js?v=2"></script>
-<script src="js/core.js?v=33"></script>
+<script src="js/core.js?v=36"></script>
 <script src="js/auth.js"></script>
 <script src="js/game1.js?v=2"></script>
 <script src="js/game2.js?v=2"></script>
