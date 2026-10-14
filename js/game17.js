@@ -1093,7 +1093,9 @@ function g17Draw() {
   const W=cv.width, H=cv.height
 
   c.clearRect(0,0,W,H)
-  c.fillStyle='#080c14'; c.fillRect(0,0,W,H)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  c.fillStyle=_lt?'#eef1f7':'#080c14'; c.fillRect(0,0,W,H)
 
   // shake transform
   c.save()
@@ -1104,7 +1106,7 @@ function g17Draw() {
   c.translate(W/2-G17.camX, H/2-G17.camY)
 
   // ── grid ───────────────────────────────
-  c.strokeStyle='rgba(255,255,255,.035)'; c.lineWidth=1
+  c.strokeStyle=_lt?'rgba(0,0,0,.06)':'rgba(255,255,255,.035)'; c.lineWidth=1
   const gs=120, gx0=Math.floor((G17.camX-W/2)/gs)*gs, gy0=Math.floor((G17.camY-H/2)/gs)*gs
   for (let x=gx0;x<G17.camX+W/2+gs;x+=gs) { c.beginPath();c.moveTo(x,G17.camY-H/2);c.lineTo(x,G17.camY+H/2);c.stroke() }
   for (let y=gy0;y<G17.camY+H/2+gs;y+=gs) { c.beginPath();c.moveTo(G17.camX-W/2,y);c.lineTo(G17.camX+W/2,y);c.stroke() }
@@ -1238,7 +1240,7 @@ function g17Draw() {
     c.fillStyle='#1f2937'; c.fillRect(barX,barY,bw,bh)
     c.fillStyle=rage?'#ef4444':`hsl(${cb.hue},75%,55%)`
     c.fillRect(barX,barY,bw*(cb.hp/cb.maxHp),bh)
-    c.fillStyle='#fff'; c.font='bold 10px sans-serif'; c.textAlign='center'
+    c.fillStyle=_lt?'#111':'#fff'; c.font='bold 10px sans-serif'; c.textAlign='center'
     c.fillText(rage?'⚠️ CIRCLE BOSS ⚠️':'⭕ CIRCLE BOSS', cb.cx, barY-4)
 
     // radius ring (faint, shows boundary)
@@ -1261,7 +1263,7 @@ function g17Draw() {
     c.fillStyle='#1f2937'; c.fillRect(bH.x-bw/2,bH.y-G17_SEG_R-22,bw,bh)
     c.fillStyle=rage?'#ef4444':'#f87171'
     c.fillRect(bH.x-bw/2,bH.y-G17_SEG_R-22,bw*(b.hp/b.maxHp),bh)
-    c.fillStyle='#fff'; c.font='bold 11px sans-serif'; c.textAlign='center'
+    c.fillStyle=_lt?'#111':'#fff'; c.font='bold 11px sans-serif'; c.textAlign='center'
     c.fillText(rage?'⚠️BOSS⚠️':'BOSS',bH.x,bH.y-G17_SEG_R-24)
   }
 
@@ -1350,10 +1352,10 @@ function g17Draw() {
 
   // energy bar (bottom-centre)
   const barW=200, barX=W/2-barW/2, barY=H-26
-  c.fillStyle='rgba(0,0,0,.4)'; c.fillRect(barX-2,barY-8,barW+4,10)
+  c.fillStyle=_lt?'rgba(0,0,0,.12)':'rgba(0,0,0,.4)'; c.fillRect(barX-2,barY-8,barW+4,10)
   c.fillStyle=p.energy>30?'#facc15':'#ef4444'
   c.fillRect(barX,barY-7,barW*(p.energy/p.maxEnergy),8)
-  c.fillStyle='rgba(255,255,255,.3)'; c.font='9px monospace'; c.textAlign='center'
+  c.fillStyle=_lt?'rgba(0,0,0,.45)':'rgba(255,255,255,.3)'; c.font='9px monospace'; c.textAlign='center'
   c.fillText('⚡ ENERGY',W/2,barY-10)
 
   // reload bar (only when auto-aim on)
@@ -1361,24 +1363,24 @@ function g17Draw() {
     const rcd=g17ReloadCD(), rem=Math.max(0,G17.shootCD)
     const pct=rcd>0?1-rem/rcd:1
     const ry=H-10
-    c.fillStyle='rgba(0,0,0,.4)'; c.fillRect(barX-2,ry-8,barW+4,10)
+    c.fillStyle=_lt?'rgba(0,0,0,.12)':'rgba(0,0,0,.4)'; c.fillRect(barX-2,ry-8,barW+4,10)
     c.fillStyle=rem>0?'#a78bfa':'#4ade80'
     c.fillRect(barX,ry-7,barW*pct,8)
-    c.fillStyle='rgba(255,255,255,.3)'; c.font='9px monospace'; c.textAlign='center'
+    c.fillStyle=_lt?'rgba(0,0,0,.45)':'rgba(255,255,255,.3)'; c.font='9px monospace'; c.textAlign='center'
     c.fillText(rem>0?'🔄 RELOADING':'🔫 READY',W/2,ry-10)
   }
 
   // wave badge
-  c.fillStyle='rgba(255,255,255,.08)'; c.fillRect(W-68,6,62,20)
-  c.fillStyle='#94a3b8'; c.font='11px monospace'; c.textAlign='center'
+  c.fillStyle=_lt?'rgba(0,0,0,.06)':'rgba(255,255,255,.08)'; c.fillRect(W-68,6,62,20)
+  c.fillStyle=_lt?'#475569':'#94a3b8'; c.font='11px monospace'; c.textAlign='center'
   c.fillText('Wave '+G17.wave,W-37,20)
 
   // minimap
   const mmW=90,mmH=90,mmX=W-mmW-8,mmY=H-mmH-50
-  c.fillStyle='rgba(0,0,0,.6)'; c.fillRect(mmX,mmY,mmW,mmH)
-  c.strokeStyle='rgba(255,255,255,.12)'; c.lineWidth=1; c.strokeRect(mmX,mmY,mmW,mmH)
+  c.fillStyle=_lt?'rgba(255,255,255,.8)':'rgba(0,0,0,.6)'; c.fillRect(mmX,mmY,mmW,mmH)
+  c.strokeStyle=_lt?'rgba(0,0,0,.15)':'rgba(255,255,255,.12)'; c.lineWidth=1; c.strokeRect(mmX,mmY,mmW,mmH)
   const sx=mmW/G17_W, sy=mmH/G17_H
-  c.fillStyle='rgba(255,255,255,.2)'
+  c.fillStyle=_lt?'rgba(0,0,0,.25)':'rgba(255,255,255,.2)'
   for (const f of G17.food) c.fillRect(mmX+f.x*sx,mmY+f.y*sy,1,1)
   for (const en of G17.enemies) {
     if (en.dead) continue

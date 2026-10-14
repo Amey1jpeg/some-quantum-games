@@ -401,7 +401,9 @@ function g18Draw() {
   const W = cv.width, H = cv.height
 
   c.clearRect(0, 0, W, H)
-  c.fillStyle = '#060a12'; c.fillRect(0, 0, W, H)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  c.fillStyle = _lt ? '#eef1f7' : '#060a12'; c.fillRect(0, 0, W, H)
 
   c.save()
   if (G18.screenShake > 0) {
@@ -410,7 +412,7 @@ function g18Draw() {
   }
 
   // grid
-  c.strokeStyle = 'rgba(255,255,255,.022)'; c.lineWidth = 1
+  c.strokeStyle = _lt ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.022)'; c.lineWidth = 1
   for (let x = 0; x < W; x += 80) { c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke() }
   for (let y = 0; y < H; y += 80) { c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke() }
 
@@ -519,12 +521,12 @@ function g18Draw() {
 
   // timer bar (full width top)
   const barW = W - 20
-  c.fillStyle = 'rgba(0,0,0,.5)'; c.fillRect(10, 8, barW, 9)
+  c.fillStyle = _lt ? 'rgba(0,0,0,.12)' : 'rgba(0,0,0,.5)'; c.fillRect(10, 8, barW, 9)
   c.fillStyle = timerCol; c.fillRect(10, 8, barW * timePct, 9)
 
   // score
   c.font = 'bold 22px monospace'; c.textAlign = 'left'
-  c.fillStyle = '#f1f5f9'; c.shadowColor = '#000'; c.shadowBlur = 4
+  c.fillStyle = _lt ? '#14152b' : '#f1f5f9'; c.shadowColor = _lt ? 'rgba(255,255,255,.8)' : '#000'; c.shadowBlur = 4
   c.fillText(G18.score.toLocaleString(), 12, 40)
   c.shadowBlur = 0
 

@@ -170,10 +170,12 @@ function g31Loop(ts) {
   const ctx = c.getContext('2d')
   const gs = G31_GS
 
-  ctx.fillStyle = '#0d1117'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f1f4f9' : '#0d1117'
   ctx.fillRect(0, 0, c.width, c.height)
 
-  ctx.strokeStyle = '#1a2332'; ctx.lineWidth = 0.5
+  ctx.strokeStyle = _lt ? '#dfe5ee' : '#1a2332'; ctx.lineWidth = 0.5
   for (let x = 0; x <= G31.gw; x++) { ctx.beginPath(); ctx.moveTo(x*gs, 0); ctx.lineTo(x*gs, c.height); ctx.stroke() }
   for (let y = 0; y <= G31.gh; y++) { ctx.beginPath(); ctx.moveTo(0, y*gs); ctx.lineTo(c.width, y*gs); ctx.stroke() }
 
@@ -191,7 +193,7 @@ function g31Loop(ts) {
   const maxTime = Math.max(15, 60 - (G31.score > 0 ? G31.score - 1 : 0))
   const timerFrac = Math.max(0, G31.timeLeft / maxTime)
   const timerColor = G31.timeLeft < 8 ? '#ef4444' : G31.timeLeft < 15 ? '#f97316' : '#4ade80'
-  ctx.fillStyle = '#1a2332'
+  ctx.fillStyle = _lt ? '#dfe5ee' : '#1a2332'
   ctx.fillRect(0, c.height - 4, c.width, 4)
   ctx.fillStyle = timerColor
   ctx.fillRect(0, c.height - 4, c.width * timerFrac, 4)
@@ -200,7 +202,7 @@ function g31Loop(ts) {
   for (let i = 0; i < G31.snake.length; i++) {
     const s = G31.snake[i]
     const alpha = i === 0 ? 1 : Math.max(0.3, 0.85 - i / G31.snake.length * 0.5)
-    ctx.fillStyle = i === 0 ? '#4ade80' : `rgba(74,222,128,${alpha})`
+    ctx.fillStyle = i === 0 ? (_lt ? '#16a34a' : '#4ade80') : (_lt ? `rgba(22,163,74,${alpha})` : `rgba(74,222,128,${alpha})`)
     const pad = i === 0 ? 1 : 2
     ctx.fillRect(s.x * gs + pad, s.y * gs + pad, gs - pad * 2, gs - pad * 2)
   }

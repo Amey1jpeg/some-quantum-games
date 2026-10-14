@@ -355,7 +355,9 @@ function _g37Draw(px, py, angle) {
   const ctx = c.getContext('2d')
   const W = c.width, H = c.height
 
-  ctx.fillStyle = '#03030a'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#eeeff8' : '#03030a'
   ctx.fillRect(0, 0, W, H)
   if (G37.bgFlash > 0) {
     ctx.fillStyle = `rgba(251,191,36,${G37.bgFlash * 0.10})`
@@ -381,6 +383,7 @@ function _g37Draw(px, py, angle) {
     const isCur = i === oi
     ctx.strokeStyle = done
       ? 'rgba(67,56,202,0.5)'
+      : _lt ? (isCur ? 'rgba(0,0,0,0.32)' : 'rgba(0,0,0,0.14)')
       : isCur ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.11)'
     ctx.lineWidth = done ? 2.5 : isCur ? 2 : 1.5
     ctx.beginPath()
@@ -394,7 +397,7 @@ function _g37Draw(px, py, angle) {
     ctx.save()
     ctx.translate(toX(tiles[oi].x), toY(tiles[oi].y))
     ctx.rotate(G37.ringRot)
-    ctx.strokeStyle = 'rgba(255,255,255,0.20)'
+    ctx.strokeStyle = _lt ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.20)'
     ctx.lineWidth = 1.5
     ctx.setLineDash([6, 5])
     ctx.beginPath(); ctx.arc(0, 0, G37_ORBITR, 0, Math.PI * 2); ctx.stroke()
@@ -450,7 +453,7 @@ function _g37Draw(px, py, angle) {
     }
 
     ctx.globalAlpha = isDone ? 0.30 : 1
-    ctx.fillStyle   = isDone ? '#312e81' : col
+    ctx.fillStyle   = isDone ? (_lt ? '#a5b4fc' : '#312e81') : col
     ctx.fillRect(-sz, -sz, sz * 2, sz * 2)
 
     if (isCur || isStatic) {

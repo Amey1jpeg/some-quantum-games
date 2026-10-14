@@ -374,8 +374,11 @@ function g29Draw() {
   c.save(); c.translate(sk, sk*.5)
   c.clearRect(-10,-10,G29.w+20,G29.h+20)
 
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+
   // Grid bg
-  c.strokeStyle = 'rgba(232,121,249,0.05)'; c.lineWidth = 1
+  c.strokeStyle = _lt ? 'rgba(192,38,211,0.10)' : 'rgba(232,121,249,0.05)'; c.lineWidth = 1
   for (let x = 0; x < G29.w; x += 44) { c.beginPath(); c.moveTo(x,0); c.lineTo(x,G29.h); c.stroke() }
   for (let y = 0; y < G29.h; y += 44) { c.beginPath(); c.moveTo(0,y); c.lineTo(G29.w,y); c.stroke() }
 
@@ -408,7 +411,7 @@ function g29Draw() {
     }
     c.shadowBlur = 0
     if (e.maxHp > 1) {
-      c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(e.x-e.w/2, e.y-e.h/2-8, e.w, 4)
+      c.fillStyle = _lt ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.12)'; c.fillRect(e.x-e.w/2, e.y-e.h/2-8, e.w, 4)
       c.fillStyle = e.col;                   c.fillRect(e.x-e.w/2, e.y-e.h/2-8, e.w*e.hp/e.maxHp, 4)
     }
   }
@@ -420,9 +423,9 @@ function g29Draw() {
     c.beginPath(); c.moveTo(b.x,b.y-b.h/2); c.lineTo(b.x+b.w/2,b.y+b.h*.1); c.lineTo(b.x+b.w*.3,b.y+b.h/2); c.lineTo(b.x-b.w*.3,b.y+b.h/2); c.lineTo(b.x-b.w/2,b.y+b.h*.1); c.closePath(); c.fill()
     c.shadowBlur = 0
     // boss hp bar
-    c.fillStyle='rgba(255,255,255,.15)'; c.fillRect(20,8,G29.w-40,10)
+    c.fillStyle=_lt?'rgba(0,0,0,.12)':'rgba(255,255,255,.15)'; c.fillRect(20,8,G29.w-40,10)
     c.fillStyle='#ef4444';               c.fillRect(20,8,(G29.w-40)*b.hp/b.maxHp,10)
-    c.fillStyle='#fff'; c.font='bold 10px monospace'; c.textAlign='center'; c.fillText(`⚠ BOSS  ${b.hp}/${b.maxHp}`,G29.w/2,22)
+    c.fillStyle=_lt?'#111':'#fff'; c.font='bold 10px monospace'; c.textAlign='center'; c.fillText(`⚠ BOSS  ${b.hp}/${b.maxHp}`,G29.w/2,22)
   }
 
   // Powerups
@@ -447,7 +450,7 @@ function g29Draw() {
     c.beginPath(); c.arc(G29.px,G29.py,22,0,Math.PI*2); c.stroke()
   }
   // ship body
-  c.fillStyle='#ffffff'; c.shadowBlur=22; c.shadowColor='#e879f9'
+  c.fillStyle=_lt?'#581c87':'#ffffff'; c.shadowBlur=22; c.shadowColor='#e879f9'
   c.beginPath()
   c.moveTo(G29.px, G29.py-20)
   c.lineTo(G29.px-15, G29.py+12)
@@ -464,7 +467,7 @@ function g29Draw() {
   // Floaters
   c.textAlign='center'; c.textBaseline='middle'
   for (const f of G29.floaters) {
-    c.globalAlpha=Math.min(1,f.life); c.fillStyle='#fff'; c.font='bold 13px monospace'
+    c.globalAlpha=Math.min(1,f.life); c.fillStyle=_lt?'#111':'#fff'; c.font='bold 13px monospace'
     c.fillText(f.text, f.x, f.y)
   }
   c.globalAlpha=1
@@ -482,7 +485,7 @@ function g29Draw() {
   // Wave clear / incoming text
   if (G29.enemies.length===0 && !G29.boss && G29.waveTimer < 2.5) {
     const alpha = Math.sin(G29.waveTimer/2.5*Math.PI)
-    c.globalAlpha=alpha; c.fillStyle='#fff'; c.font='bold 22px monospace'; c.textAlign='center'
+    c.globalAlpha=alpha; c.fillStyle=_lt?'#111':'#fff'; c.font='bold 22px monospace'; c.textAlign='center'
     c.fillText(G29.waveTimer<0.2?`WAVE ${G29.wave} CLEAR! ✓`:`WAVE ${G29.wave+1} INCOMING...`, G29.w/2, G29.h/2)
     c.globalAlpha=1
   }

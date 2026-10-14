@@ -5,6 +5,8 @@
 // ═══════════════════════════════════════════════════════
 const G33_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308']
 const G33_DIM    = ['#450a0a', '#0c1a3a', '#052e16', '#422006']
+// Unlit pads need to stay quiet against the page, so light mode uses pale tints
+const G33_DIM_LT = ['#fecaca', '#bfdbfe', '#bbf7d0', '#fef08a']
 
 const G33 = {
   active: false,
@@ -34,7 +36,8 @@ function initGame33() {
 function g33DimAll() {
   for (let i = 0; i < 4; i++) {
     const b = document.getElementById(`g33-btn-${i}`)
-    if (b) b.style.background = G33_DIM[i]
+    const lt = typeof qgLight === 'function' && qgLight()
+    if (b) b.style.background = (lt ? G33_DIM_LT : G33_DIM)[i]
   }
 }
 

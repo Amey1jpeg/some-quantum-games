@@ -345,11 +345,13 @@ function g15Loop() {
   }
 
   ctx.clearRect(-10,-10,W+20,H+20)
-  ctx.fillStyle = '#07071a'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f1eefb' : '#07071a'
   ctx.fillRect(-10,-10,W+20,H+20)
 
   // Grid
-  ctx.strokeStyle='rgba(139,92,246,0.05)'; ctx.lineWidth=1
+  ctx.strokeStyle=_lt?'rgba(139,92,246,0.12)':'rgba(139,92,246,0.05)'; ctx.lineWidth=1
   for(let x=0;x<W;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
   for(let y=0;y<H;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
 
@@ -386,13 +388,13 @@ function g15Loop() {
 
   // Labels
   ctx.font='10px monospace'; ctx.textAlign='center'
-  ctx.fillStyle='rgba(99,102,241,0.4)'; ctx.fillText('YOU →',W/4,18)
-  ctx.fillStyle='rgba(236,72,153,0.4)'; ctx.fillText('← TWIN',3*W/4,18)
+  ctx.fillStyle=_lt?'rgba(79,70,229,0.7)':'rgba(99,102,241,0.4)'; ctx.fillText('YOU →',W/4,18)
+  ctx.fillStyle=_lt?'rgba(219,39,119,0.7)':'rgba(236,72,153,0.4)'; ctx.fillText('← TWIN',3*W/4,18)
 
   // Side labels for orb types
-  ctx.fillStyle='rgba(59,130,246,0.3)'; ctx.font='9px monospace'
+  ctx.fillStyle=_lt?'rgba(37,99,235,0.6)':'rgba(59,130,246,0.3)'; ctx.font='9px monospace'
   ctx.fillText('BLUE ORBS',W/4,H-8)
-  ctx.fillStyle='rgba(236,72,153,0.3)'
+  ctx.fillStyle=_lt?'rgba(219,39,119,0.6)':'rgba(236,72,153,0.3)'
   ctx.fillText('PINK ORBS',3*W/4,H-8)
   ctx.textAlign='left'
 
@@ -456,7 +458,7 @@ function g15Loop() {
 
   // Break cooldown bar
   const bBarW=160, bBarX=W/2-bBarW/2
-  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(bBarX,H-14,bBarW,5)
+  ctx.fillStyle=_lt?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.06)'; ctx.fillRect(bBarX,H-14,bBarW,5)
   if (G15.broken) {
     const maxB=[180,300,480,720][G15.puLevels.breakDur]||180
     ctx.fillStyle='#f97316'; ctx.fillRect(bBarX,H-14,bBarW*(1-G15.breakFrames/maxB),5)

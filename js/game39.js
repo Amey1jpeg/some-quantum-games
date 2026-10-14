@@ -238,7 +238,9 @@ function _g39Resolve(picked) {
 function _g39Draw(ctx, w, h) {
   ctx.save()
   ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'
-  ctx.fillStyle = '#030710'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#eef2fb' : '#030710'
   ctx.fillRect(0, 0, w, h)
 
   // Title
@@ -255,7 +257,7 @@ function _g39Draw(ctx, w, h) {
   ctx.textAlign = 'right'
   ctx.fillText(`Streak: ${G39.streak}`, w - 14, 34)
   ctx.font = '11px monospace'
-  ctx.fillStyle = 'rgba(255,255,255,0.4)'
+  ctx.fillStyle = _lt ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.4)'
   ctx.fillText(`Best: ${G39.best}`, w - 14, 52)
 
   // Phase status
@@ -267,7 +269,7 @@ function _g39Draw(ctx, w, h) {
     ctx.fillText(`Remember the key!  ${rem}s`, w / 2, 68)
   } else if (G39.phase === 'shuffle') {
     const rem = Math.max(0, G39_SHUFFLE_END - G39.t).toFixed(1)
-    ctx.fillStyle = 'rgba(255,255,255,0.55)'
+    ctx.fillStyle = _lt ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.55)'
     ctx.fillText(`Shuffling…  ${rem}s`, w / 2, 68)
   } else if (G39.phase === 'pick') {
     const rem = Math.max(0, G39_PICK_SECS - G39.t).toFixed(1)
@@ -306,8 +308,8 @@ function _g39Draw(ctx, w, h) {
 
     if (ring) {
       ctx.beginPath(); ctx.arc(kp.x, kp.y, R + 7, 0, Math.PI * 2)
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5
-      ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 18
+      ctx.strokeStyle = _lt ? '#1e1b4b' : '#ffffff'; ctx.lineWidth = 2.5
+      ctx.shadowColor = _lt ? '#fbbf24' : '#ffffff'; ctx.shadowBlur = 18
       ctx.stroke(); ctx.shadowBlur = 0
     }
     ctx.beginPath(); ctx.arc(kp.x, kp.y, R, 0, Math.PI * 2)

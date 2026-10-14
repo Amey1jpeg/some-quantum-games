@@ -31,6 +31,16 @@ const DECO_COLS = [
   '#ef4444', // red
   '#e2e8f0', // white
 ]
+// Same slots, deepened for a light page — the neon tints wash out on white,
+// and "white" would vanish entirely, so it becomes slate
+const DECO_COLS_LIGHT = [
+  '#16a34a', // green
+  '#0891b2', // cyan
+  '#9333ea', // purple
+  '#d97706', // amber
+  '#dc2626', // red
+  '#334155', // white → slate
+]
 const DECO_TYPES = ['rect', 'diamond', 'circle', 'bar', 'tri', 'line', 'text']
 
 const DECO_DEFAULT_ALPHA = 0.22
@@ -69,6 +79,7 @@ function drawDeco(ctx, deco, w, h, scroll, originX, opts) {
   if (!deco || !deco.length) return
   const glow = !opts || opts.glow !== false
   const time = (opts && opts.time) || 0
+  const pal  = (typeof qgLight === 'function' && qgLight()) ? DECO_COLS_LIGHT : DECO_COLS
   ctx.save()
   for (const d of deco) {
     const m  = decoMotion(d, time)
@@ -78,7 +89,7 @@ function drawDeco(ctx, deco, w, h, scroll, originX, opts) {
 
     const y   = ((d.cf ?? 0.5) + m.dy) * h
     const dh  = (d.hf ?? 0.1) * h
-    const col = DECO_COLS[d.c ?? 0] || DECO_COLS[0]
+    const col = pal[d.c ?? 0] || pal[0]
 
     ctx.globalAlpha = (d.a ?? DECO_DEFAULT_ALPHA) * m.a
     ctx.fillStyle   = col

@@ -712,7 +712,7 @@ function _spdDraw(ctx, w, h) {
     const oy    = obs.floor ? h - oh : 0
     const edgeY = obs.floor ? h - oh : oh
 
-    ctx.fillStyle = '#1e0030'
+    ctx.fillStyle = _lt ? '#3a1f4a' : '#1e0030'
     ctx.fillRect(ox - half, oy, SPD_OBW, oh)
     ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1
     ctx.strokeRect(ox - half, oy, SPD_OBW, oh)
@@ -736,13 +736,13 @@ function _spdDraw(ctx, w, h) {
   // Score
   ctx.textAlign = 'center'
   ctx.font = 'bold 26px monospace'
-  ctx.fillStyle = 'rgba(255,255,255,0.92)'
+  ctx.fillStyle = _lt ? 'rgba(0,0,0,0.86)' : 'rgba(255,255,255,0.92)'
   ctx.shadowColor = mainCol; ctx.shadowBlur = 16
   ctx.fillText(S.practice ? '—' : S.score, w/2, 42); ctx.shadowBlur = 0
 
   // Noclip label
   if (S.practice) {
-    ctx.font = '11px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.30)'
+    ctx.font = '11px monospace'; ctx.fillStyle = _lt ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.30)'
     ctx.fillText((S.noclip ? 'PRACTICE · NOCLIP' : 'PRACTICE') +
                  (S.practiceDiff ? ' — ' + S.practiceDiff.toUpperCase() : '') +
                  (S.attempts ? '   att ' + S.attempts : ''), w/2, 18)
@@ -756,15 +756,15 @@ function _spdDraw(ctx, w, h) {
   if (S.phase === 'announce' && ch) {
     const a = Math.min(1, S.announceT * 7)
     ctx.globalAlpha = a
-    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0,0,w,h)
+    ctx.fillStyle = _lt ? 'rgba(255,255,255,0.62)' : 'rgba(0,0,0,0.55)'; ctx.fillRect(0,0,w,h)
     ctx.textAlign = 'center'
     ctx.font = 'bold 12px monospace'
     ctx.fillStyle = mainCol; ctx.shadowColor = mainCol; ctx.shadowBlur = 12
     ctx.fillText(ch.diff.toUpperCase(), w/2, h/2 - 48)
     ctx.font = 'bold 28px monospace'
-    ctx.fillStyle = '#fff'; ctx.shadowColor = mainCol; ctx.shadowBlur = 22
+    ctx.fillStyle = _lt ? '#111' : '#fff'; ctx.shadowColor = mainCol; ctx.shadowBlur = 22
     ctx.fillText(ch.name, w/2, h/2 - 10); ctx.shadowBlur = 0
-    ctx.font = '12px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.36)'
+    ctx.font = '12px monospace'; ctx.fillStyle = _lt ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.36)'
     ctx.fillText('tap / space to flip', w/2, h/2 + 18)
     ctx.globalAlpha = 1
   }

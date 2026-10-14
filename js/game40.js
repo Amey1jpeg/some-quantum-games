@@ -803,7 +803,7 @@ function _g40Draw(ctx, w, h) {
   // Score
   ctx.textAlign   = 'center'
   ctx.font        = 'bold 28px monospace'
-  ctx.fillStyle   = 'rgba(255,255,255,0.92)'
+  ctx.fillStyle   = _lt ? 'rgba(20,21,43,0.9)' : 'rgba(255,255,255,0.92)'
   ctx.shadowColor = '#a855f7'; ctx.shadowBlur = 18
   ctx.fillText(G40.score, w / 2, 46)
   ctx.shadowBlur  = 0
@@ -823,7 +823,7 @@ function _g40Draw(ctx, w, h) {
   if (G40.phase === 'announce' && G40.challenge) {
     const fade = Math.min(1, G40.announceT / 0.18)
     ctx.globalAlpha = fade
-    ctx.fillStyle = 'rgba(3,7,16,.72)'
+    ctx.fillStyle = _lt ? 'rgba(255,255,255,.82)' : 'rgba(3,7,16,.72)'
     ctx.fillRect(0, h / 2 - 62, w, 124)
     ctx.textAlign = 'center'
     ctx.font = 'bold 13px monospace'
@@ -831,7 +831,7 @@ function _g40Draw(ctx, w, h) {
     ctx.fillText(G40.challenge.diff.toUpperCase() + (G40.hasPortal ? '  \u00b7  PORTAL' : ''),
                  w / 2, h / 2 - 22)
     ctx.font = 'bold 32px monospace'
-    ctx.fillStyle = '#fff'
+    ctx.fillStyle = _lt ? '#1e1b4b' : '#fff'
     ctx.shadowColor = '#a855f7'; ctx.shadowBlur = 20
     ctx.fillText(G40.challenge.name, w / 2, h / 2 + 16)
     ctx.shadowBlur = 0
@@ -877,10 +877,12 @@ function _g40DrawPipe(ctx, x, y, pw, ph, isTop, safe, tunnel) {
     return
   }
   const edge = safe ? '#22c55e' : '#a855f7'
+  // On a light sky the pipes stay a deep tone so they still read as solid
+  const lt = typeof qgLight === 'function' && qgLight()
 
-  ctx.fillStyle = safe ? '#04140b' : '#06091a'
+  ctx.fillStyle = lt ? (safe ? '#1b4438' : '#2a2350') : (safe ? '#04140b' : '#06091a')
   ctx.fillRect(x, y, pw, ph)
-  ctx.fillStyle = safe ? '#0a2a17' : '#0d1533'
+  ctx.fillStyle = lt ? (safe ? '#245a49' : '#352d63') : (safe ? '#0a2a17' : '#0d1533')
   ctx.fillRect(capX, capY, capW, capH)
 
   ctx.strokeStyle = edge

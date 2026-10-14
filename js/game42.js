@@ -187,12 +187,13 @@ function _g42Draw(ctx, w, h) {
   ctx.save()
   ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'
 
-  // Background
-  ctx.fillStyle = '#030710'
+  // Background — canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#eef6f9' : '#030710'
   ctx.fillRect(0, 0, w, h)
 
   // Subtle grid
-  ctx.strokeStyle = 'rgba(6,182,212,0.04)'
+  ctx.strokeStyle = _lt ? 'rgba(8,145,178,0.10)' : 'rgba(6,182,212,0.04)'
   ctx.lineWidth = 1
   for (let y = 0; y < h; y += 22) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke()
@@ -235,7 +236,7 @@ function _g42Draw(ctx, w, h) {
   if (target && G42.phase === 'playing') {
     ctx.textAlign = 'center'
     ctx.font      = '13px monospace'
-    ctx.fillStyle = 'rgba(6,182,212,0.5)'
+    ctx.fillStyle = _lt ? 'rgba(8,145,178,0.75)' : 'rgba(6,182,212,0.5)'
     ctx.fillText('▲ type this', w / 2, h - 28)
 
     const charW = 11
@@ -245,11 +246,11 @@ function _g42Draw(ctx, w, h) {
       ctx.font      = 'bold 15px monospace'
       ctx.textAlign = 'center'
       if (i < target.typed) {
-        ctx.fillStyle = '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 6
+        ctx.fillStyle = _lt ? '#16a34a' : '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 6
       } else if (i === target.typed) {
-        ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#06b6d4'; ctx.shadowBlur = 10
+        ctx.fillStyle = _lt ? '#0f172a' : '#ffffff'; ctx.shadowColor = '#06b6d4'; ctx.shadowBlur = 10
       } else {
-        ctx.fillStyle = 'rgba(6,182,212,0.55)'; ctx.shadowBlur = 0
+        ctx.fillStyle = _lt ? 'rgba(8,145,178,0.8)' : 'rgba(6,182,212,0.55)'; ctx.shadowBlur = 0
       }
       ctx.fillText(target.text[i], cx, h - 10)
       ctx.shadowBlur = 0
@@ -260,7 +261,7 @@ function _g42Draw(ctx, w, h) {
   // Score
   ctx.textAlign   = 'center'
   ctx.font        = 'bold 26px monospace'
-  ctx.fillStyle   = 'rgba(255,255,255,0.9)'
+  ctx.fillStyle   = _lt ? 'rgba(20,21,43,0.9)' : 'rgba(255,255,255,0.9)'
   ctx.shadowColor = '#06b6d4'; ctx.shadowBlur = 16
   ctx.fillText(G42.score, w / 2, 44)
   ctx.shadowBlur  = 0
@@ -268,7 +269,7 @@ function _g42Draw(ctx, w, h) {
   // Lives
   ctx.textAlign = 'right'; ctx.font = '18px monospace'
   for (let i = 0; i < 3; i++) {
-    ctx.fillStyle = i < G42.lives ? '#ef4444' : 'rgba(255,255,255,0.15)'
+    ctx.fillStyle = i < G42.lives ? '#ef4444' : (_lt ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)')
     ctx.shadowColor = '#ef4444'; ctx.shadowBlur = i < G42.lives ? 8 : 0
     ctx.fillText('❤', w - 14 - i * 22, 38)
   }
@@ -276,7 +277,7 @@ function _g42Draw(ctx, w, h) {
 
   // Speed
   ctx.textAlign = 'left'; ctx.font = '11px monospace'
-  ctx.fillStyle = 'rgba(6,182,212,0.4)'
+  ctx.fillStyle = _lt ? 'rgba(8,145,178,0.7)' : 'rgba(6,182,212,0.4)'
   ctx.fillText(`${Math.round(G42.fallSpd)} px/s`, 12, 38)
 
   ctx.restore()
@@ -291,20 +292,23 @@ function _g42DrawWord(ctx, word, isTarget) {
   let cx = word.x - totalW / 2 + charW / 2
 
   const err = word.errFlash > 0
+  // Pale cyan washes out on a light page, so light mode uses a deeper one
+  const lt  = typeof qgLight === 'function' && qgLight()
+  const cy  = lt ? '8,145,178' : '6,182,212'
 
   for (let i = 0; i < word.text.length; i++) {
     if (i < word.typed) {
-      ctx.fillStyle   = '#4ade80'
+      ctx.fillStyle   = lt ? '#16a34a' : '#4ade80'
       ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 6
     } else if (err && i === word.typed) {
       ctx.fillStyle   = '#ef4444'
       ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 12
     } else if (isTarget) {
       const alpha = i === word.typed ? 1 : 0.65
-      ctx.fillStyle   = `rgba(6,182,212,${alpha})`
+      ctx.fillStyle   = `rgba(${cy},${alpha})`
       ctx.shadowColor = '#06b6d4'; ctx.shadowBlur = isTarget && i === word.typed ? 14 : 4
     } else {
-      ctx.fillStyle = 'rgba(6,182,212,0.35)'; ctx.shadowBlur = 0
+      ctx.fillStyle = `rgba(${cy},${lt ? 0.6 : 0.35})`; ctx.shadowBlur = 0
     }
     ctx.textAlign = 'center'
     ctx.fillText(word.text[i], cx, word.y)

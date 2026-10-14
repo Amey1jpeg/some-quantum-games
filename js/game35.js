@@ -113,13 +113,18 @@ function _g35MakePat(ctx, tint) {
   const off = document.createElement('canvas')
   off.width = 24; off.height = 24
   const oc = off.getContext('2d')
-  oc.fillStyle = tint === 'red' ? '#1a0707' : '#07111e'
+  // Light mode keeps the walls a deep tone so they still read as solid
+  const lt = typeof qgLight === 'function' && qgLight()
+  const pal = tint === 'red'
+    ? (lt ? ['#4a1f22', '#5e2a2d', '#733538'] : ['#1a0707', '#2d1010', '#3d1a1a'])
+    : (lt ? ['#1f4560', '#285775', '#336a8c'] : ['#07111e', '#0f2d47', '#163d5e'])
+  oc.fillStyle = pal[0]
   oc.fillRect(0, 0, 24, 24)
-  oc.fillStyle = tint === 'red' ? '#2d1010' : '#0f2d47'
+  oc.fillStyle = pal[1]
   oc.beginPath()
   oc.moveTo(12, 0); oc.lineTo(24, 12); oc.lineTo(12, 24); oc.lineTo(0, 12)
   oc.closePath(); oc.fill()
-  oc.fillStyle = tint === 'red' ? '#3d1a1a' : '#163d5e'
+  oc.fillStyle = pal[2]
   oc.beginPath()
   oc.moveTo(12, 0); oc.lineTo(24, 12); oc.lineTo(12, 12)
   oc.closePath(); oc.fill()
@@ -476,7 +481,9 @@ function g35Draw(ctx, w, h) {
 // `panelH` = the logical height of the corridor (wallBuf values are in [0, panelH])
 // `yOff`   = vertical pixel offset to render into (0 for full, h/2 for bottom half)
 function _g35DrawCore(ctx, w, h, panelH, yOff) {
-  ctx.fillStyle = '#030710'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#e9f1f7' : '#030710'
   ctx.fillRect(0, yOff, w, panelH)
 
   const pat = _g35MakePat(ctx, null)
@@ -592,7 +599,7 @@ function _g35DrawCore(ctx, w, h, panelH, yOff) {
   ctx.rotate(angle)
   const s = G35_PR
   ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 18
-  ctx.fillStyle = '#ffffff'
+  ctx.fillStyle = _lt ? '#166534' : '#ffffff'
   ctx.beginPath()
   ctx.moveTo(s * 1.5, 0)
   ctx.lineTo(-s * 0.5, -s)
@@ -621,7 +628,8 @@ function _g35DrawCore(ctx, w, h, panelH, yOff) {
 
 // Draw opponent corridor in the top half using history buffer
 function _g35DrawOpp(ctx, w, HH) {
-  ctx.fillStyle = '#07030f'
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f6ecef' : '#07030f'
   ctx.fillRect(0, 0, w, HH)
 
   if (G35_oppHistory.length > 1) {
@@ -903,7 +911,7 @@ function _g35LimboDrawKeys(ctx, w, yOff) {
   ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'  // clear any wave glow bleed
 
   if (lm.phase === 'shuffle') {
-    ctx.fillStyle = 'rgba(3,7,16,0.38)'
+    ctx.fillStyle = (typeof qgLight === 'function' && qgLight()) ? 'rgba(255,255,255,0.45)' : 'rgba(3,7,16,0.38)'
     ctx.fillRect(0, yOff, w, pH)
   }
 
@@ -916,7 +924,7 @@ function _g35LimboDrawKeys(ctx, w, yOff) {
     ctx.fillText('LIMBO', w / 2, yOff + 30)
     ctx.shadowBlur = 0
     ctx.font = '13px monospace'
-    ctx.fillStyle = 'rgba(255,255,255,0.6)'
+    ctx.fillStyle = (typeof qgLight === 'function' && qgLight()) ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'
     ctx.fillText(lm.t < 5.0 ? 'remember the glowing key!' : 'track it...', w / 2, yOff + 50)
   } else if (lm.phase === 'open') {
     ctx.font = 'bold 20px monospace'
@@ -957,8 +965,9 @@ function _g35LDrawKey(ctx, x, y, color, r, highlighted, phase2correct) {
   ctx.save()
   if (highlighted || phase2correct) {
     ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI * 2)
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5
-    ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 20
+    const lt = typeof qgLight === 'function' && qgLight()
+    ctx.strokeStyle = lt ? '#1e1b4b' : '#ffffff'; ctx.lineWidth = 2.5
+    ctx.shadowColor = lt ? '#fbbf24' : '#ffffff'; ctx.shadowBlur = 20
     ctx.stroke(); ctx.shadowBlur = 0
   }
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2)

@@ -407,10 +407,12 @@ function _g46Draw(ctx, w, h) {
     ctx.translate((Math.random()-0.5)*s, (Math.random()-0.5)*s)
   }
 
-  ctx.fillStyle = '#0a0a18'; ctx.fillRect(-10,-10,w+20,h+20)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#eef0fb' : '#0a0a18'; ctx.fillRect(-10,-10,w+20,h+20)
 
   // parallax stripes
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1
+  ctx.strokeStyle = _lt ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1
   for (let x = -(G46.cam*0.4 % 90); x < w; x += 90) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke()
   }
@@ -418,7 +420,7 @@ function _g46Draw(ctx, w, h) {
   const sx = x => x - G46.cam
 
   // floor, broken by pits
-  ctx.fillStyle = '#1e293b'
+  ctx.fillStyle = _lt ? '#475569' : '#1e293b'
   let cursor = 0
   const pits = G46.traps.filter(t => t.kind === 'pit').sort((a,b) => a.x-b.x)
   for (const p of pits) {
@@ -520,13 +522,18 @@ function _g46Draw(ctx, w, h) {
 
 function _g46DrawUI(ctx, w, h) {
   ctx.textAlign = 'center'
+  // Scrims and text flip with the theme so a light page doesn't get black panels
+  const lt   = typeof qgLight === 'function' && qgLight()
+  const ink  = lt ? '#111' : '#fff'
+  const inkA = a => lt ? `rgba(0,0,0,${a})` : `rgba(255,255,255,${a})`
+  const dim  = a => lt ? `rgba(255,255,255,${a + 0.1})` : `rgba(0,0,0,${a})`
 
   if (G46.phase === 'build') {
-    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0, 0, w, 74)
+    ctx.fillStyle = dim(0.55); ctx.fillRect(0, 0, w, 74)
     const who = G46.mode === 'local'
       ? (G46.buildTurn === 0 ? 'P1' : 'P2')
       : (G46.placed[G46.me] ? null : 'YOU')
-    ctx.font = 'bold 15px monospace'; ctx.fillStyle = '#fff'
+    ctx.font = 'bold 15px monospace'; ctx.fillStyle = ink
     ctx.fillText(who ? `${who}: place a trap  —  click the course` : 'Waiting for the other player…', w/2, 24)
 
     // palette
@@ -534,12 +541,12 @@ function _g46DrawUI(ctx, w, h) {
     G46_TRAPS.forEach((t, i) => {
       const x = x0 + i*bw
       const on = i === G46.sel
-      ctx.fillStyle = on ? t.col + '33' : 'rgba(255,255,255,0.05)'
+      ctx.fillStyle = on ? t.col + '33' : inkA(0.05)
       ctx.fillRect(x+4, 36, bw-8, 28)
-      ctx.strokeStyle = on ? t.col : 'rgba(255,255,255,0.15)'
+      ctx.strokeStyle = on ? t.col : inkA(0.15)
       ctx.lineWidth = on ? 2 : 1
       ctx.strokeRect(x+4, 36, bw-8, 28)
-      ctx.fillStyle = on ? t.col : 'rgba(255,255,255,0.55)'
+      ctx.fillStyle = on ? t.col : inkA(0.55)
       ctx.font = 'bold 11px monospace'
       ctx.fillText(`${i+1} ${t.name}`, x + bw/2, 54)
     })
@@ -547,17 +554,17 @@ function _g46DrawUI(ctx, w, h) {
 
   if (G46.phase === 'countdown') {
     const n = Math.max(1, 3 - Math.floor(G46.countT/0.7))
-    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0,0,w,h)
-    ctx.font = 'bold 62px monospace'; ctx.fillStyle = '#fff'
+    ctx.fillStyle = dim(0.5); ctx.fillRect(0,0,w,h)
+    ctx.font = 'bold 62px monospace'; ctx.fillStyle = ink
     ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 26
     ctx.fillText(n, w/2, h/2 + 20); ctx.shadowBlur = 0
-    ctx.font = '13px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    ctx.font = '13px monospace'; ctx.fillStyle = inkA(0.5)
     ctx.fillText(G46.mode === 'local' ? 'P1 = W   ·   P2 = ↑' : 'SPACE to jump', w/2, h/2 + 58)
   }
 
   if (G46.phase === 'result' || G46.phase === 'matchover') {
-    ctx.fillStyle = 'rgba(0,0,0,0.62)'; ctx.fillRect(0,0,w,h)
-    ctx.font = 'bold 20px monospace'; ctx.fillStyle = '#fff'
+    ctx.fillStyle = dim(0.62); ctx.fillRect(0,0,w,h)
+    ctx.font = 'bold 20px monospace'; ctx.fillStyle = ink
     ctx.fillText(G46.msg, w/2, h/2 - 6)
     ctx.font = 'bold 15px monospace'
     ctx.fillStyle = '#38bdf8'; ctx.fillText(`P1  ${G46.scores[0]}`, w/2 - 60, h/2 + 28)

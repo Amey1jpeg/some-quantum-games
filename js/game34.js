@@ -212,7 +212,9 @@ function g34Draw() {
   const w   = c.width, h = c.height
   const n   = G34.n
 
-  ctx.fillStyle = '#1a1f2e'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f2f4f8' : '#1a1f2e'
   ctx.fillRect(0, 0, w, h)
 
   const barW   = w / n
@@ -260,7 +262,7 @@ function g34Draw() {
     ctx.fill()
 
     if (n <= 30) {
-      ctx.fillStyle = (isSel || isDragSrc) ? '#fbbf24' : isDragTgt ? '#a5b4fc' : '#6aab7c'
+      ctx.fillStyle = (isSel || isDragSrc) ? '#fbbf24' : isDragTgt ? (_lt ? '#4f46e5' : '#a5b4fc') : (_lt ? '#3f6e4d' : '#6aab7c')
       ctx.font = `${Math.max(9, Math.min(13, bw - 3))}px monospace`
       ctx.textAlign = 'center'
       ctx.fillText(val, x + bw / 2, h - 6)
