@@ -1749,6 +1749,12 @@ function _g43Draw(ctx, w, h) {
 
   // Finish line
   if (G43.clearAt) _g43DrawFinish(ctx, waveX + (G43.clearAt - G43.scrollX), h)
+  // The finish line you just crossed keeps scrolling away behind you. The
+  // handover shifts the scroll origin back by the finished level's length,
+  // so that flag now sits at column zero. Without it the flag vanished the
+  // instant you passed it, which was the one thing still saying a swap had
+  // happened. _g43DrawFinish drops it once it is off the left edge.
+  if (G43.prevLv) _g43DrawFinish(ctx, waveX - G43.scrollX, h)
 
   // Noclip bump: name it, so it cannot read as a death
   if (G43.noclip && G43.hitFlash > 0) {
