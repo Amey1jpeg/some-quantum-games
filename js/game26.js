@@ -178,10 +178,12 @@ function g26Draw() {
   const W=cv.width,H=cv.height,pl=G26.planet,p=G26.player
 
   c.clearRect(0,0,W,H)
-  c.fillStyle='#020610';c.fillRect(0,0,W,H)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  c.fillStyle=_lt?'#eef2fb':'#020610';c.fillRect(0,0,W,H)
 
   // stars
-  c.fillStyle='rgba(255,255,255,.3)'
+  c.fillStyle=_lt?'rgba(30,41,59,.28)':'rgba(255,255,255,.3)'
   for(let i=0;i<60;i++)c.fillRect((i*317+11)%W,(i*211+7)%H,1,1)
 
   c.save()
@@ -195,7 +197,7 @@ function g26Draw() {
   // safe fill (very faint)
   c.beginPath();c.arc(pl.x,pl.y,G26.safeMax,0,Math.PI*2)
   c.arc(pl.x,pl.y,G26.safeMin,0,Math.PI*2,true)
-  c.fillStyle='rgba(74,222,128,.04)';c.fill()
+  c.fillStyle=_lt?'rgba(34,197,94,.08)':'rgba(74,222,128,.04)';c.fill()
 
   // player trail
   for(let i=0;i<G26.trail.length-1;i++){
@@ -227,7 +229,7 @@ function g26Draw() {
   // player moon
   const dist=g26Dist(p.x,p.y,pl.x,pl.y)
   const inSafe=dist>=G26.safeMin&&dist<=G26.safeMax
-  const moonCol=p.thrustFlash>0?'#22d3ee':inSafe?'#e2e8f0':'#f87171'
+  const moonCol=p.thrustFlash>0?'#22d3ee':inSafe?(_lt?'#64748b':'#e2e8f0'):'#f87171'
   c.beginPath();c.arc(p.x,p.y,p.r,0,Math.PI*2)
   c.fillStyle=moonCol;c.shadowColor=moonCol;c.shadowBlur=inSafe?14:22;c.fill();c.shadowBlur=0
   c.beginPath();c.arc(p.x-p.r*.28,p.y-p.r*.28,p.r*.32,0,Math.PI*2)
@@ -249,18 +251,18 @@ function g26Draw() {
   c.restore()
 
   // HUD
-  c.font='bold 22px monospace';c.textAlign='left';c.fillStyle='#f1f5f9'
-  c.shadowColor='#000';c.shadowBlur=4;c.fillText(G26.score.toLocaleString(),12,40);c.shadowBlur=0
-  c.font='13px sans-serif';c.fillStyle='#94a3b8'
+  c.font='bold 22px monospace';c.textAlign='left';c.fillStyle=_lt?'#14152b':'#f1f5f9'
+  c.shadowColor=_lt?'rgba(255,255,255,.8)':'#000';c.shadowBlur=4;c.fillText(G26.score.toLocaleString(),12,40);c.shadowBlur=0
+  c.font='13px sans-serif';c.fillStyle=_lt?'#475569':'#94a3b8'
   const secs=Math.floor(G26.frameCount/60)
   c.fillText(`Time: ${secs}s  Dist: ${Math.floor(g26Dist(p.x,p.y,pl.x,pl.y))}px`,12,58)
 
   // cooldown bar
   if(G26.thrustCooldown>0){
     const pct=1-G26.thrustCooldown/22
-    c.fillStyle='rgba(0,0,0,.4)';c.fillRect(W-70,H-22,62,8)
+    c.fillStyle=_lt?'rgba(0,0,0,.12)':'rgba(0,0,0,.4)';c.fillRect(W-70,H-22,62,8)
     c.fillStyle='#22d3ee';c.fillRect(W-70,H-22,62*pct,8)
-    c.font='10px monospace';c.textAlign='center';c.fillStyle='#94a3b8'
+    c.font='10px monospace';c.textAlign='center';c.fillStyle=_lt?'#475569':'#94a3b8'
     c.fillText('THRUST',W-39,H-26)
   }
 

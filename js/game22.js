@@ -212,10 +212,12 @@ function g22Draw() {
   const W=cv.width,H=cv.height
 
   c.clearRect(0,0,W,H)
-  c.fillStyle='#020617';c.fillRect(0,0,W,H)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  c.fillStyle=_lt?'#eef2fb':'#020617';c.fillRect(0,0,W,H)
 
   // stars
-  c.fillStyle='rgba(255,255,255,.35)'
+  c.fillStyle=_lt?'rgba(30,41,59,.3)':'rgba(255,255,255,.35)'
   for(let i=0;i<80;i++){
     const sx=(i*237+13)%W,sy=(i*193+7)%H
     c.fillRect(sx,sy,1,1)
@@ -229,7 +231,7 @@ function g22Draw() {
     for(let ring=1;ring<=3;ring++){
       const r2=p.r+ring*25
       c.beginPath();c.arc(p.x,p.y,r2,0,Math.PI*2)
-      c.strokeStyle=`hsla(${p.hue},70%,55%,${0.08-ring*0.02})`;c.lineWidth=1;c.stroke()
+      c.strokeStyle=`hsla(${p.hue},70%,${_lt?45:55}%,${(_lt?0.16:0.08)-ring*(_lt?0.04:0.02)})`;c.lineWidth=1;c.stroke()
     }
     // planet body
     const grad=c.createRadialGradient(p.x-p.r*.3,p.y-p.r*.3,2,p.x,p.y,p.r)
@@ -300,9 +302,9 @@ function g22Draw() {
   c.restore()
 
   // HUD
-  c.font='bold 20px monospace';c.textAlign='left';c.fillStyle='#f1f5f9'
-  c.shadowColor='#000';c.shadowBlur=4;c.fillText(G22.score.toLocaleString(),12,36);c.shadowBlur=0
-  c.font='13px sans-serif';c.fillStyle='#94a3b8'
+  c.font='bold 20px monospace';c.textAlign='left';c.fillStyle=_lt?'#14152b':'#f1f5f9'
+  c.shadowColor=_lt?'rgba(255,255,255,.8)':'#000';c.shadowBlur=4;c.fillText(G22.score.toLocaleString(),12,36);c.shadowBlur=0
+  c.font='13px sans-serif';c.fillStyle=_lt?'#475569':'#94a3b8'
   c.fillText(`🎯 ${G22.targetsHit}/${G22.totalTargets}  💥 ${G22.shotsLeft} shots left`,12,54)
 
   let my=H/2-60

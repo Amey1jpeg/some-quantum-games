@@ -424,11 +424,13 @@ function _g45Draw(ctx, w, h) {
     ctx.translate((Math.random()-0.5)*s, (Math.random()-0.5)*s)
   }
 
-  ctx.fillStyle = '#04030c'; ctx.fillRect(-14, -14, w+28, h+28)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#eef3fb' : '#04030c'; ctx.fillRect(-14, -14, w+28, h+28)
 
   for (const st of G45.stars) {
     ctx.globalAlpha = st.z * 0.7
-    ctx.fillStyle = '#93c5fd'
+    ctx.fillStyle = _lt ? '#3b82f6' : '#93c5fd'
     ctx.fillRect(st.x, st.y, st.r, st.r)
   }
   ctx.globalAlpha = 1
@@ -471,13 +473,13 @@ function _g45Draw(ctx, w, h) {
     ctx.beginPath(); ctx.arc(0, 0, G45_SHIP_R + 5, 0, Math.PI*2)
     ctx.fillStyle = 'rgba(34,211,238,0.07)'; ctx.fill()
     ctx.beginPath(); ctx.arc(0, 0, G45_SHIP_R, 0, Math.PI*2)
-    ctx.fillStyle = '#0e2a3a'; ctx.fill()
+    ctx.fillStyle = _lt ? '#cffafe' : '#0e2a3a'; ctx.fill()
     ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2.5
     ctx.shadowColor = '#22d3ee'; ctx.shadowBlur = 12; ctx.stroke(); ctx.shadowBlur = 0
 
     // Turret barrel
     ctx.rotate(G45.turret.ang)
-    ctx.fillStyle = '#67e8f9'
+    ctx.fillStyle = _lt ? '#0891b2' : '#67e8f9'
     ctx.fillRect(G45_SHIP_R - 3, -3.5, 16, 7)
     ctx.restore()
 
@@ -502,7 +504,7 @@ function _g45Draw(ctx, w, h) {
 
   // Wave label
   ctx.textAlign = 'center'
-  ctx.font = 'bold 11px monospace'; ctx.fillStyle = 'rgba(255,255,255,0.30)'
+  ctx.font = 'bold 11px monospace'; ctx.fillStyle = _lt ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.30)'
   ctx.fillText('WAVE ' + G45.wave, w/2, 18)
 
   ctx.restore()

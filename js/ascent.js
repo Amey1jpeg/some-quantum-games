@@ -131,9 +131,12 @@ function gaSize() {
   GA.W = _gaCanvas.width / GA.scale
 }
 
+// Canvases get no CSS variables, so the draw code reads the theme directly
+function gaLight() { return typeof qgLight === 'function' && qgLight() }
+
 function gaDrawBlank() {
   _gaCtx.setTransform(1, 0, 0, 1, 0, 0)
-  _gaCtx.fillStyle = '#05050f'; _gaCtx.fillRect(0, 0, _gaCanvas.width, _gaCanvas.height)
+  _gaCtx.fillStyle = gaLight() ? '#f1eefb' : '#05050f'; _gaCtx.fillRect(0, 0, _gaCanvas.width, _gaCanvas.height)
 }
 
 function gaKd(e) {
@@ -625,9 +628,10 @@ function gaDraw() {
   ctx.save()
   if (GA.shake > 0) ctx.translate((Math.random() - 0.5) * GA.shake, (Math.random() - 0.5) * GA.shake)
 
-  ctx.fillStyle = '#05050f'; ctx.fillRect(-20, -20, W + 40, H + 40)
+  const _lt = gaLight()
+  ctx.fillStyle = _lt ? '#f1eefb' : '#05050f'; ctx.fillRect(-20, -20, W + 40, H + 40)
   for (const s of GA.stars) {
-    ctx.globalAlpha = s.a; ctx.fillStyle = '#fff'
+    ctx.globalAlpha = s.a; ctx.fillStyle = _lt ? '#8b80b0' : '#fff'
     ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill()
   }
   ctx.globalAlpha = 1
@@ -695,12 +699,12 @@ function gaDraw() {
   // HUD
   if (GA.level) {
     const pw = Math.min(360, W * 0.4), px = (W - pw) / 2
-    ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(px, 10, pw, 4)
+    ctx.fillStyle = _lt ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(px, 10, pw, 4)
     ctx.fillStyle = '#a78bfa'; ctx.fillRect(px, 10, pw * Math.min(1, Math.max(0, GA.x / GA.endX)), 4)
   }
   const bw = 170, bx = W - bw - 16, by = 22
-  ctx.fillStyle = 'rgba(5,5,15,0.6)'; ctx.fillRect(bx - 8, by - 8, bw + 16, 34)
-  ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(bx, by, bw, 5)
+  ctx.fillStyle = _lt ? 'rgba(255,255,255,0.75)' : 'rgba(5,5,15,0.6)'; ctx.fillRect(bx - 8, by - 8, bw + 16, 34)
+  ctx.fillStyle = _lt ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(bx, by, bw, 5)
   let label
   if (GA.forced) {
     ctx.fillStyle = '#ef4444'; ctx.fillRect(bx, by, bw, 5)
@@ -715,7 +719,7 @@ function gaDraw() {
     ctx.fillStyle = '#22d3ee'; ctx.fillRect(bx, by, bw, 5)
     label = 'ENTANGLED · SPACE to break'
   }
-  ctx.textAlign = 'center'; ctx.font = '10px monospace'; ctx.fillStyle = 'rgba(226,232,240,0.7)'
+  ctx.textAlign = 'center'; ctx.font = '10px monospace'; ctx.fillStyle = _lt ? 'rgba(30,27,75,0.75)' : 'rgba(226,232,240,0.7)'
   ctx.fillText(label, bx + bw / 2, by + 19)
 
   if (GA.practice) {
@@ -737,7 +741,7 @@ function gaDraw() {
     ctx.fillText(GA.banner.text, W / 2, 52); ctx.shadowBlur = 0; ctx.globalAlpha = 1
   }
   if (GA.score < 3 && GA.phase === 'playing' && GA.x < 1200) {
-    ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(167,139,250,0.75)'; ctx.font = '12px monospace'
+    ctx.textAlign = 'center'; ctx.fillStyle = _lt ? 'rgba(109,40,217,0.8)' : 'rgba(167,139,250,0.75)'; ctx.font = '12px monospace'
     ctx.fillText('W = thrust · S = other way · ↑/↓ = move both together · portals are optional', W / 2, H - 14)
   }
 }
@@ -764,7 +768,7 @@ function gaDrawStrip(ctx, st, x) {
   const [, y, w, h] = alStripRect(st)
   const down = st.edge === 'top' || st.edge === 'midbot'      // teeth point away from what they're attached to
   const baseY = down ? y : y + h - 5
-  ctx.fillStyle = '#0b0b1e'; ctx.fillRect(x, baseY, w, 5)
+  ctx.fillStyle = gaLight() ? '#2a2850' : '#0b0b1e'; ctx.fillRect(x, baseY, w, 5)
   ctx.fillStyle = '#f43f5e'; ctx.shadowBlur = 8; ctx.shadowColor = '#f43f5e'
   const n = Math.max(1, Math.round(w / 14)), sw = w / n
   for (let i = 0; i < n; i++) {
@@ -812,7 +816,8 @@ function gaDrawFinish(ctx, x, H) {
 }
 
 function gaSpikes(ctx, x, y, w, h, col, block) {
-  ctx.fillStyle = '#0b0b1e'; ctx.fillRect(x, y, w, h)
+  // Blocks stay a deep tone on a light page so they still read as solid
+  ctx.fillStyle = gaLight() ? '#2a2850' : '#0b0b1e'; ctx.fillRect(x, y, w, h)
   ctx.strokeStyle = col; ctx.lineWidth = 1.5
   ctx.shadowBlur = 10; ctx.shadowColor = col
   ctx.strokeRect(x + 0.75, y + 0.75, w - 1.5, h - 1.5)

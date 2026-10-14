@@ -234,7 +234,9 @@ function g23Draw() {
   const W=cv.width,H=cv.height
 
   c.clearRect(0,0,W,H)
-  c.fillStyle=G23.zapFlash>0?`rgba(239,68,68,${G23.zapFlash/20*.3})`:'#060a12'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  c.fillStyle=G23.zapFlash>0?`rgba(239,68,68,${G23.zapFlash/20*.3})`:(_lt?'#eef1f7':'#060a12')
   c.fillRect(0,0,W,H)
 
   c.save()
@@ -246,7 +248,7 @@ function g23Draw() {
     const isPath=G23.path.includes(e.a)&&G23.path.includes(e.b)
     const consecutive=G23.path.some((_,i)=>i<G23.path.length-1&&
       ((G23.path[i]===e.a&&G23.path[i+1]===e.b)||(G23.path[i]===e.b&&G23.path[i+1]===e.a)))
-    c.strokeStyle=consecutive?'rgba(99,102,241,.55)':'rgba(255,255,255,.08)'
+    c.strokeStyle=consecutive?'rgba(99,102,241,.55)':(_lt?'rgba(0,0,0,.12)':'rgba(255,255,255,.08)')
     c.lineWidth=consecutive?2.5:1
     c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()
   }
@@ -273,7 +275,7 @@ function g23Draw() {
     if(n.state==='source')     {col='#22c55e';glow=16}
     else if(n.state==='conducted'){col='#4ade80';glow=12}
     else if(n.state==='path')  {col='#6366f1';glow=8}
-    else                       {col='#1e293b';glow=0}
+    else                       {col=_lt?'#cbd5e1':'#1e293b';glow=0}
 
     const isNext=G23.path[G23.pathIdx]===i&&!G23.sequenceDone
     if(isNext){
@@ -284,7 +286,7 @@ function g23Draw() {
 
     c.beginPath();c.arc(n.x,n.y,n.r,0,Math.PI*2)
     c.fillStyle=col;c.shadowColor=col;c.shadowBlur=glow;c.fill();c.shadowBlur=0
-    c.strokeStyle='rgba(255,255,255,.18)';c.lineWidth=1.5;c.stroke()
+    c.strokeStyle=_lt?'rgba(0,0,0,.18)':'rgba(255,255,255,.18)';c.lineWidth=1.5;c.stroke()
 
     // index label
     const pathPos=G23.path.indexOf(i)
@@ -303,9 +305,9 @@ function g23Draw() {
   c.restore()
 
   // HUD
-  c.font='bold 20px monospace';c.textAlign='left';c.fillStyle='#f1f5f9'
-  c.shadowColor='#000';c.shadowBlur=4;c.fillText(G23.score.toLocaleString(),12,36);c.shadowBlur=0
-  c.font='13px sans-serif';c.fillStyle='#94a3b8'
+  c.font='bold 20px monospace';c.textAlign='left';c.fillStyle=_lt?'#14152b':'#f1f5f9'
+  c.shadowColor=_lt?'rgba(255,255,255,.8)':'#000';c.shadowBlur=4;c.fillText(G23.score.toLocaleString(),12,36);c.shadowBlur=0
+  c.font='13px sans-serif';c.fillStyle=_lt?'#475569':'#94a3b8'
   c.fillText(`Wave ${G23.wave}  ❤️${G23.lives}  ${G23.pathIdx}/${G23.path.length} conducted`,12,54)
 
   let my=H/2-70

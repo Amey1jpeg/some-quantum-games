@@ -121,11 +121,13 @@ function g32Loop(ts) {
   }
 
   // ─── Draw ───
-  ctx.fillStyle = '#0d1117'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f6f1f5' : '#0d1117'
   ctx.fillRect(0, 0, w, h)
 
   // Scrolling stripe BG
-  ctx.fillStyle = '#111827'
+  ctx.fillStyle = _lt ? '#efe6ee' : '#111827'
   const stripeW = 90
   const offset = (G32.score * 5 + ts * 0.04) % stripeW
   for (let x = -offset; x < w; x += stripeW) ctx.fillRect(x, 0, stripeW / 2, h)
@@ -137,7 +139,7 @@ function g32Loop(ts) {
 
   // Pillars
   for (const p of G32.pillars) {
-    ctx.fillStyle = '#1e293b'
+    ctx.fillStyle = _lt ? '#4a2a40' : '#1e293b'
     ctx.fillRect(p.x, 0, G32_PW, p.gapY)
     ctx.fillRect(p.x, p.gapY + G32_GAP, G32_PW, h - p.gapY - G32_GAP)
     ctx.strokeStyle = '#f472b644'; ctx.lineWidth = 1.5
@@ -153,7 +155,7 @@ function g32Loop(ts) {
   const glow = ctx.createRadialGradient(G32.cx, G32.y, 0, G32.cx, G32.y, G32_PR * 2.5)
   glow.addColorStop(0, '#f472b677'); glow.addColorStop(1, '#f472b600')
   ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(G32.cx, G32.y, G32_PR * 2.5, 0, Math.PI * 2); ctx.fill()
-  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(G32.cx, G32.y, G32_PR, 0, Math.PI * 2); ctx.fill()
+  ctx.fillStyle = _lt ? '#be185d' : '#ffffff'; ctx.beginPath(); ctx.arc(G32.cx, G32.y, G32_PR, 0, Math.PI * 2); ctx.fill()
 
   // Gravity direction arrow HUD
   ctx.fillStyle = '#f472b6'; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center'

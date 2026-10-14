@@ -226,7 +226,9 @@ function g24Draw() {
   const W=cv.width, H=cv.height, cx=W/2, cy=H/2
 
   c.clearRect(0,0,W,H)
-  c.fillStyle='#050810'; c.fillRect(0,0,W,H)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  c.fillStyle=_lt?'#eef1f8':'#050810'; c.fillRect(0,0,W,H)
 
   // beat flash
   if (G24.beatFlash>0) { c.fillStyle=`rgba(251,191,36,${G24.beatFlash/10*.12})`; c.fillRect(0,0,W,H) }
@@ -236,15 +238,15 @@ function g24Draw() {
 
   // tolerance zone (faint)
   c.beginPath(); c.arc(cx,cy,G24_TARGET_R-G24_TOLERANCE,0,Math.PI*2)
-  c.strokeStyle='rgba(99,102,241,.12)'; c.lineWidth=1; c.stroke()
+  c.strokeStyle=_lt?'rgba(99,102,241,.25)':'rgba(99,102,241,.12)'; c.lineWidth=1; c.stroke()
   c.beginPath(); c.arc(cx,cy,G24_TARGET_R+G24_TOLERANCE,0,Math.PI*2)
-  c.strokeStyle='rgba(99,102,241,.12)'; c.lineWidth=1; c.stroke()
+  c.strokeStyle=_lt?'rgba(99,102,241,.25)':'rgba(99,102,241,.12)'; c.lineWidth=1; c.stroke()
 
   // perfect zone fill (very faint)
   c.beginPath(); c.arc(cx,cy,G24_TARGET_R+G24_TOLERANCE*0.38,0,Math.PI*2)
-  c.strokeStyle='rgba(251,191,36,.18)'; c.lineWidth=1; c.stroke()
+  c.strokeStyle=_lt?'rgba(217,119,6,.3)':'rgba(251,191,36,.18)'; c.lineWidth=1; c.stroke()
   c.beginPath(); c.arc(cx,cy,G24_TARGET_R-G24_TOLERANCE*0.38,0,Math.PI*2)
-  c.strokeStyle='rgba(251,191,36,.18)'; c.lineWidth=1; c.stroke()
+  c.strokeStyle=_lt?'rgba(217,119,6,.3)':'rgba(251,191,36,.18)'; c.lineWidth=1; c.stroke()
 
   // target ring
   c.beginPath(); c.arc(cx,cy,G24_TARGET_R,0,Math.PI*2)
@@ -275,9 +277,9 @@ function g24Draw() {
   c.restore()
 
   // HUD
-  c.font='bold 22px monospace';c.textAlign='left';c.fillStyle='#f1f5f9'
-  c.shadowColor='#000';c.shadowBlur=4;c.fillText(G24.score.toLocaleString(),12,40);c.shadowBlur=0
-  c.font='13px sans-serif';c.fillStyle='#94a3b8'
+  c.font='bold 22px monospace';c.textAlign='left';c.fillStyle=_lt?'#14152b':'#f1f5f9'
+  c.shadowColor=_lt?'rgba(255,255,255,.8)':'#000';c.shadowBlur=4;c.fillText(G24.score.toLocaleString(),12,40);c.shadowBlur=0
+  c.font='13px sans-serif';c.fillStyle=_lt?'#475569':'#94a3b8'
   c.fillText('❤️'.repeat(G24.lives)+'  BPM '+Math.floor(G24.bpm),12,58)
 
   if (G24.combo>1){
@@ -296,7 +298,7 @@ function g24Draw() {
 
   if (G24.frameCount<200){
     c.globalAlpha=Math.min(1,(200-G24.frameCount)/60)*.7
-    c.font='13px sans-serif';c.textAlign='center';c.fillStyle='#a5b4fc'
+    c.font='13px sans-serif';c.textAlign='center';c.fillStyle=_lt?'#4f46e5':'#a5b4fc'
     c.fillText('Click/tap when the ring lines up with the purple circle!',W/2,H-16)
     c.globalAlpha=1
   }

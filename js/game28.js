@@ -699,10 +699,12 @@ function g28Draw() {
   const tx2sx = tx => OX + (tx - G28.scrollX) * S
   const ty2sy = ty => OY + ty * S
 
-  c.fillStyle = '#050810'; c.fillRect(0, 0, W, H)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  c.fillStyle = _lt ? '#eef1f8' : '#050810'; c.fillRect(0, 0, W, H)
 
   // bg grid lines
-  c.strokeStyle = 'rgba(99,102,241,0.05)'; c.lineWidth = 1
+  c.strokeStyle = _lt ? 'rgba(99,102,241,0.12)' : 'rgba(99,102,241,0.05)'; c.lineWidth = 1
   for (let col = 0; col <= G28_COLS; col++) {
     const x = OX + (col - G28.scrollX) * S
     c.beginPath(); c.moveTo(x, OY); c.lineTo(x, OY + G28_ROWS * S); c.stroke()
@@ -798,7 +800,7 @@ function g28Draw() {
     c.shadowBlur = 0
     c.globalAlpha = 0.9
     c.font = `bold ${Math.max(9, S * 0.32)}px sans-serif`
-    c.textAlign = 'center'; c.fillStyle = '#7dd3fc'
+    c.textAlign = 'center'; c.fillStyle = _lt ? '#0369a1' : '#7dd3fc'
     c.fillText('OPP', gx + gw / 2, gy - S * 0.15)
     c.restore()
     c.globalAlpha = 1
@@ -862,7 +864,7 @@ function g28Draw() {
 
   // fade overlay
   if (G28.fade < 255) {
-    c.fillStyle = `rgba(5,8,16,${1 - fa})`
+    c.fillStyle = _lt ? `rgba(238,241,248,${1 - fa})` : `rgba(5,8,16,${1 - fa})`
     c.fillRect(0, 0, W, H)
   }
 
@@ -878,7 +880,7 @@ function g28Draw() {
 
   // HUD
   c.font = 'bold 14px monospace'; c.textAlign = 'left'
-  c.fillStyle = '#f1f5f9'; c.shadowColor = '#000'; c.shadowBlur = 4
+  c.fillStyle = _lt ? '#14152b' : '#f1f5f9'; c.shadowColor = _lt ? 'rgba(255,255,255,.8)' : '#000'; c.shadowBlur = 4
   c.fillText(`LVL ${G28.level + 1}   ${G28.score.toLocaleString()} pts`, 10, 22)
   c.shadowBlur = 0
   c.font = '11px monospace'; c.fillStyle = '#64748b'

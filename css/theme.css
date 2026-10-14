@@ -5,9 +5,9 @@
 
    The site's chrome is almost entirely driven by the :root
    variables, so a light theme is mostly a matter of redefining
-   them. Game arenas keep their own dark backgrounds on purpose —
-   a game canvas reads as its own screen, and the ~40 games each
-   paint hardcoded colours that no variable reaches.
+   them. Game canvases can't see those variables, so each game's
+   draw code asks qgLight() and paints its own daytime scenery; the
+   rules at the bottom of this file cover the CSS around them.
    ═══════════════════════════════════════════════════════ */
 
 :root[data-theme="light"] {
@@ -135,6 +135,9 @@
 /* Reaction test keeps its signal colours — only the neutral states change */
 :root[data-theme="light"] #game3 .arena.state-early {
   background: radial-gradient(ellipse at center, #fecaca, #fee2e2);
+}
+:root[data-theme="light"] #game3 .arena.state-ready {
+  background: radial-gradient(ellipse at center, #dcfce7, #f0fdf4);
 }
 
 /* Chrome around the arena */

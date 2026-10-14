@@ -219,26 +219,29 @@ function _g36Draw() {
 function _g36DrawSplit(ctx, W, H) {
   const HH = H / 2  // half height
 
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+
   // Opponent panel (top)
-  ctx.fillStyle = '#070712'
+  ctx.fillStyle = _lt ? '#e8eaf7' : '#070712'
   ctx.fillRect(0, 0, W, HH)
   ctx.fillStyle = 'rgba(165,180,252,0.08)'
   ctx.fillRect(0, 0, W, HH)
 
-  ctx.fillStyle = 'rgba(165,180,252,0.4)'
+  ctx.fillStyle = _lt ? 'rgba(79,70,229,0.6)' : 'rgba(165,180,252,0.4)'
   ctx.font = `bold ${Math.min(W/24, 14)}px monospace`
   ctx.textAlign = 'center'; ctx.textBaseline = 'top'
   ctx.fillText('👤 OPPONENT', W/2, 8)
 
   const elapsed = G36.startTime > 0 ? (performance.now() - G36.startTime) / 1000 : 0
   const oppCPS  = G36_oppClicks > 0 && elapsed > 0.3 ? Math.round(G36_oppClicks / elapsed) : 0
-  ctx.fillStyle = '#a5b4fc'
+  ctx.fillStyle = _lt ? '#4f46e5' : '#a5b4fc'
   ctx.font = `bold ${Math.min(W/4, 72)}px monospace`
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
   ctx.shadowColor = '#6366f1'; ctx.shadowBlur = 16
   ctx.fillText(G36_oppClicks, W/2, HH * 0.52)
   ctx.shadowBlur = 0
-  ctx.fillStyle = 'rgba(165,180,252,0.6)'
+  ctx.fillStyle = _lt ? 'rgba(79,70,229,0.75)' : 'rgba(165,180,252,0.6)'
   ctx.font = `bold ${Math.min(W/20, 18)}px monospace`
   ctx.fillText(oppCPS + ' CPS', W/2, HH * 0.82)
 
@@ -248,10 +251,10 @@ function _g36DrawSplit(ctx, W, H) {
   ctx.beginPath(); ctx.moveTo(0, HH); ctx.lineTo(W, HH); ctx.stroke()
 
   // You panel (bottom)
-  ctx.fillStyle = '#0a0a1a'
+  ctx.fillStyle = _lt ? '#f4f5fc' : '#0a0a1a'
   ctx.fillRect(0, HH, W, HH)
 
-  ctx.fillStyle = 'rgba(129,140,248,0.4)'
+  ctx.fillStyle = _lt ? 'rgba(79,70,229,0.6)' : 'rgba(129,140,248,0.4)'
   ctx.font = `bold ${Math.min(W/24, 14)}px monospace`
   ctx.textAlign = 'center'; ctx.textBaseline = 'top'
   ctx.fillText('YOU', W/2, HH + 8)
@@ -264,27 +267,29 @@ function _g36DrawSplit(ctx, W, H) {
   }
 
   const liveCPS = elapsed > 0.3 ? Math.round(G36.clicks / elapsed) : 0
-  ctx.fillStyle = '#ffffff'
+  ctx.fillStyle = _lt ? '#1e1b4b' : '#ffffff'
   ctx.font = `bold ${Math.min(W/4, 72)}px monospace`
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
   ctx.shadowColor = '#6366f1'; ctx.shadowBlur = 20
   ctx.fillText(G36.clicks, W/2, HH + HH * 0.52)
   ctx.shadowBlur = 0
-  ctx.fillStyle = '#a5b4fc'
+  ctx.fillStyle = _lt ? '#4f46e5' : '#a5b4fc'
   ctx.font = `bold ${Math.min(W/20, 18)}px monospace`
   ctx.fillText((G36.startTime === 0 ? 'CPS' : liveCPS + ' CPS'), W/2, HH + HH * 0.82)
 
   // Timer bar along very bottom
   const progress = G36.startTime === 0 ? 1 : G36.timeLeft / G36_DURATION
   const col = progress > 0.5 ? '#6366f1' : progress > 0.25 ? '#f59e0b' : '#ef4444'
-  ctx.fillStyle = 'rgba(255,255,255,0.06)'
+  ctx.fillStyle = _lt ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)'
   ctx.fillRect(0, H - 6, W, 6)
   ctx.fillStyle = col
   ctx.fillRect(0, H - 6, W * progress, 6)
 }
 
 function _g36DrawFull(ctx, W, H) {
-  ctx.fillStyle = '#0a0a1a'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f4f5fc' : '#0a0a1a'
   ctx.fillRect(0, 0, W, H)
 
   const notStarted = G36.startTime === 0
@@ -309,29 +314,29 @@ function _g36DrawFull(ctx, W, H) {
 
   const cx = W/2, cy = H * 0.38, arcR = Math.min(W, H) * 0.28
   const progress = G36.startTime === 0 ? 1 : G36.timeLeft / G36_DURATION
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 10; ctx.lineCap = 'round'
+  ctx.strokeStyle = _lt ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'; ctx.lineWidth = 10; ctx.lineCap = 'round'
   ctx.beginPath(); ctx.arc(cx, cy, arcR, -Math.PI/2, Math.PI*2 - Math.PI/2); ctx.stroke()
   const col = progress > 0.5 ? '#6366f1' : progress > 0.25 ? '#f59e0b' : '#ef4444'
   ctx.strokeStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 18
   ctx.beginPath(); ctx.arc(cx, cy, arcR, -Math.PI/2, Math.PI*2 * progress - Math.PI/2); ctx.stroke()
   ctx.shadowBlur = 0
 
-  ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.floor(arcR * 0.7)}px monospace`
+  ctx.fillStyle = _lt ? '#1e1b4b' : '#fff'; ctx.font = `bold ${Math.floor(arcR * 0.7)}px monospace`
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
   ctx.fillText(G36.startTime === 0 ? G36_DURATION : Math.ceil(G36.timeLeft), cx, cy)
 
   const elapsed  = G36.startTime > 0 ? (performance.now() - G36.startTime) / 1000 : 0
   const liveCPS  = elapsed > 0.3 ? Math.round(G36.clicks / elapsed) : 0
-  ctx.fillStyle = '#a5b4fc'; ctx.font = `bold ${Math.floor(arcR * 0.25)}px monospace`
+  ctx.fillStyle = _lt ? '#4f46e5' : '#a5b4fc'; ctx.font = `bold ${Math.floor(arcR * 0.25)}px monospace`
   ctx.fillText(G36.startTime === 0 ? 'CPS' : `${liveCPS} CPS`, cx, cy + arcR * 0.55)
 
-  ctx.fillStyle = '#ffffff'
+  ctx.fillStyle = _lt ? '#1e1b4b' : '#ffffff'
   ctx.font = `bold ${Math.min(W/5, 90)}px monospace`
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
   ctx.shadowColor = '#6366f1'; ctx.shadowBlur = 20
   ctx.fillText(G36.clicks, W/2, H * 0.82)
   ctx.shadowBlur = 0
 
-  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.font = `${Math.min(W/20, 18)}px monospace`
+  ctx.fillStyle = _lt ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.35)'; ctx.font = `${Math.min(W/20, 18)}px monospace`
   ctx.fillText('CLICKS', W/2, H * 0.82 + 22)
 }

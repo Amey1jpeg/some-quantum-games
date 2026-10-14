@@ -271,11 +271,13 @@ function _g41Draw(ctx, w, h) {
   ctx.save()
   ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'
 
-  ctx.fillStyle = '#030710'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f6f1ec' : '#030710'
   ctx.fillRect(0, 0, w, h)
 
   // Scan lines
-  ctx.strokeStyle = 'rgba(249,115,22,0.04)'
+  ctx.strokeStyle = _lt ? 'rgba(234,88,12,0.08)' : 'rgba(249,115,22,0.04)'
   ctx.lineWidth = 1
   for (let y = 0; y < h; y += 20) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke()
@@ -285,12 +287,12 @@ function _g41Draw(ctx, w, h) {
   for (const s of G41.stars) {
     ctx.globalAlpha = s.a
     ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
-    ctx.fillStyle = '#fff'; ctx.fill()
+    ctx.fillStyle = _lt ? '#9a8f86' : '#fff'; ctx.fill()
   }
   ctx.globalAlpha = 1
 
   // Ceiling & floor
-  ctx.fillStyle = '#0f1f35'
+  ctx.fillStyle = _lt ? '#3d2a1f' : '#0f1f35'
   ctx.fillRect(0, 0, w, G41_WALL)
   ctx.fillRect(0, h - G41_WALL, w, G41_WALL)
   ctx.strokeStyle = '#f97316'; ctx.lineWidth = 1.6
@@ -326,14 +328,14 @@ function _g41Draw(ctx, w, h) {
   // Score
   ctx.textAlign   = 'center'
   ctx.font        = 'bold 28px monospace'
-  ctx.fillStyle   = 'rgba(255,255,255,0.92)'
+  ctx.fillStyle   = _lt ? 'rgba(20,21,43,0.9)' : 'rgba(255,255,255,0.92)'
   ctx.shadowColor = '#f97316'; ctx.shadowBlur = 16
   ctx.fillText(G41.score, w / 2, 46)
   ctx.shadowBlur  = 0
 
   // Speed
   ctx.textAlign = 'right'; ctx.font = '11px monospace'
-  ctx.fillStyle = 'rgba(249,115,22,0.5)'
+  ctx.fillStyle = _lt ? 'rgba(194,65,12,0.75)' : 'rgba(249,115,22,0.5)'
   ctx.fillText(`${Math.round(G41.camSpd)} px/s`, w - 12, 36)
 
   // Hint (first 3 blocks)
@@ -351,7 +353,8 @@ function _g41Draw(ctx, w, h) {
 function _g41DrawObs(ctx, o, h) {
   function block(x, y, bw, bh) {
     if (bw <= 0 || bh <= 0) return
-    ctx.fillStyle = '#080e1c'
+    // Blocks stay a deep tone on a light page so they still read as solid
+    ctx.fillStyle = (typeof qgLight === 'function' && qgLight()) ? '#3d2a1f' : '#080e1c'
     ctx.fillRect(x, y, bw, bh)
     ctx.strokeStyle = '#f97316'; ctx.lineWidth = 1.8
     ctx.shadowColor = '#f97316'; ctx.shadowBlur = 12

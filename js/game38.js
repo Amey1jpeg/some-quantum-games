@@ -326,7 +326,10 @@ function _g38Draw(now) {
   const rowBot = Math.floor((G38.camY - H * 0.62) / G38_ROWH) - 1
   const rowTop = Math.ceil((G38.camY + H * 0.40) / G38_ROWH) + 1
 
-  ctx.fillStyle = '#0f172a'
+  // Canvases get no CSS variables, so read the theme directly — light
+  // mode is the same crossing by day
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#e2e8f0' : '#0f172a'
   ctx.fillRect(0, 0, W, H)
 
   for (let ri = rowBot; ri <= rowTop; ri++) {
@@ -335,16 +338,16 @@ function _g38Draw(now) {
     const rH  = G38_ROWH
 
     if (row.type === 'grass') {
-      ctx.fillStyle = row.s ? '#14532d' : '#166534'
+      ctx.fillStyle = _lt ? (row.s ? '#a3e6b4' : '#b6efc4') : (row.s ? '#14532d' : '#166534')
       ctx.fillRect(0, sy, W, rH)
-      ctx.fillStyle = row.s ? '#166534' : '#15803d'
+      ctx.fillStyle = _lt ? (row.s ? '#86d39a' : '#97dcaa') : (row.s ? '#166534' : '#15803d')
       for (let x = cw * 0.5; x < W; x += cw) {
         ctx.fillRect(x - 2, sy + rH * 0.3, 4, rH * 0.4)
       }
     }
 
     if (row.type === 'road') {
-      ctx.fillStyle = row.s ? '#1f2937' : '#111827'
+      ctx.fillStyle = _lt ? (row.s ? '#71717a' : '#6b7280') : (row.s ? '#1f2937' : '#111827')
       ctx.fillRect(0, sy, W, rH)
       ctx.strokeStyle = 'rgba(253,224,71,0.5)'
       ctx.lineWidth = 2; ctx.setLineDash([cw * 0.42, cw * 0.28])
@@ -373,10 +376,10 @@ function _g38Draw(now) {
     }
 
     if (row.type === 'water') {
-      ctx.fillStyle = row.s ? '#1e3a8a' : '#1e40af'
+      ctx.fillStyle = _lt ? (row.s ? '#60a5fa' : '#3b82f6') : (row.s ? '#1e3a8a' : '#1e40af')
       ctx.fillRect(0, sy, W, rH)
       const wOff = (now * 0.055 * (row.dir > 0 ? 1 : -1)) % (cw * 1.4)
-      ctx.strokeStyle = 'rgba(96,165,250,0.38)'; ctx.lineWidth = 1.5
+      ctx.strokeStyle = _lt ? 'rgba(255,255,255,0.5)' : 'rgba(96,165,250,0.38)'; ctx.lineWidth = 1.5
       for (let x = -cw + wOff; x < W + cw; x += cw * 0.9) {
         ctx.beginPath()
         ctx.moveTo(x, sy + rH * 0.38)
@@ -394,12 +397,12 @@ function _g38Draw(now) {
     }
 
     if (row.type === 'rail') {
-      ctx.fillStyle = row.s ? '#292524' : '#1c1917'
+      ctx.fillStyle = _lt ? (row.s ? '#d6d3d1' : '#e7e5e4') : (row.s ? '#292524' : '#1c1917')
       ctx.fillRect(0, sy, W, rH)
-      ctx.strokeStyle = 'rgba(161,161,170,0.4)'; ctx.lineWidth = 2
+      ctx.strokeStyle = _lt ? 'rgba(87,83,78,0.6)' : 'rgba(161,161,170,0.4)'; ctx.lineWidth = 2
       ctx.beginPath(); ctx.moveTo(0, sy + rH * 0.28); ctx.lineTo(W, sy + rH * 0.28); ctx.stroke()
       ctx.beginPath(); ctx.moveTo(0, sy + rH * 0.72); ctx.lineTo(W, sy + rH * 0.72); ctx.stroke()
-      ctx.strokeStyle = 'rgba(120,113,108,0.45)'; ctx.lineWidth = 3
+      ctx.strokeStyle = _lt ? 'rgba(120,113,108,0.6)' : 'rgba(120,113,108,0.45)'; ctx.lineWidth = 3
       for (let x = 0; x < W; x += cw * 0.55) {
         ctx.beginPath(); ctx.moveTo(x, sy + rH * 0.22); ctx.lineTo(x, sy + rH * 0.78); ctx.stroke()
       }
@@ -439,7 +442,7 @@ function _g38Draw(now) {
     const sy = toSY(p.wy) + jumpOff
     const pr = cw * 0.30
 
-    ctx.fillStyle = 'rgba(0,0,0,0.30)'
+    ctx.fillStyle = _lt ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.30)'
     ctx.beginPath(); ctx.ellipse(sx, toSY(p.wy) + 3, pr * 0.75, pr * 0.22, 0, 0, Math.PI * 2); ctx.fill()
 
     ctx.fillStyle = 'rgba(129,140,248,0.22)'
@@ -447,7 +450,7 @@ function _g38Draw(now) {
     ctx.beginPath(); ctx.arc(sx, sy, pr + 5, 0, Math.PI * 2); ctx.fill()
     ctx.shadowBlur = 0
 
-    ctx.fillStyle = '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 10
+    ctx.fillStyle = _lt ? '#15803d' : '#4ade80'; ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 10
     ctx.beginPath(); ctx.arc(sx, sy, pr, 0, Math.PI * 2); ctx.fill()
     ctx.shadowBlur = 0
 
@@ -460,12 +463,12 @@ function _g38Draw(now) {
   }
 
   // HUD
-  ctx.fillStyle = 'rgba(3,7,18,0.60)'
+  ctx.fillStyle = _lt ? 'rgba(255,255,255,0.75)' : 'rgba(3,7,18,0.60)'
   ctx.fillRect(0, 0, W, 42)
-  ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'left'
+  ctx.fillStyle = _lt ? '#14152b' : '#e2e8f0'; ctx.font = 'bold 15px monospace'; ctx.textAlign = 'left'
   ctx.fillText('🐸 ' + G38.score, 12, 27)
   if (G38.best > 0) {
-    ctx.fillStyle = '#fbbf24'; ctx.textAlign = 'center'
+    ctx.fillStyle = _lt ? '#b45309' : '#fbbf24'; ctx.textAlign = 'center'
     ctx.fillText('Best  ' + G38.best, W / 2, 27)
   }
   ctx.textAlign = 'left'

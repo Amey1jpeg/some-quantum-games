@@ -302,9 +302,11 @@ function g30Loop(ts) {
   G30.eBullets = G30.eBullets.filter(b => b.alive)
 
   // ─── Draw ───
-  ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, w, h)
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#f1f4f9' : '#0d1117'; ctx.fillRect(0, 0, w, h)
 
-  ctx.strokeStyle = '#1a2332'; ctx.lineWidth = 1
+  ctx.strokeStyle = _lt ? '#dfe5ee' : '#1a2332'; ctx.lineWidth = 1
   for (let x = 0; x < w; x += 48) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke() }
   for (let y = 0; y < h; y += 48) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke() }
 
@@ -320,7 +322,7 @@ function g30Loop(ts) {
 
   // Range ring
   ctx.beginPath(); ctx.arc(G30.px, G30.py, G30.pRange, 0, Math.PI*2)
-  ctx.strokeStyle = '#60a5fa18'; ctx.lineWidth = 1; ctx.stroke()
+  ctx.strokeStyle = _lt ? '#2563eb30' : '#60a5fa18'; ctx.lineWidth = 1; ctx.stroke()
 
   // Player bullets
   ctx.fillStyle = '#93c5fd'
@@ -340,7 +342,7 @@ function g30Loop(ts) {
     if (e.type === 'turret') {
       // draw as purple octagon-ish ring with rotating cannon
       ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI*2)
-      ctx.fillStyle = '#1e1533'; ctx.fill()
+      ctx.fillStyle = _lt ? '#f3e8ff' : '#1e1533'; ctx.fill()
       ctx.strokeStyle = '#c084fc'; ctx.lineWidth = 2.5; ctx.stroke()
       // cannon pointing at player
       const ang = Math.atan2(G30.py - e.y, G30.px - e.x)
@@ -354,7 +356,7 @@ function g30Loop(ts) {
     }
     if (e.maxHp > 1 || e.type === 'turret') {
       const bx = e.x - e.r, by = e.y - e.r - 8
-      ctx.fillStyle = '#333'; ctx.fillRect(bx, by, e.r*2, 4)
+      ctx.fillStyle = _lt ? '#d4d4d8' : '#333'; ctx.fillRect(bx, by, e.r*2, 4)
       ctx.fillStyle = e.type === 'turret' ? '#c084fc' : '#ef4444'
       ctx.fillRect(bx, by, e.r*2 * (e.hp/e.maxHp), 4)
     }
@@ -366,16 +368,16 @@ function g30Loop(ts) {
   ctx.beginPath(); ctx.arc(G30.px, G30.py, 22, 0, Math.PI*2)
   ctx.fillStyle = pGrad; ctx.fill()
   ctx.beginPath(); ctx.arc(G30.px, G30.py, 12, 0, Math.PI*2)
-  ctx.fillStyle = '#ffffff'; ctx.fill()
+  ctx.fillStyle = _lt ? '#1d4ed8' : '#ffffff'; ctx.fill()
 
   // Player HP bar
-  ctx.fillStyle = '#333'; ctx.fillRect(G30.px-30, G30.py-28, 60, 5)
+  ctx.fillStyle = _lt ? '#d4d4d8' : '#333'; ctx.fillRect(G30.px-30, G30.py-28, 60, 5)
   ctx.fillStyle = G30.pHp > G30.pMaxHp*0.4 ? '#60a5fa' : '#ef4444'
   ctx.fillRect(G30.px-30, G30.py-28, 60*(G30.pHp/G30.pMaxHp), 5)
 
   // Wave countdown banner
   if (G30.betweenWaves && G30.waveTimer > 0) {
-    ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(w/2-90, 14, 180, 26)
+    ctx.fillStyle = _lt ? 'rgba(255,255,255,.85)' : 'rgba(0,0,0,.65)'; ctx.fillRect(w/2-90, 14, 180, 26)
     ctx.fillStyle = '#60a5fa'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center'
     ctx.fillText(`Wave ${G30.wave+1} in ${Math.ceil(G30.waveTimer/60)}s`, w/2, 31)
     ctx.textAlign = 'left'

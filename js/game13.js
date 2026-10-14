@@ -242,13 +242,15 @@ function g13Loop() {
 
   // Draw
   ctx.clearRect(0, 0, W, H)
-  ctx.fillStyle = '#050510'
+  // Canvases get no CSS variables, so read the theme directly
+  const _lt = typeof qgLight === 'function' && qgLight()
+  ctx.fillStyle = _lt ? '#eceefa' : '#050510'
   ctx.fillRect(0, 0, W, H)
 
   // Arena circle
   ctx.beginPath()
   ctx.arc(cx, cy, arenaR, 0, Math.PI*2)
-  ctx.fillStyle = '#0d0d20'
+  ctx.fillStyle = _lt ? '#ffffff' : '#0d0d20'
   ctx.fill()
   ctx.strokeStyle = '#6366f1'
   ctx.lineWidth = 3
@@ -261,7 +263,7 @@ function g13Loop() {
   for (let r = 60; r < arenaR; r += 60) {
     ctx.beginPath()
     ctx.arc(cx, cy, r, 0, Math.PI*2)
-    ctx.strokeStyle = 'rgba(99,102,241,0.08)'
+    ctx.strokeStyle = _lt ? 'rgba(99,102,241,0.16)' : 'rgba(99,102,241,0.08)'
     ctx.lineWidth = 1
     ctx.stroke()
   }
