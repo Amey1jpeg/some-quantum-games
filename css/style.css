@@ -1261,8 +1261,6 @@ body {
   padding: .15rem .55rem;
 }
 .lb-acct-link:hover { border-color: var(--accent2); background: rgba(6,182,212,.08); }
-.lb-acct-claim { color: var(--muted); border-style: dashed; }
-.lb-acct-claim:hover { color: var(--text); border-color: var(--accent); background: rgba(124,58,237,.1); }
 .qg-lb-status { font-size: .76rem; min-height: 0; }
 .qg-lb-status:empty { display: none; }
 .lb-row-focus { outline: 2px solid var(--accent2); outline-offset: -2px; animation: lb-focus 1.6s ease-out; }
