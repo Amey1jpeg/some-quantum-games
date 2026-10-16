@@ -301,11 +301,28 @@ function gaGauntletNext() {
 // already coming into view as you reach the flag, and crossing it changes
 // nothing about the ships — not where they are, not which half, not how
 // fast they were moving.
+// A level laid end to end with the last one is entered at whatever height
+// the ships happened to be, not from a standing start, so it needs room to
+// settle before its first hazard. Nearly all of them have 560 units or
+// more. JUMPSCARES has 110, and from 41% of the possible arrival heights
+// it is unclearable before you touch anything — checked against the
+// planner, which says 164 of 277 heights survive at 110 and all 277 at
+// 210. Levels that already have the room are padded by nothing.
+const GA_MIN_RUNIN = 220
+const GA_HAZARDS = ['col', 'block', 'saw', 'strip']
+
+function gaRunIn(lv) {
+  let first = Infinity
+  for (const o of lv.objects) if (GA_HAZARDS.includes(o.t) && o.x < first) first = o.x
+  return first === Infinity ? GA_MIN_RUNIN : first
+}
+
 function gaQueueNext() {
   const lv = gaGauntletPick(GA.clears + 1, GA.level)
   GA.next = lv || null
   if (!lv) return
-  const base = GA.endX
+  const base = GA.endX + Math.max(0, GA_MIN_RUNIN - gaRunIn(lv))
+  GA.nextBase = base
   GA.pending.push(...lv.objects.map(o => Object.assign({}, o, { x: o.x + base })))
   GA.pending.sort((a, b) => a.x - b.x)
 }
@@ -316,7 +333,10 @@ function gaMerge() {
   GA.clears++
   document.getElementById('ga-score').textContent = GA.clears
   GA.prevEndX = GA.endX
-  GA.base  = GA.endX
+  // nextBase includes any run-in padding gaQueueNext added, so the level's
+  // objects and its finish line stay in step.
+  GA.base  = (GA.nextBase != null) ? GA.nextBase : GA.endX
+  GA.nextBase = null
   GA.level = lv
   GA.endX  = GA.base + alEndX(lv)
   GA.fwd   = lv.speed
