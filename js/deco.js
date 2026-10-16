@@ -1,12 +1,13 @@
 // ═══════════════════════════════════════════════════════
 //  DECO — decorative, non-lethal level scenery
 //  Shared by Wave Gauntlet (43) and Spider (44), and by the
-//  local level editor. Drawn behind the corridor/obstacles so
+//  local level editor. Also home to the concept backdrops
+//  (drawDecoTheme) for Spin Flip and Entangled Gauntlet. Drawn behind the corridor/obstacles so
 //  it can never be mistaken for something that kills you.
 //
 //  One deco item:
 //    { t, col, cf, w, hf, c, a, tx, rot }
-//      t    shape: rect diamond circle bar tri line text
+//      t    shape: rect diamond circle bar tri line text laser
 //      col  world column (same axis as keyframes / obstacles)
 //      cf   vertical centre, fraction of canvas height
 //      w    width in columns
@@ -41,7 +42,7 @@ const DECO_COLS_LIGHT = [
   '#dc2626', // red
   '#334155', // white → slate
 ]
-const DECO_TYPES = ['rect', 'diamond', 'circle', 'bar', 'tri', 'line', 'text']
+const DECO_TYPES = ['rect', 'diamond', 'circle', 'bar', 'tri', 'line', 'text', 'laser']
 
 const DECO_DEFAULT_ALPHA = 0.22
 
@@ -123,6 +124,9 @@ function drawDeco(ctx, deco, w, h, scroll, originX, opts) {
       case 'line':
         ctx.beginPath(); ctx.moveTo(-dw/2, 0); ctx.lineTo(dw/2, 0); ctx.stroke()
         break
+      case 'laser':
+        _decoLaser(ctx, -dw/2, 0, dw/2, 0, col, 0.5 + 0.5 * Math.sin(time * 9 + (d.col || 0)))
+        break
       case 'text':
         ctx.font = `bold ${Math.max(8, Math.round(dh))}px monospace`
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
@@ -153,10 +157,189 @@ function makeDeco(t, col, cf) {
   if (t === 'text') { d.tx = 'TEXT'; d.hf = 0.06; d.a = 0.5 }
   if (t === 'line') { d.hf = 0.01; d.w = 120 }
   if (t === 'bar')  { d.a = 0.14 }
+  if (t === 'laser') { d.hf = 0.02; d.w = 160; d.c = 2; d.a = 0.5 }
   return d
 }
 
+// ── Lasers ───────────────────────────────────────────────
+// One beam between two emitters: a wide soft pass, a thin hot core, and a
+// small housing at each end. `on` (0–1) fades the beam; at 0 only a dashed
+// sighting line is left, so a laser that is "off" still reads as a laser.
+function _decoLaser(ctx, x1, y1, x2, y2, col, on) {
+  ctx.save()
+  ctx.strokeStyle = col; ctx.fillStyle = col
+  ctx.lineCap = 'round'
+  if (on > 0.05) {
+    const a = ctx.globalAlpha
+    ctx.globalAlpha = a * 0.25 * on
+    ctx.lineWidth = 6
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
+    ctx.globalAlpha = a * on
+    ctx.lineWidth = 1.4
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
+    ctx.globalAlpha = a
+  } else {
+    ctx.setLineDash([3, 7]); ctx.lineWidth = 1
+    ctx.globalAlpha *= 0.35
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke()
+    ctx.setLineDash([]); ctx.globalAlpha /= 0.35
+  }
+  for (const [x, y] of [[x1, y1], [x2, y2]]) {
+    ctx.fillRect(x - 4, y - 4, 8, 8)
+    ctx.beginPath(); ctx.arc(x, y, 2 + 2 * on, 0, Math.PI * 2); ctx.fill()
+  }
+  ctx.restore()
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONCEPT BACKDROPS — themed scenery, no level data needed
+//  Each one is a pure function of scroll and time: the world is cut into
+//  slots, and every slot hashes its own index to pick what goes there. So
+//  endless runs get scenery for free, and a level always looks the same.
+//  Everything sits on a slower parallax layer than the play field and is
+//  drawn faint, so it reads as far-off background and never as a hazard.
+//
+//  scroll  = world scroll (same units as the game's own)
+//  originX = screen x where world `scroll` sits
+//  opts.time = seconds, for motion; opts.mid = centre line (entangled)
+//  A theme either has `draw` (one slot at a time) or `paint` (whole frame).
+// ═══════════════════════════════════════════════════════
+
+// Stable 0–1 noise from a slot index and a salt
+function _decoHash(i, k) {
+  let x = Math.imul(i | 0, 374761393) ^ Math.imul((k | 0) + 1, 668265263)
+  x = Math.imul(x ^ (x >>> 13), 1274126177)
+  return ((x ^ (x >>> 16)) >>> 0) / 4294967296
+}
+
+const DECO_THEMES = {
+  // Spin Flip — the spider's own nest. Threads drop from the ceiling or
+  // climb from the floor with a small spider bobbing on the end, corner
+  // webs fan out from both, and the odd ↑↓ marks the spin flip.
+  spider: { gap: 170, par: 0.5, draw(ctx, i, x, h, t, pal) {
+    const r = k => _decoHash(i, k)
+    const up  = r(0) < 0.5               // anchored to the ceiling?
+    const col = r(1) < 0.7 ? pal[2] : pal[5]
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1
+    const kind = r(2)
+    if (kind < 0.45) {
+      // Dangling spider
+      const len = h * (0.18 + r(3) * 0.3) + Math.sin(t * 1.3 + r(4) * 6) * h * 0.04
+      const ay = up ? 0 : h, by = up ? len : h - len
+      ctx.globalAlpha = 0.28
+      ctx.beginPath(); ctx.moveTo(x, ay); ctx.lineTo(x, by); ctx.stroke()
+      ctx.globalAlpha = 0.4
+      ctx.beginPath(); ctx.arc(x, by, 4, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(x, by + (up ? 5 : -5), 2.5, 0, Math.PI * 2); ctx.fill()
+      const wig = Math.sin(t * 6 + i) * 0.25
+      for (const s of [-1, 1]) for (let l = 0; l < 4; l++) {
+        const a = (-0.7 + l * 0.45 + wig) * (up ? 1 : -1)
+        ctx.beginPath(); ctx.moveTo(x, by)
+        ctx.quadraticCurveTo(x + s * 6 * Math.cos(a), by + 6 * Math.sin(a) - 3,
+                             x + s * 9 * Math.cos(a), by + 9 * Math.sin(a) + 2)
+        ctx.stroke()
+      }
+    } else if (kind < 0.8) {
+      // Corner web: spokes fanning off the wall, joined by sagging rings
+      const R = h * (0.12 + r(3) * 0.14), ay = up ? 0 : h, dir = up ? 1 : -1
+      const spokes = 6, rings = 4
+      ctx.globalAlpha = 0.18
+      const pt = (s, f) => {
+        const a = Math.PI * (0.08 + 0.84 * s / (spokes - 1))
+        return [x - Math.cos(a) * R * f, ay + dir * Math.sin(a) * R * f]
+      }
+      for (let s = 0; s < spokes; s++) {
+        const [px, py] = pt(s, 1)
+        ctx.beginPath(); ctx.moveTo(x, ay); ctx.lineTo(px, py); ctx.stroke()
+      }
+      for (let g = 1; g <= rings; g++) {
+        const f = g / rings
+        ctx.beginPath()
+        for (let s = 0; s < spokes; s++) {
+          const [px, py] = pt(s, f)
+          if (!s) { ctx.moveTo(px, py); continue }
+          const [qx, qy] = pt(s - 0.5, f * 0.86)    // sag toward the hub
+          ctx.quadraticCurveTo(qx, qy, px, py)
+        }
+        ctx.stroke()
+      }
+    } else {
+      // Spin-flip marker
+      ctx.globalAlpha = 0.16 + 0.08 * Math.sin(t * 2 + i)
+      ctx.font = `bold ${Math.round(h * 0.09)}px monospace`
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText(r(3) < 0.5 ? '↑↓' : '↓↑', x, h * (0.3 + r(4) * 0.4))
+    }
+  }},
+
+  // Entangled Gauntlet — mirror horizon. A synthwave grid runs away into
+  // the centre line from both sides, blue ceiling above and pink floor
+  // below, so the line reads as one horizon the two ships share. Rungs
+  // stream toward the horizon and the rays slide with the scroll, so the
+  // speed of the run is easy to feel. Whole-frame, so it uses `paint`.
+  entangled: { par: 1, paint(ctx, w, h, s, t, pal, opts) {
+    const mid  = opts.mid ?? h / 2
+    const lt   = typeof qgLight === 'function' && qgLight()
+    const blue = lt ? '#2563eb' : '#3b82f6', pink = lt ? '#db2777' : '#ec4899'
+    const vx   = w / 2
+    ctx.lineWidth = 1
+    for (const [sign, c] of [[-1, blue], [1, pink]]) {
+      const depth = sign < 0 ? mid : h - mid
+      ctx.strokeStyle = c
+      // Rungs, bunching toward the horizon
+      for (let k = 0; k < 14; k++) {
+        const f = (k + (s / 60) % 1) / 14, z = f * f
+        const y = mid + sign * (8 + z * (depth - 8))
+        ctx.globalAlpha = 0.08 + 0.22 * z
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke()
+      }
+      // Rays from the vanishing point
+      ctx.globalAlpha = 0.15
+      const n = Math.ceil(w / 240) + 2
+      for (let k = -n; k <= n; k++) {
+        const xb = vx + k * 120 - ((s * 0.6) % 120)
+        ctx.beginPath()
+        ctx.moveTo(vx + (xb - vx) * 0.04, mid + sign * 8)
+        ctx.lineTo(vx + (xb - vx) * 2.2,  mid + sign * depth)
+        ctx.stroke()
+      }
+      // Glow hugging the horizon
+      const g = ctx.createLinearGradient(0, mid, 0, mid + sign * 90)
+      g.addColorStop(0, c + '30'); g.addColorStop(1, c + '00')
+      ctx.globalAlpha = 1; ctx.fillStyle = g
+      ctx.fillRect(0, sign < 0 ? mid - 90 : mid, w, 90)
+    }
+  }},
+}
+
+function drawDecoTheme(ctx, theme, w, h, scroll, originX, opts) {
+  const th = DECO_THEMES[theme]
+  if (!th) return
+  opts = opts || {}
+  const time = opts.time || 0
+  const pal  = (typeof qgLight === 'function' && qgLight()) ? DECO_COLS_LIGHT : DECO_COLS
+  const s    = scroll * th.par, pad = 260
+  if (th.paint) {                       // whole-frame themes
+    ctx.save(); ctx.shadowBlur = 0
+    th.paint(ctx, w, h, s, time, pal, opts)
+    ctx.restore()
+    return
+  }
+  const i0   = Math.floor((s - originX - pad) / th.gap)
+  const i1   = Math.ceil((s - originX + w + pad) / th.gap)
+  ctx.save()
+  ctx.shadowBlur = 0
+  for (let i = i0; i <= i1; i++) {
+    ctx.save()
+    th.draw(ctx, i, originX + i * th.gap - s, h, time, pal, opts)
+    ctx.restore()
+  }
+  ctx.restore()
+}
+
 if (typeof window !== 'undefined') {
+  window.drawDecoTheme = drawDecoTheme
+  window.DECO_THEMES = DECO_THEMES
   window.DECO_COLS = DECO_COLS
   window.DECO_TYPES = DECO_TYPES
   window.drawDeco = drawDeco

@@ -701,7 +701,9 @@ function _spdDraw(ctx, w, h) {
   }
   ctx.globalAlpha = 1
 
-  // Deco sits behind the obstacles so it can never read as a block
+  // Deco sits behind the obstacles so it can never read as a block. The
+  // nest backdrop goes first, so a level's own deco still sits on top of it.
+  if (typeof drawDecoTheme === 'function') drawDecoTheme(ctx, 'spider', w, h, S.scrollX, spX, { time: S.t })
   if (typeof drawDeco === 'function') drawDeco(ctx, S.deco, w, h, S.scrollX, spX, { time: S.t })
 
   // Obstacles
