@@ -247,6 +247,10 @@ const _SPD = {
   obstacles:[], deco:[],
   trail:[], threads:[],
   announceT:0, clearedT:0, t:0,
+  // Gauntlet runs roll one level into the next like Wave Gauntlet: the next
+  // level is built early and drawn past the flag, the last one trails off
+  // behind you, and the name fades in over the top as you cross.
+  nextLv:null, prevLv:null, banner:null,
   shake:0, hitFlash:0,
   // practice = never scores. noclip = blocks don't kill. Separate flags.
   practice:false, noclip:false,
@@ -414,14 +418,18 @@ window.stopSpider = function() {
   window.removeEventListener('keydown', _spdKeyDn)
 }
 
-function _spdLoadChallenge() {
+// Pick and generate a level without touching the run, so the one after this
+// can be built early and drawn past the finish line. `score` is the gate to
+// draw from — one higher for the next level, since this one will be cleared
+// by the time it arrives.
+function _spdBuildChallenge(score) {
   const c    = _spdC()
   let pool = _SPD.testLevel
     ? [_SPD.testLevel]
     : (_SPD.practice && _SPD.practiceDiff)
       // Practice ignores score gates so every level in the tier is reachable
       ? [..._spdB(SPD_POOL[_SPD.practiceDiff] || SPD_POOL.easy), ..._spdCustom(_SPD.practiceDiff, null)]
-      : _spdGetPool(_SPD.score)
+      : _spdGetPool(score)
   if (_SPD.practiceLevel && !_SPD.testLevel) {
     const one = pool.filter(t => t.name === _SPD.practiceLevel)
     if (one.length) pool = one
@@ -429,12 +437,30 @@ function _spdLoadChallenge() {
   if (!pool.length) pool = [...SPD_POOL.easy]
   const tmpl = _spdPick(pool)
   const data = tmpl.gen(c.height)
-  Object.assign(_SPD, {
+  return {
     challenge:  { name: tmpl.name, diff: tmpl.diff, speed: tmpl.speed },
     speed:      tmpl.speed,
     clearAt:    data.clearAt,
     obstacles:  data.obstacles,
     deco:       data.deco || [],
+  }
+}
+
+// Bot line. The spider is only ever on the floor or the ceiling and a
+// block kills only on its own surface, so the required surface at each
+// block is forced — the plan is just the columns to flip at. Flips are
+// keyed to scroll position, so frame timing cannot shift them.
+function _spdSolveBot() {
+  _SPD.bot = null
+  if (!_SPD.botMode || typeof lcSolveSpider !== 'function') return
+  try {
+    const r = lcSolveSpider(_SPD, !!_SPD.evil, _SPD.onFloor)
+    if (r.ok) _SPD.bot = { flips: r.flips, next: 0, taps: r.taps }
+  } catch (e) { console.warn('spider bot:', e) }
+}
+
+function _spdLoadChallenge() {
+  Object.assign(_SPD, _spdBuildChallenge(_SPD.score), {
     scrollX:    0,
     trail:      [],
     fullTrail:  [],
@@ -448,18 +474,34 @@ function _spdLoadChallenge() {
     retrying:   false,
     retryT:     0,
     bot:        null,
+    banner:     null,
+    prevLv:     null,
   })
+  _spdSolveBot()
+  // One level ahead is kept built so it can be drawn past the finish line.
+  // Practice and test play fly a single level, so neither looks ahead.
+  _SPD.nextLv = (!_SPD.practice && !_SPD.testLevel) ? _spdBuildChallenge(_SPD.score + 1) : null
+}
 
-  // Bot line. The spider is only ever on the floor or the ceiling and a
-  // block kills only on its own surface, so the required surface at each
-  // block is forced — the plan is just the columns to flip at. Flips are
-  // keyed to scroll position, so frame timing cannot shift them.
-  if (_SPD.botMode && typeof lcSolveSpider === 'function') {
-    try {
-      const r = lcSolveSpider(data, !!_SPD.evil)
-      if (r.ok) _SPD.bot = { flips: r.flips, next: 0, taps: r.taps }
-    } catch (e) { console.warn('spider bot:', e) }
-  }
+// Hand over to the level that has been visible past the finish line.
+//
+// Nothing stops and nothing is reset: the spider stays on whichever surface
+// it was on, the scroll origin moves back by the finished level's length so
+// the flag you crossed sits at column zero and scrolls away behind you, and
+// the level after next is built so there is always one more to see.
+function _spdMerge() {
+  const lv  = _SPD.nextLv || _spdBuildChallenge(_SPD.score)
+  const was = _SPD.clearAt
+  _SPD.prevLv = { challenge: _SPD.challenge, clearAt: was, obstacles: _SPD.obstacles, deco: _SPD.deco }
+  Object.assign(_SPD, lv)
+  _SPD.scrollX -= was
+  for (const t of _SPD.trail)   t.worldX -= was
+  for (const t of _SPD.threads) t.worldX -= was
+  _SPD.nextLv = _spdBuildChallenge(_SPD.score + 1)
+  _SPD.phase  = 'playing'
+  _SPD.taps   = 0
+  _spdSolveBot()
+  _SPD.banner = { name: lv.challenge.name, diff: lv.challenge.diff, t: 1.6 }
 }
 
 function _spdKeyDn(e) {
@@ -531,6 +573,7 @@ function _spdLoop(ts) {
   }
 
   _SPD.t += dt
+  if (_SPD.banner) { _SPD.banner.t -= dt; if (_SPD.banner.t <= 0) _SPD.banner = null }
   if (_SPD.shake   > 0) _SPD.shake   = Math.max(0, _SPD.shake   - dt * 4)
   if (_SPD.hitFlash > 0) _SPD.hitFlash = Math.max(0, _SPD.hitFlash - dt * 5)
 
@@ -582,8 +625,7 @@ function _spdLoop(ts) {
       }
     }
 
-    if (_SPD.scrollX >= _SPD.clearAt) {
-      _SPD.phase = 'cleared'; _SPD.clearedT = 0
+    if (_SPD.phase === 'playing' && _SPD.scrollX >= _SPD.clearAt) {
       if (_SPD.practice) _spdTrailCard()
       if (!_SPD.practice) {
         _SPD.score++
@@ -591,6 +633,11 @@ function _spdLoop(ts) {
         document.getElementById('spd-score-hud').textContent = _SPD.score
       }
       SFX.win()
+      // Run the levels together, the way Wave Gauntlet does: cross the flag
+      // and the next level is simply there. Practice and test play are one
+      // level, so they still stop.
+      if (_SPD.nextLv) _spdMerge()
+      else { _SPD.phase = 'cleared'; _SPD.clearedT = 0 }
     }
 
   } else if (_SPD.phase === 'cleared') {
@@ -701,12 +748,23 @@ function _spdDraw(ctx, w, h) {
   }
   ctx.globalAlpha = 1
 
+  // The level just finished trails off behind, and the next one is already
+  // laid out past the flag. Each is drawn at its own offset, in its own
+  // difficulty colour, so what is coming reads before you get there.
+  const layers = [{ lv: S, off: 0, col: mainCol }]
+  if (S.prevLv) layers.push({ lv: S.prevLv, off: -S.prevLv.clearAt,
+                              col: SPD_DIFF_COL[S.prevLv.challenge.diff] || mainCol })
+  if (S.nextLv) layers.push({ lv: S.nextLv, off: S.clearAt,
+                              col: SPD_DIFF_COL[S.nextLv.challenge.diff] || mainCol })
+
   // Deco sits behind the obstacles so it can never read as a block
-  if (typeof drawDeco === 'function') drawDeco(ctx, S.deco, w, h, S.scrollX, spX, { time: S.t })
+  if (typeof drawDeco === 'function') {
+    for (const L of layers) drawDeco(ctx, L.lv.deco, w, h, S.scrollX - L.off, spX, { time: S.t })
+  }
 
   // Obstacles
-  for (const obs of S.obstacles) {
-    const ox   = Math.round(obs.col - S.scrollX + spX)
+  for (const L of layers) for (const obs of L.lv.obstacles) {
+    const ox   = Math.round(obs.col + L.off - S.scrollX + spX)
     if (ox < -SPD_OBW - 10 || ox > w + SPD_OBW) continue
     const half  = SPD_OBW / 2
     const oy    = obs.floor ? h - oh : 0
@@ -717,8 +775,8 @@ function _spdDraw(ctx, w, h) {
     ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1
     ctx.strokeRect(ox - half, oy, SPD_OBW, oh)
 
-    ctx.strokeStyle = mainCol; ctx.lineWidth = 2
-    ctx.shadowColor = mainCol; ctx.shadowBlur = 10
+    ctx.strokeStyle = L.col; ctx.lineWidth = 2
+    ctx.shadowColor = L.col; ctx.shadowBlur = 10
     ctx.beginPath(); ctx.moveTo(ox - half, edgeY); ctx.lineTo(ox + half, edgeY)
     ctx.stroke(); ctx.shadowBlur = 0
   }
@@ -729,6 +787,8 @@ function _spdDraw(ctx, w, h) {
   if (deadAlpha > 0.01) {
     ctx.globalAlpha = deadAlpha
     if (S.clearAt) _spdDrawFinish(ctx, spX + (S.clearAt - S.scrollX), h)
+    // The flag you just crossed sits at column zero and scrolls away
+    if (S.prevLv)  _spdDrawFinish(ctx, spX - S.scrollX, h)
     _spdDrawSpider(ctx, spX, spY, S.onFloor, spiderCol)
     ctx.globalAlpha = 1
   }
@@ -749,6 +809,28 @@ function _spdDraw(ctx, w, h) {
     if (SPD_cheat.on) {
       ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px monospace'
       ctx.fillText(SPD_cheat.label(), w/2, 32)
+    }
+  }
+
+  // ── Merge banner ──
+  // Shown over the running game when one level rolls into the next, so the
+  // name is still there to read without anything stopping to tell you.
+  // Sits below the score, which this game draws at the top centre.
+  if (S.banner) {
+    const b = S.banner
+    const a = Math.min(1, (1.6 - b.t) * 6) * Math.min(1, b.t * 2.5)
+    if (a > 0.01) {
+      const col = SPD_DIFF_COL[b.diff] || '#fff'
+      ctx.globalAlpha = a
+      ctx.textAlign = 'center'
+      ctx.font = 'bold 11px monospace'
+      ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 10
+      ctx.fillText(String(b.diff || '').toUpperCase(), w / 2, 70)
+      ctx.font = 'bold 20px monospace'
+      ctx.fillStyle = _lt ? '#111' : '#fff'
+      ctx.fillText(b.name, w / 2, 94)
+      ctx.shadowBlur = 0
+      ctx.globalAlpha = 1
     }
   }
 

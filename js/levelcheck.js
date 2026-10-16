@@ -693,10 +693,13 @@ function _lcUfoMoreTaps(lv, h, w, flaps, DT) {
 //  flip between them. No search needed — just the flip columns.
 // ═══════════════════════════════════════════════════════
 
-function lcSolveSpider(lv, worst) {
+// `startFloor` is which surface the spider is on at column 0. A level always
+// spawns it on the floor, but in a gauntlet run one level rolls straight
+// into the next and the spider arrives on whichever surface it finished on.
+function lcSolveSpider(lv, worst, startFloor) {
   const obs = [...(lv.obstacles || [])].sort((a, b) => a.col - b.col)
   const flips = []
-  let onFloor = true                     // the spider always spawns on the floor
+  let onFloor = startFloor !== false
   let prevCol = 0
   for (const o of obs) {
     const needFloor = !o.floor           // stand on the opposite surface
