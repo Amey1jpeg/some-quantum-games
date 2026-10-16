@@ -953,57 +953,93 @@ function _g40Draw(ctx, w, h) {
   ctx.restore()
 }
 
-// `safe` draws the pillar green: landing on it is allowed, so it has to be
-// obvious at a glance which side you can rest on and which will kill you.
-// `tunnel` draws it as a see-through blue barrier with a crawling dashed edge,
-// the same blue as a portal mouth: it will carry you through, not kill you.
+// Every pillar is a laser wall: an emitter block on the screen edge, a
+// curtain of beams running to a receiver at the gap. The colour is the rule:
+//   red   — kills you
+//   green — `safe`: a rest pillar you can land on and slide along
+//   blue  — `tunnel`: a barrier you tunnel straight through
+// The beams fill exactly the old pillar rectangle, so hitboxes are unchanged.
+const G40_LASER = {
+  kill:   { core: '#fecaca', beam: '#ef4444', dim: 'rgba(239,68,68,', ltBeam: '#dc2626' },
+  safe:   { core: '#bbf7d0', beam: '#22c55e', dim: 'rgba(34,197,94,', ltBeam: '#16a34a' },
+  tunnel: { core: '#bae6fd', beam: '#38bdf8', dim: 'rgba(56,189,248,', ltBeam: '#0284c7' },
+}
+
 function _g40DrawPipe(ctx, x, y, pw, ph, isTop, safe, tunnel) {
   if (ph <= 0) return
-  const capH = 18, capX = x - 5, capW = pw + 10
-  const capY = isTop ? y + ph - capH : y
-  if (tunnel && !safe) {
-    ctx.save()
-    ctx.globalAlpha = 0.45
-    ctx.fillStyle = '#082f49'
-    ctx.fillRect(x, y, pw, ph)
-    ctx.fillRect(capX, capY, capW, capH)
-    ctx.globalAlpha = 1
-    ctx.strokeStyle = '#38bdf8'
-    ctx.lineWidth   = 1.8
-    ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 14
-    ctx.setLineDash([7, 5])
-    ctx.lineDashOffset = -performance.now() / 40
-    ctx.strokeRect(x + 0.9, y, pw - 1.8, ph)
-    ctx.strokeRect(capX + 0.9, capY, capW - 1.8, capH)
-    ctx.restore()
-    return
-  }
-  const edge = safe ? '#22c55e' : '#a855f7'
-  // On a light sky the pipes stay a deep tone so they still read as solid
-  const lt = typeof qgLight === 'function' && qgLight()
+  const kind = safe ? 'safe' : tunnel ? 'tunnel' : 'kill'
+  const L    = G40_LASER[kind]
+  const lt   = typeof qgLight === 'function' && qgLight()
+  const beam = lt ? L.ltBeam : L.beam
+  const now  = performance.now() / 1000
+  const capH = 14, capX = x - 5, capW = pw + 10
+  // Emitter sits on the screen edge, receiver on the face by the gap
+  const emY  = isTop ? y : y + ph - capH
+  const rxY  = isTop ? y + ph - capH : y
+  const b0   = isTop ? y + capH : y + capH          // beams run between them
+  const b1   = isTop ? y + ph - capH : y + ph - capH
 
-  ctx.fillStyle = lt ? (safe ? '#1b4438' : '#2a2350') : (safe ? '#04140b' : '#06091a')
+  ctx.save()
+  // Haze — the field the beams fill. Tunnel barriers are thinner, you go through.
+  const haze = ctx.createLinearGradient(x, 0, x + pw, 0)
+  const ha = kind === 'tunnel' ? 0.07 : 0.13
+  haze.addColorStop(0,   L.dim + '0)')
+  haze.addColorStop(0.5, L.dim + ha + ')')
+  haze.addColorStop(1,   L.dim + '0)')
+  ctx.fillStyle = haze
   ctx.fillRect(x, y, pw, ph)
-  ctx.fillStyle = lt ? (safe ? '#245a49' : '#352d63') : (safe ? '#0a2a17' : '#0d1533')
-  ctx.fillRect(capX, capY, capW, capH)
 
-  ctx.strokeStyle = edge
-  ctx.lineWidth   = 1.8
-  ctx.shadowColor = edge; ctx.shadowBlur = safe ? 16 : 12
-  ctx.strokeRect(x + 0.9, y, pw - 1.8, ph)
-  ctx.strokeRect(capX + 0.9, capY, capW - 1.8, capH)
-  ctx.shadowBlur  = 0
+  // Beams
+  if (b1 > b0) {
+    const n = 4
+    ctx.lineCap = 'butt'
+    for (let i = 0; i < n; i++) {
+      const bx = x + pw * (i + 0.5) / n
+      const fl = 0.75 + 0.25 * Math.sin(now * 23 + i * 1.9 + x * 0.05)
+      if (kind === 'tunnel') {
+        ctx.setLineDash([9, 6])
+        ctx.lineDashOffset = (isTop ? 1 : -1) * now * 40 + i * 4
+      }
+      ctx.globalAlpha = 0.35 * fl
+      ctx.strokeStyle = beam; ctx.lineWidth = 5
+      ctx.shadowColor = beam; ctx.shadowBlur = 14
+      ctx.beginPath(); ctx.moveTo(bx, b0); ctx.lineTo(bx, b1); ctx.stroke()
+      ctx.shadowBlur = 0
+      ctx.globalAlpha = fl
+      ctx.strokeStyle = lt ? beam : L.core; ctx.lineWidth = 1.4
+      ctx.beginPath(); ctx.moveTo(bx, b0); ctx.lineTo(bx, b1); ctx.stroke()
+      ctx.setLineDash([])
+    }
+    ctx.globalAlpha = 1
+  }
 
-  ctx.fillStyle = safe ? 'rgba(34,197,94,0.16)' : 'rgba(168,85,247,0.10)'
-  ctx.fillRect(x + 4, y, 7, ph)
+  // Emitter and receiver housings
+  const house = (hy, lit) => {
+    if (hy + capH < y || hy > y + ph) return
+    ctx.fillStyle = lt ? '#334155' : '#0b0f1a'
+    ctx.fillRect(capX, hy, capW, capH)
+    ctx.strokeStyle = beam; ctx.lineWidth = 1.4
+    ctx.shadowColor = beam; ctx.shadowBlur = lit ? 14 : 6
+    ctx.strokeRect(capX + 0.7, hy + 0.7, capW - 1.4, capH - 1.4)
+    ctx.shadowBlur = 0
+    // A lens per beam
+    for (let i = 0; i < 4; i++) {
+      const lx = x + pw * (i + 0.5) / 4
+      ctx.fillStyle = lit ? (lt ? beam : L.core) : beam
+      ctx.beginPath(); ctx.arc(lx, hy + capH / 2, lit ? 2.4 : 1.8, 0, Math.PI * 2); ctx.fill()
+    }
+  }
+  if (ph > capH * 2) house(emY, false)
+  house(rxY, true)
 
-  // A bright lip on the face you can actually stand on
+  // The face you can stand on glows solid green
   if (safe) {
     ctx.fillStyle = '#4ade80'
     ctx.shadowColor = '#4ade80'; ctx.shadowBlur = 14
-    ctx.fillRect(capX, isTop ? capY + capH - 3 : capY, capW, 3)
+    ctx.fillRect(capX, isTop ? rxY + capH - 3 : rxY, capW, 3)
     ctx.shadowBlur = 0
   }
+  ctx.restore()
 }
 
 // `scale` keeps the saucer in proportion with the gauntlet's scaled physics;
@@ -1112,13 +1148,15 @@ function _g40TrailCard() {
     const x = at * sx
     const half = (p.gap != null ? p.gap : G40.gap) / 2
     const safeTop = p.safe === 'top', safeBot = p.safe === 'bottom'
-    g.fillStyle = safeTop ? 'rgba(34,197,94,0.30)' : 'rgba(168,85,247,0.22)'
+    // Same laser colours as in play: red kills, green rests, blue tunnels
+    const laser = safe => safe ? '#22c55e' : p.tunnel ? '#38bdf8' : '#ef4444'
+    g.fillStyle = laser(safeTop) + '40'
     g.fillRect(x - PW/2, top, PW, Math.max(0, p.cy - half))
-    g.fillStyle = safeBot ? 'rgba(34,197,94,0.30)' : 'rgba(168,85,247,0.22)'
+    g.fillStyle = laser(safeBot) + '40'
     g.fillRect(x - PW/2, top + p.cy + half, PW, Math.max(0, H - (p.cy + half)))
-    g.strokeStyle = safeTop ? '#22c55e' : col; g.lineWidth = 1.4
+    g.strokeStyle = laser(safeTop); g.lineWidth = 1.4
     g.beginPath(); g.moveTo(x - PW/2, top + p.cy - half); g.lineTo(x + PW/2, top + p.cy - half); g.stroke()
-    g.strokeStyle = safeBot ? '#22c55e' : col
+    g.strokeStyle = laser(safeBot)
     g.beginPath(); g.moveTo(x - PW/2, top + p.cy + half); g.lineTo(x + PW/2, top + p.cy + half); g.stroke()
   }
 

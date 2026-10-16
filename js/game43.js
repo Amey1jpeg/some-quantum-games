@@ -1556,6 +1556,41 @@ window.g43SaveCard = function() {
 
 // ── draw ─────────────────────────────────────────────────
 
+// Wave Dash's wall tile: a 24px square with a diamond facet and a lit
+// upper-right half, shaded from the level's difficulty colour so the walls
+// match the glowing edge. Tiles are built once per colour; the pattern is
+// re-made each frame only to shift it with the scroll.
+const _g43Tiles = {}
+function _g43Mix(hex, base, f) {
+  const p = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16))
+  const a = p(hex), b = p(base)
+  return '#' + a.map((v, i) => Math.round(b[i] + (v - b[i]) * f).toString(16).padStart(2, '0')).join('')
+}
+function _g43WallPat(ctx, col, lt, scroll) {
+  const key = col + (lt ? 'l' : 'd')
+  let off = _g43Tiles[key]
+  if (!off) {
+    off = _g43Tiles[key] = document.createElement('canvas')
+    off.width = 24; off.height = 24
+    const oc  = off.getContext('2d')
+    // Dark: a whisper of the colour over near-black. Light: deeper, so the
+    // walls still read as solid on a pale page.
+    const pal = lt ? [0.30, 0.38, 0.47].map(f => _g43Mix(col, '#10141c', f))
+                   : [0.07, 0.14, 0.21].map(f => _g43Mix(col, '#020406', f))
+    oc.fillStyle = pal[0]; oc.fillRect(0, 0, 24, 24)
+    oc.fillStyle = pal[1]
+    oc.beginPath(); oc.moveTo(12, 0); oc.lineTo(24, 12); oc.lineTo(12, 24); oc.lineTo(0, 12)
+    oc.closePath(); oc.fill()
+    oc.fillStyle = pal[2]
+    oc.beginPath(); oc.moveTo(12, 0); oc.lineTo(24, 12); oc.lineTo(12, 12)
+    oc.closePath(); oc.fill()
+  }
+  const pat = ctx.createPattern(off, 'repeat')
+  if (pat.setTransform && typeof DOMMatrix === 'function')
+    pat.setTransform(new DOMMatrix().translateSelf(-(((scroll % 24) + 24) % 24), 0))
+  return pat
+}
+
 function _g43Draw(ctx, w, h) {
   ctx.save()
   if (G43.shake > 0) {
@@ -1591,8 +1626,9 @@ function _g43Draw(ctx, w, h) {
   // Near-black walls against a near-white corridor read as an inkblot, so
   // light mode uses a deep tone rather than true black — still obviously
   // solid, but it lets the glowing corridor edge stay the loudest thing.
-  ctx.fillStyle = _lt ? (ch?.isDC ? '#3d1f22' : '#1b4438')
-                      : (ch?.isDC ? '#0e0000' : '#001408')
+  //
+  // The fill is Wave Dash's faceted diamond tiling in the difficulty colour,
+  // anchored to the world so the facets scroll with the walls.
 
   // Cache wall lookups (ci = actual count after loop)
   const wallCache = []
@@ -1604,19 +1640,28 @@ function _g43Draw(ctx, w, h) {
   }
   const wc = wallCache.length
 
-  // Top wall
-  ctx.beginPath(); ctx.moveTo(-1, -1)
-  for (let i = 0; i < wc; i++) {
-    ctx.lineTo(i * G43_DRAW_STEP, wallCache[i].cy - wallCache[i].gapH / 2)
+  // Filled in runs of one colour, like the edges below, so the walls past
+  // the finish line already wear the next level's tint. Runs overlap by a
+  // pixel so no seam shows where they meet.
+  const _fill = (pick, rim) => {
+    let i = 0
+    while (i < wc) {
+      const col = wallCache[i].col
+      let j = i
+      while (j + 1 < wc && wallCache[j + 1].col === col) j++
+      const end = Math.min(j + 1, wc - 1)
+      const x0 = i === 0 ? -1 : i * G43_DRAW_STEP - 0.5
+      const x1 = end === wc - 1 ? w + 1 : end * G43_DRAW_STEP + 0.5
+      ctx.beginPath(); ctx.moveTo(x0, rim)
+      for (let k = i; k <= end; k++) ctx.lineTo(k * G43_DRAW_STEP, pick(wallCache[k]))
+      ctx.lineTo(x1, pick(wallCache[end])); ctx.lineTo(x1, rim); ctx.closePath()
+      ctx.fillStyle = _g43WallPat(ctx, col, _lt, scrollI - waveX)
+      ctx.fill()
+      i = j + 1
+    }
   }
-  ctx.lineTo(w+1, -1); ctx.closePath(); ctx.fill()
-
-  // Bottom wall
-  ctx.beginPath(); ctx.moveTo(-1, h+1)
-  for (let i = 0; i < wc; i++) {
-    ctx.lineTo(i * G43_DRAW_STEP, wallCache[i].cy + wallCache[i].gapH / 2)
-  }
-  ctx.lineTo(w+1, h+1); ctx.closePath(); ctx.fill()
+  _fill(wl => wl.cy - wl.gapH / 2, -1)
+  _fill(wl => wl.cy + wl.gapH / 2, h + 1)
 
   // Inner edges (the glowing lines that show the slope geometry).
   //

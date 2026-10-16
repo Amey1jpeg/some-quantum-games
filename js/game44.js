@@ -757,7 +757,9 @@ function _spdDraw(ctx, w, h) {
   if (S.nextLv) layers.push({ lv: S.nextLv, off: S.clearAt,
                               col: SPD_DIFF_COL[S.nextLv.challenge.diff] || mainCol })
 
-  // Deco sits behind the obstacles so it can never read as a block
+  // Deco sits behind the obstacles so it can never read as a block. The
+  // nest backdrop goes first, so a level's own deco still sits on top of it.
+  if (typeof drawDecoTheme === 'function') drawDecoTheme(ctx, 'spider', w, h, S.scrollX, spX, { time: S.t })
   if (typeof drawDeco === 'function') {
     for (const L of layers) drawDeco(ctx, L.lv.deco, w, h, S.scrollX - L.off, spX, { time: S.t })
   }

@@ -700,6 +700,9 @@ function gaDraw() {
     ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill()
   }
   ctx.globalAlpha = 1
+  // Mirror horizon — drawn in world units, under everything
+  if (typeof drawDecoTheme === 'function')
+    drawDecoTheme(ctx, 'entangled', W, H, GA.camX, 0, { time: performance.now() / 1000, mid: half })
 
   const unlinked = GA.broken || GA.forced
   ctx.strokeStyle = unlinked ? '#ef4444' : 'rgba(139,92,246,0.45)'
