@@ -1080,9 +1080,10 @@ async function loadLeaderboard(game, list) {
       const label = (byAccount && acct) ? acct : r.name
       const alias = byAccount && acct && r.name.toLowerCase() !== acct.toLowerCase()
         ? ` <span class="lb-alias">as ${escHtml(r.name)}</span>` : ''
-      const acctLink = byAccount ? '' : `<span class="lb-acct-slot">${r.user_id
-        ? `<a class="lb-acct-link" href="#" data-uid="${escHtml(r.user_id)}" title="Show ${escHtml(acct || 'this account')} in the accounts list">👤 ${escHtml(acct || 'Account')}</a>`
-        : `<a class="lb-acct-link lb-acct-claim" href="#" data-name="${escHtml(r.name)}" title="Link ${escHtml(r.name)}'s guest scores to an account">🔗 Link</a>`}</span>`
+      // Guest rows show nothing here. Claiming them by hand is gone: scores
+      // posted while signed in already carry the account, so the only rows
+      // without one are genuinely guest rows and there is nothing to fix.
+      const acctLink = (byAccount || !r.user_id) ? '' : `<span class="lb-acct-slot"><a class="lb-acct-link" href="#" data-uid="${escHtml(r.user_id)}" title="Show ${escHtml(acct || 'this account')} in the accounts list">👤 ${escHtml(acct || 'Account')}</a></span>`
       // Author and co-author are account titles, so they show in the
       // accounts view only. In names view everyone gets a plain medal.
       const isAdmin = byAccount && label.toUpperCase() === ADMIN_NAME
@@ -1240,28 +1241,6 @@ function qgLbStatus(msg, ok) {
   el.style.color = ok ? 'var(--success)' : 'var(--danger)'
 }
 
-// 🔗 Link on a guest row: move every guest score under that name onto
-// the signed-in account. The ownership checks live in the database
-// (link_name_to_account in sql/leaderboard_accounts.sql).
-async function lbLinkName(name) {
-  qgLbStatus('')
-  const authName = (typeof AUTH !== 'undefined') ? AUTH.getDisplayName() : null
-  if (!authName || typeof _sb === 'undefined' || !_sb) {
-    if (confirm(`Sign in to link "${name}" to your account.\n\nGo to sign in now?`)) {
-      qgLbPanelHide()
-      AUTH.openPage('login')
-    }
-    return
-  }
-  if (!confirm(`Link every guest score posted as "${name}" to your account "${authName}"?\n\nThis can't be undone from the site.`)) return
-  const { data, error } = await _sb.rpc('link_name_to_account', { p_name: name })
-  if (error) { qgLbStatus(error.message || 'Could not link that name.'); return }
-  lbProfileNames.set(AUTH.user.id, authName)
-  qgLbStatus(data > 0
-    ? `✓ Linked ${data} score${data === 1 ? '' : 's'} as "${name}" to ${authName}.`
-    : `Nothing to link — "${name}" has no guest scores left.`, data > 0)
-  qgLbPanelRefresh()
-}
 
 function qgLbPanelShow() {
   const panel = document.getElementById('qg-lb-panel')
@@ -1345,7 +1324,6 @@ function qgBuildLbPanel() {
     const a = e.target.closest('.lb-acct-link')
     if (!a) return
     e.preventDefault()
-    if (a.dataset.name) { lbLinkName(a.dataset.name); return }
     lbFocusAccount = a.dataset.uid
     setLbView('accounts')
   })

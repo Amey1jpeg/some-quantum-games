@@ -72,6 +72,12 @@ const G40 = {
   hasPortal: false,
   fullTrail: [],
   taps:     0,
+  // Levels roll one into the next like Wave Gauntlet: the next level is
+  // picked early and its pillars are already queued past the flag, the flag
+  // you crossed scrolls away behind you, and the name fades in on top.
+  nextLv:   null,
+  prevClearX: null,   // screen x of the flag just crossed, while it is on screen
+  banner:   null,
 }
 
 
@@ -161,10 +167,7 @@ function _g40GetPool(score) {
   return [...extreme, ...hard]
 }
 
-// Lay a level out in screen space. Pillars start off to the right and
-// scroll in, exactly as the endless spawner does, so movement, drawing
-// and collision are shared between both modes.
-function _g40LoadLevel(w, h) {
+function _g40PickLevel(score) {
   let pool
   if (G40.testLevel) pool = [G40.testLevel]
   else if (G40.practice && G40.practiceDiff) {
@@ -174,19 +177,80 @@ function _g40LoadLevel(w, h) {
       const one = pool.filter(x => x.name === G40.practiceLevel)
       if (one.length) pool = one
     }
-  } else pool = _g40GetPool(G40.score)
-  const tmpl = pool[qRandInt(pool.length)] || G40_POOL.easy[0]
-  G40.challenge = tmpl
-  G40.speed     = tmpl.speed
-  G40.gap       = tmpl.gapf * h
-  G40.clearAt   = tmpl.clearAt
-  G40.scrollX   = 0
+  } else pool = _g40GetPool(score)
+  return pool[qRandInt(pool.length)] || G40_POOL.easy[0]
+}
+
+// A level's pillars in screen space, `dx` further right than a fresh start
+// would put them. The level after this one is laid out with dx set to the
+// distance left to the flag, so it is already in the queue behind it.
+function _g40LayPipes(tmpl, w, h, dx) {
   // `at` is the scroll position where this pillar meets the ship, so a
   // pillar starts at `at` plus the ship's x. Laying them out relative to the
   // right edge instead made the level's real length depend on the window
   // width, and the finish fired before the last pillar had arrived —
   // FIRST STEPS ended 220 columns early on a 900px canvas.
   const ufoX0 = w * 0.20
+  return tmpl.pipes.map(p => ({
+    x: p.at + ufoX0 + dx, cy: p.cyf * h, gap: (p.gapf || tmpl.gapf) * h,
+    safe: p.safe || null, passed: false, tunnel: _g40RollTunnel(),
+  }))
+}
+
+// Queue up the level after this one past the finish line. Only a scored,
+// solo, unassisted run looks ahead: practice and test play are one level,
+// 2P is one race, and the bot plans a level from a standing start.
+function _g40QueueNext(w, h) {
+  G40.nextLv = null
+  if (G40.practice || G40.testLevel || G40.multi || G40.botMode) return
+  const tmpl  = _g40PickLevel(G40.score + 1)
+  const pipes = _g40LayPipes(tmpl, w, h, G40.clearAt - G40.scrollX)
+  for (const p of pipes) p.next = true
+  G40.pipes.push(...pipes)
+  G40.nextLv = tmpl
+}
+
+// Hand over to the level whose pillars have been visible past the flag.
+// Nothing is reset: the UFO keeps its height and speed, the queued pillars
+// simply become this level's, and the scroll origin moves back by the
+// finished level's length so the next flag lands where the level says.
+function _g40Merge(w, h) {
+  const tmpl = G40.nextLv
+  G40.prevClearX = w * 0.20 + (G40.clearAt - G40.scrollX)
+  G40.scrollX  -= G40.clearAt
+  G40.challenge = tmpl
+  G40.speed     = tmpl.speed
+  G40.gap       = tmpl.gapf * h
+  G40.clearAt   = tmpl.clearAt
+  // Portals are rolled per level, the same as a fresh load. Their columns
+  // are this level's own, which is what the scroll now counts in.
+  const wantPortals = tmpl.portals && tmpl.portals.length &&
+    qRandInt(100) < Math.round((tmpl.portalChance ?? 0.35) * 100)
+  G40.portals   = wantPortals ? tmpl.portals.map(p => ({
+    at: p.at, cf: p.cf ?? 0.5,
+    toAt: p.toAt ?? p.at, toCf: p.toCf ?? 0.5,
+    mouth: p.mouth ?? 0.16,
+  })) : []
+  G40.hasPortal = !!wantPortals
+  G40.portalCool = 0
+  G40.taps = 0
+  // Pillars that have scrolled off are done with; the queued ones are live
+  G40.pipes = G40.pipes.filter(p => p.x > -G40_PIPE_W - 20)
+  for (const p of G40.pipes) p.next = false
+  _g40QueueNext(w, h)
+  G40.banner = { name: tmpl.name, diff: tmpl.diff, portal: G40.hasPortal, t: 1.6 }
+}
+
+// Lay a level out in screen space. Pillars start off to the right and
+// scroll in, exactly as the endless spawner does, so movement, drawing
+// and collision are shared between both modes.
+function _g40LoadLevel(w, h) {
+  const tmpl = _g40PickLevel(G40.score)
+  G40.challenge = tmpl
+  G40.speed     = tmpl.speed
+  G40.gap       = tmpl.gapf * h
+  G40.clearAt   = tmpl.clearAt
+  G40.scrollX   = 0
   // Portals: fly through the mouth at (at, cf) and you come out at
   // (toAt, toCf) — a different column, a different height, or both.
   // Rolled once per load, so the pillars and the bot plan agree on which
@@ -201,10 +265,10 @@ function _g40LoadLevel(w, h) {
   G40.hasPortal = !!wantPortals
   G40.portalFlash = 0
   G40.portalCool = 0
-  G40.pipes     = tmpl.pipes.map(p => ({
-    x: p.at + ufoX0, cy: p.cyf * h, gap: (p.gapf || tmpl.gapf) * h,
-    safe: p.safe || null, passed: false, tunnel: _g40RollTunnel(),
-  }))
+  G40.pipes     = _g40LayPipes(tmpl, w, h, 0)
+  G40.prevClearX = null
+  G40.banner    = null
+  _g40QueueNext(w, h)
   G40.y   = h / 2; G40.vy   = 0
   G40.p2y = h / 2; G40.p2vy = 0
   G40.p1dead = false; G40.p2dead = false
@@ -501,6 +565,7 @@ function _g40Loop(ts) {
   }
 
   if (G40.portalFlash > 0) G40.portalFlash = Math.max(0, G40.portalFlash - dt)
+  if (G40.banner) { G40.banner.t -= dt; if (G40.banner.t <= 0) G40.banner = null }
 
   if (G40.retrying) {
     G40.retryT += dt
@@ -552,6 +617,10 @@ function _g40Loop(ts) {
       if (G40.multi && !G40.p2dead) { G40.p2vy += GRAV * sdt; G40.p2y += G40.p2vy * sdt }
 
       for (const p of G40.pipes) p.x -= spd * sdt
+      if (G40.prevClearX != null) {
+        G40.prevClearX -= spd * sdt
+        if (G40.prevClearX < -60) G40.prevClearX = null
+      }
 
       if (G40.gauntlet) {
         G40.scrollX += spd * sdt
@@ -589,6 +658,7 @@ function _g40Loop(ts) {
           const jump = p.toAt - G40.scrollX
           G40.scrollX = p.toAt
           for (const q of G40.pipes) q.x -= jump
+          if (G40.prevClearX != null) G40.prevClearX -= jump
           G40.y = Math.max(RY + 2, Math.min(h - RY - 2, p.toCf * h))
           G40.vy = 0
           G40.portalFlash = 0.3
@@ -627,6 +697,7 @@ function _g40Loop(ts) {
       const tunnelPast = (p) => {
         const jump = p.x + G40_PIPE_W - (ufoX - RX) + 1
         for (const q of G40.pipes) q.x -= jump
+        if (G40.prevClearX != null) G40.prevClearX -= jump
         if (G40.gauntlet) G40.scrollX += jump
         G40.portalFlash = 0.3
         SFX.powerup()
@@ -652,10 +723,19 @@ function _g40Loop(ts) {
         _g40Die()
       }
 
-      if (G40.gauntlet && !G40.p1dead && G40.scrollX >= G40.clearAt) {
-        G40.phase = 'cleared'; G40.clearedT = 0
-        if (G40.practice || G40.testLevel) _g40TrailCard()
+      if (G40.gauntlet && !G40.p1dead && G40.phase === 'playing' && G40.scrollX >= G40.clearAt) {
         SFX.win()
+        if (G40.nextLv) {
+          // Run the levels together, the way Wave Gauntlet does: cross the
+          // flag and the next level's pillars are already coming
+          G40.score++
+          window._g40Score = G40.score
+          document.getElementById('g40-score-hud').textContent = G40.score
+          _g40Merge(w, h)
+        } else {
+          G40.phase = 'cleared'; G40.clearedT = 0
+          if (G40.practice || G40.testLevel) _g40TrailCard()
+        }
       }
     }
 
@@ -786,6 +866,8 @@ function _g40Draw(ctx, w, h) {
   }
   // Only the gauntlet has an end; the endless run never reaches one
   if (G40.gauntlet && G40.clearAt) _g40DrawFinish(ctx, ufoX + (G40.clearAt - G40.scrollX), h)
+  // The flag you just crossed keeps scrolling away behind you
+  if (G40.gauntlet && G40.prevClearX != null) _g40DrawFinish(ctx, G40.prevClearX, h)
   const alpha = G40.phase === 'dead' ? Math.max(0.15, 1 - G40.deadT * 1.4) : 1
   const scale = G40.gauntlet ? h / 560 : 1
   if (G40.multi) {
@@ -836,6 +918,26 @@ function _g40Draw(ctx, w, h) {
     ctx.fillText(G40.challenge.name, w / 2, h / 2 + 16)
     ctx.shadowBlur = 0
     ctx.globalAlpha = 1
+  }
+
+  // Merge banner: one level rolling into the next is named over the running
+  // game rather than on a card of its own. Sits below the score.
+  if (G40.banner) {
+    const b = G40.banner
+    const a = Math.min(1, (1.6 - b.t) * 6) * Math.min(1, b.t * 2.5)
+    if (a > 0.01) {
+      const col = G40_DIFF_COL[b.diff] || '#a855f7'
+      ctx.globalAlpha = a
+      ctx.textAlign = 'center'
+      ctx.font = 'bold 11px monospace'
+      ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 10
+      ctx.fillText(String(b.diff || '').toUpperCase() + (b.portal ? '  \u00b7  PORTAL' : ''), w / 2, 72)
+      ctx.font = 'bold 20px monospace'
+      ctx.fillStyle = _lt ? '#111' : '#fff'
+      ctx.fillText(b.name, w / 2, 96)
+      ctx.shadowBlur = 0
+      ctx.globalAlpha = 1
+    }
   }
 
   // 2P result

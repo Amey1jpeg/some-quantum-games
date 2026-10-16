@@ -80,7 +80,7 @@ function gaRand(max) {
 
 const GA = {
   phase: 'idle', raf: null, last: 0,
-  W: 0, H: AL_H, scale: 1,
+  W: 0, H: AL_H, scale: 1, base: 0,
   mode: 'gauntlet',         // 'gauntlet' | 'endless' | 'practice' | 'test'
   clears: 0,                // gauntlet: levels cleared this run
   level: null, gen: null,
@@ -278,14 +278,76 @@ function gaGauntletPool(clears) {
   if (!pool.length) pool = extreme.length ? extreme : all      // a tier with nothing in it yet
   return pool
 }
-function gaGauntletNext() {
-  let pool = gaGauntletPool(GA.clears)
-  if (pool.length > 1 && GA.level) pool = pool.filter(l => l.name !== GA.level.name)   // never the same level twice running
-  const lv = pool[gaRand(pool.length)]
-  if (!lv) return gaPlayEndless()                              // no built-in levels at all
+function gaGauntletPick(clears, after) {
+  let pool = gaGauntletPool(clears)
+  if (pool.length > 1 && after) pool = pool.filter(l => l.name !== after.name)   // never the same level twice running
+  return pool[gaRand(pool.length)]
+}
+function gaGauntletBanner(lv) {
   const cleared = GA.clears
-  gaStart(lv)
   GA.banner = { text: (cleared ? '✓ ' + cleared + ' · ' : '') + lv.name + ' — ' + alDiff(lv.diff).label.toUpperCase(), col: alDiff(lv.diff).col, t: 2.4 }
+}
+function gaGauntletNext() {
+  const lv = gaGauntletPick(GA.clears, GA.level)
+  if (!lv) return gaPlayEndless()                              // no built-in levels at all
+  gaStart(lv)
+  gaGauntletBanner(lv)
+  gaQueueNext()
+}
+
+// The levels of a Gauntlet run are laid end to end in one world, the way
+// Wave Gauntlet runs its corridors together: the next level is picked early
+// and its objects start right where this one's finish line is, so it is
+// already coming into view as you reach the flag, and crossing it changes
+// nothing about the ships — not where they are, not which half, not how
+// fast they were moving.
+// A level laid end to end with the last one is entered at whatever height
+// the ships happened to be, not from a standing start, so it needs room to
+// settle before its first hazard. Nearly all of them have 560 units or
+// more. JUMPSCARES has 110, and from 41% of the possible arrival heights
+// it is unclearable before you touch anything — checked against the
+// planner, which says 164 of 277 heights survive at 110 and all 277 at
+// 210. Levels that already have the room are padded by nothing.
+const GA_MIN_RUNIN = 220
+const GA_HAZARDS = ['col', 'block', 'saw', 'strip']
+
+function gaRunIn(lv) {
+  let first = Infinity
+  for (const o of lv.objects) if (GA_HAZARDS.includes(o.t) && o.x < first) first = o.x
+  return first === Infinity ? GA_MIN_RUNIN : first
+}
+
+function gaQueueNext() {
+  const lv = gaGauntletPick(GA.clears + 1, GA.level)
+  GA.next = lv || null
+  if (!lv) return
+  const base = GA.endX + Math.max(0, GA_MIN_RUNIN - gaRunIn(lv))
+  GA.nextBase = base
+  GA.pending.push(...lv.objects.map(o => Object.assign({}, o, { x: o.x + base })))
+  GA.pending.sort((a, b) => a.x - b.x)
+}
+
+// Cross the flag: what was queued past it becomes the level being flown
+function gaMerge() {
+  const lv = GA.next
+  GA.clears++
+  document.getElementById('ga-score').textContent = GA.clears
+  GA.prevEndX = GA.endX
+  // nextBase includes any run-in padding gaQueueNext added, so the level's
+  // objects and its finish line stay in step.
+  GA.base  = (GA.nextBase != null) ? GA.nextBase : GA.endX
+  GA.nextBase = null
+  GA.level = lv
+  GA.endX  = GA.base + alEndX(lv)
+  GA.fwd   = lv.speed
+  // A level starts at normal speed and entangled, the same as a fresh one.
+  // The multiplier eases back rather than snapping.
+  GA.multTarget = 1
+  GA.forced = false
+  if (typeof SFX !== 'undefined') SFX.win()
+  for (const c of ['#60a5fa', '#f9a8d4', '#fde68a']) gaBurst(GA.x, AL_HALF, c, 8)
+  gaGauntletBanner(lv)
+  gaQueueNext()
 }
 window.gaPlayGauntlet = function() { GA.mode = 'gauntlet'; GA.clears = 0; GA.level = null; gaGauntletNext() }
 window.gaPlayEndless = function() { GA.mode = 'endless'; gaStart(null) }
@@ -305,7 +367,7 @@ function gaStart(level) {
   document.getElementById('ga-overlay').style.display = 'none'
   document.getElementById('ga-over').classList.remove('show')
   Object.assign(GA, {
-    phase: 'playing', level, gen: null,
+    phase: 'playing', level, gen: null, next: null, base: 0, prevEndX: null,
     x: 0, camX: -GA.W * GA_CAM_LEAD, fwd: level ? level.speed : GA_FWD0, mult: 1, multTarget: 1,
     py: AL_HALF * 0.5, ty: AL_HALF * 1.5, swapped: false, swapCD: 0, pv: 0, tv: 0,
     broken: false, breakT: 0, breakCD: 0,
@@ -522,8 +584,11 @@ function gaUpdate(dt) {
     const pct = Math.max(0, Math.min(100, Math.floor(GA.x / GA.endX * 100)))
     if (GA.mode !== 'gauntlet') document.getElementById('ga-score').textContent = pct + '%'
     if (GA.x >= GA.endX) {
-      if (GA.mode === 'gauntlet') { GA.clears++; document.getElementById('ga-score').textContent = GA.clears }
-      return gaWin()
+      if (GA.mode === 'gauntlet' && GA.next) gaMerge()
+      else {
+        if (GA.mode === 'gauntlet') { GA.clears++; document.getElementById('ga-score').textContent = GA.clears }
+        return gaWin()
+      }
     }
   }
 
@@ -647,6 +712,8 @@ function gaDraw() {
   ctx.setLineDash([])
 
   if (GA.level) gaDrawFinish(ctx, sx(GA.endX), H)
+  // The flag you just crossed scrolls away behind you
+  if (GA.prevEndX != null && sx(GA.prevEndX) > -40) gaDrawFinish(ctx, sx(GA.prevEndX), H)
   for (const p of GA.portals) gaDrawPortal(ctx, sx(p.x), p.y, p.kind, p.used)
 
   for (const c of GA.cols) {
@@ -703,7 +770,7 @@ function gaDraw() {
   if (GA.level) {
     const pw = Math.min(360, W * 0.4), px = (W - pw) / 2
     ctx.fillStyle = _lt ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)'; ctx.fillRect(px, 10, pw, 4)
-    ctx.fillStyle = '#a78bfa'; ctx.fillRect(px, 10, pw * Math.min(1, Math.max(0, GA.x / GA.endX)), 4)
+    ctx.fillStyle = '#a78bfa'; ctx.fillRect(px, 10, pw * Math.min(1, Math.max(0, (GA.x - GA.base) / (GA.endX - GA.base))), 4)
   }
   const bw = 170, bx = W - bw - 16, by = 22
   ctx.fillStyle = _lt ? 'rgba(255,255,255,0.75)' : 'rgba(5,5,15,0.6)'; ctx.fillRect(bx - 8, by - 8, bw + 16, 34)
