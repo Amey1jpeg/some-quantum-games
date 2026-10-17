@@ -15,7 +15,14 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  background: var(--bg);
+  /* Cyber wallpaper: a blue sky over a pink synthwave floor, the same
+     mirror horizon as Entangled Gauntlet. The floor itself is drawn by the
+     pseudo-elements below. */
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(59,130,246,.18) 0%, transparent 62%),
+    radial-gradient(ellipse 90% 45% at 50% 100%, rgba(236,72,153,.18) 0%, transparent 72%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   font-family: 'Segoe UI', system-ui, sans-serif;
   min-height: 100vh;
@@ -25,6 +32,38 @@ body {
 /* ── Particle canvas background ── */
 #bg-canvas {
   position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.4;
+}
+
+/* ── Synthwave floor ── */
+/* A pink grid laid flat and tipped away from you, rolling toward the
+   horizon. Home screen only — the game screens have their own arena. */
+body:has(#home.active)::before {
+  content: ''; position: fixed; z-index: 0; pointer-events: none;
+  left: -50%; right: -50%; bottom: 0; height: 46vh;
+  background:
+    linear-gradient(90deg, rgba(236,72,153,.55) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(0deg,  rgba(236,72,153,.55) 1px, transparent 1px) 0 0 / 64px 64px;
+  transform: perspective(320px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(0deg, #000 10%, transparent 85%);
+  mask-image: linear-gradient(0deg, #000 10%, transparent 85%);
+  opacity: .3;
+  animation: cy-floor 2.4s linear infinite;
+}
+/* The horizon line where the floor meets the sky */
+body:has(#home.active)::after {
+  content: ''; position: fixed; z-index: 0; pointer-events: none;
+  left: 0; right: 0; bottom: 46vh; height: 2px;
+  background: linear-gradient(90deg, transparent, #3b82f6 20%, #ec4899 80%, transparent);
+  box-shadow: 0 0 18px 2px rgba(236,72,153,.45), 0 0 40px 6px rgba(59,130,246,.2);
+  opacity: .45;
+}
+@keyframes cy-floor {
+  from { background-position: 0 0, 0 0 }
+  to   { background-position: 0 0, 0 64px }
+}
+@media (prefers-reduced-motion: reduce) {
+  body:has(#home.active)::before { animation: none }
 }
 
 /* ── Layout shells ── */
@@ -779,9 +818,31 @@ body {
 }
 
 /* responsive */
-@media (max-width: 500px) {
-  .game-cards { flex-direction: column; align-items: center; }
-  .game-card { width: 100%; max-width: 360px; }
+/* Phones: forty full-size cards is a very long scroll, so each card
+   becomes a compact row — icon on the left, title and a clamped
+   description beside it. */
+@media (max-width: 600px) {
+  #home { gap: 1.6rem; padding: 3.6rem 1rem 5rem; }
+  .game-cards { flex-direction: column; align-items: stretch; gap: .7rem; width: 100%; }
+  .game-card {
+    width: 100%; max-width: none; padding: .85rem 1rem; border-radius: .9rem;
+    display: grid; grid-template-columns: 2.6rem 1fr; column-gap: .8rem; align-items: start;
+  }
+  .game-card:hover { transform: none; }
+  .game-card:active { transform: scale(.98); }
+  .game-card > * { grid-column: 2; }
+  .game-card > .card-icon {
+    grid-column: 1; grid-row: 1 / span 3; font-size: 1.9rem; margin: 0; line-height: 1.2;
+  }
+  .card-icon img, .card-icon svg, .card-icon canvas { max-width: 2.4rem; height: auto; }
+  .card-title { font-size: 1.02rem; margin-bottom: .2rem; }
+  .card-desc {
+    font-size: .8rem; line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .card-tag { margin-top: .45rem; justify-self: start; }
+  /* Sits above the title instead of on top of it */
+  .auth-header-wrap { position: absolute; top: .75rem; right: .75rem; }
 }
 
 /* ══════════════════════════════════════
@@ -1265,3 +1326,85 @@ body {
 .qg-lb-status:empty { display: none; }
 .lb-row-focus { outline: 2px solid var(--accent2); outline-offset: -2px; animation: lb-focus 1.6s ease-out; }
 @keyframes lb-focus { from { background: rgba(6,182,212,.25); } }
+
+/* ══════════════════════════════════════
+   TOUCH PAD — js/touchpad.js
+   On-screen keys for the keyboard-only games, on touch screens only.
+══════════════════════════════════════ */
+#tp-pad {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: .6rem;
+  padding: .6rem max(.8rem, env(safe-area-inset-right)) max(.8rem, env(safe-area-inset-bottom)) max(.8rem, env(safe-area-inset-left));
+  background: linear-gradient(0deg, rgba(7,6,26,.92) 55%, transparent);
+  pointer-events: none;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+#tp-pad > * { pointer-events: auto; }
+/* Room for the pad, so it never sits over the arena. Keyed off markup
+   that is there before the game starts, not off the pad itself, so the
+   arena is already its final size when the game measures its canvas. */
+body.tp-touch .game-screen.active[data-tp="pad"]  { padding-bottom: 100px; }
+body.tp-touch .game-screen.active[data-tp="type"] { padding-bottom: 84px; }
+/* Wave Collapse has a second row of buttons */
+body.tp-touch #game14.active[data-tp] { padding-bottom: 150px; }
+/* Entanglement has two pads */
+body.tp-touch #game15.active[data-tp] { padding-bottom: 168px; }
+/* The floating corner buttons would land on the arena or the pad */
+body.has-tp #qg-lb-btn, body.has-tp #qg-theme-btn { display: none; }
+
+.tp-btn {
+  touch-action: none;
+  min-width: 52px; height: 52px; padding: 0 .6rem;
+  border-radius: 12px; border: 1px solid rgba(167,139,250,.45);
+  background: rgba(22,22,42,.85); color: #e2e8f0;
+  font-family: inherit; font-weight: 700; font-size: 1.05rem; line-height: 1;
+  box-shadow: 0 0 10px rgba(59,130,246,.18), inset 0 0 0 1px rgba(255,255,255,.03);
+  transition: transform .05s, background .05s;
+}
+.tp-btn.on {
+  transform: scale(.94);
+  background: rgba(236,72,153,.35); border-color: #ec4899;
+  box-shadow: 0 0 16px rgba(236,72,153,.5);
+}
+.tp-btn.tp-wide { min-width: 76px; font-size: .85rem; letter-spacing: .06em; }
+
+.tp-dpad {
+  display: grid; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 46px); gap: 4px;
+}
+.tp-dpad .tp-btn { min-width: 0; width: 100%; height: 100%; padding: 0; }
+.tp-dpad .tp-up    { grid-area: 1 / 2; }
+.tp-dpad .tp-left  { grid-area: 2 / 1; }
+.tp-dpad .tp-right { grid-area: 2 / 3; }
+.tp-dpad .tp-down  { grid-area: 3 / 2; }
+.tp-dpad .tp-btn { border-color: rgba(59,130,246,.55); }
+.tp-wasd .tp-btn { border-color: rgba(236,72,153,.55); }
+
+.tp-keys { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.tp-row { display: flex; gap: 6px; }
+.tp-row.tp-col { flex-direction: column; align-items: stretch; }
+@media (max-width: 420px) {
+  #tp-pad { gap: .4rem; padding-left: .6rem; padding-right: .6rem; }
+  .tp-dpad { grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
+  .tp-btn { min-width: 44px; height: 48px; }
+  .tp-small .tp-btn { min-width: 40px; height: 38px; }
+}
+.tp-small .tp-btn { min-width: 42px; height: 40px; font-size: .9rem; }
+
+.tp-type { flex: 1; }
+.tp-type-input {
+  width: 100%; height: 52px; border-radius: 12px;
+  border: 1px solid rgba(34,211,238,.5); background: rgba(22,22,42,.9);
+  color: #e2e8f0; font: inherit; font-size: 16px; /* 16px stops iOS zooming in */
+  text-align: center; outline: none;
+}
+.tp-type-input:focus { border-color: #ec4899; box-shadow: 0 0 14px rgba(236,72,153,.4); }
+
+/* A game screen on a phone: tighter frame, smaller header */
+@media (max-width: 600px) {
+  .game-screen { padding: .8rem .7rem; gap: .6rem; }
+  .top-bar { gap: .5rem .7rem; }
+  .game-title { font-size: .98rem; }
+  .btn-back { padding: .35rem .7rem; font-size: .8rem; }
+  .canvas-overlay { overflow-y: auto; }
+  .game-over-card { max-width: calc(100vw - 2rem); }
+}

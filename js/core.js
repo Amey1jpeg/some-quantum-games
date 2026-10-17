@@ -256,7 +256,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=18'
+    link.href = QG_ROOT + 'css/stall.css?v=19'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -389,7 +389,7 @@ function qgApplyTheme() {
     const link = document.createElement('link')
     link.id = 'qg-theme-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/theme.css?v=4'
+    link.href = QG_ROOT + 'css/theme.css?v=5'
     document.head.appendChild(link)
   }
   if (!document.getElementById('qg-theme-btn')) {
@@ -542,6 +542,8 @@ function initCanvas() {
     vx: (Math.random() - .5) * .3,
     vy: (Math.random() - .5) * .3,
     alpha: Math.random() * .6 + .2,
+    // Blue sky or pink floor, to match the synthwave wallpaper
+    rgb: Math.random() < .5 ? '96,165,250' : '236,72,153',
   }))
 }
 function animCanvas() {
@@ -549,7 +551,7 @@ function animCanvas() {
   for (const p of particles) {
     ctx.beginPath()
     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(124,58,237,${p.alpha})`
+    ctx.fillStyle = `rgba(${p.rgb},${p.alpha})`
     ctx.fill()
     p.x += p.vx; p.y += p.vy
     if (p.x < 0) p.x = canvas.width

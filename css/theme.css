@@ -26,8 +26,11 @@
   --glow2: 0 0 18px rgba(14,116,144,0.18);
 }
 
-/* The drifting purple starfield is far too heavy on a light ground */
+/* The drifting starfield is far too heavy on a light ground */
 :root[data-theme="light"] #bg-canvas { opacity: 0.14 }
+/* Same for the synthwave floor */
+:root[data-theme="light"] body:has(#home.active)::before { opacity: .18 }
+:root[data-theme="light"] body:has(#home.active)::after  { opacity: .3 }
 
 /* Cards need a real edge on white — the dark theme leant on glow for this */
 :root[data-theme="light"] .game-card {
@@ -60,7 +63,6 @@
     radial-gradient(ellipse 90% 45% at 50% 100%, #fce7f3 0%, transparent 72%),
     var(--bg);
 }
-:root[data-theme="light"] body.stall-mode:has(#home.active)::before { opacity: .22 }
 :root[data-theme="light"] .stall-canopy {
   background:
     repeating-linear-gradient(90deg, transparent 0 46px, rgba(37,99,235,.12) 46px 47px),

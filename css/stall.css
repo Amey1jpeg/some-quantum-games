@@ -27,34 +27,8 @@ body.stall-mode {
     var(--cy-deep);
 }
 
-/* ── Synthwave floor ────────────────────────────────── */
-/* A pink grid laid flat and tipped away from you, rolling toward the
-   horizon. Home screen only — the game screens have their own arena. */
-body.stall-mode:has(#home.active)::before {
-  content: ''; position: fixed; z-index: 0; pointer-events: none;
-  left: -50%; right: -50%; bottom: 0; height: 48vh;
-  background:
-    linear-gradient(90deg, rgba(236,72,153,.55) 1px, transparent 1px) 0 0 / 64px 64px,
-    linear-gradient(0deg,  rgba(236,72,153,.55) 1px, transparent 1px) 0 0 / 64px 64px;
-  transform: perspective(320px) rotateX(62deg);
-  transform-origin: 50% 100%;
-  -webkit-mask-image: linear-gradient(0deg, #000 10%, transparent 85%);
-  mask-image: linear-gradient(0deg, #000 10%, transparent 85%);
-  opacity: .35;
-  animation: cy-floor 2.4s linear infinite;
-}
-/* The horizon line where the floor meets the sky */
-body.stall-mode:has(#home.active)::after {
-  content: ''; position: fixed; z-index: 0; pointer-events: none;
-  left: 0; right: 0; bottom: 48vh; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cy-blue) 20%, var(--cy-pink) 80%, transparent);
-  box-shadow: 0 0 18px 2px rgba(236,72,153,.45), 0 0 40px 6px rgba(59,130,246,.2);
-  opacity: .5;
-}
-@keyframes cy-floor {
-  from { background-position: 0 0, 0 0 }
-  to   { background-position: 0 0, 0 64px }
-}
+/* The synthwave floor and horizon come from style.css — the main site
+   has the same wallpaper now. */
 
 /* ── HUD bar ────────────────────────────────────────── */
 .stall-canopy {
@@ -227,8 +201,7 @@ body.stall-mode:has(#home.active)::after {
 
 /* Motion is decoration here — switch it off when asked to. */
 @media (prefers-reduced-motion: reduce) {
-  .stall-lights i, .stall-bunting i, .stall-canopy::after,
-  body.stall-mode::before { animation: none !important }
+  .stall-lights i, .stall-bunting i, .stall-canopy::after { animation: none !important }
 }
 
 /* Narrow screens: fewer, smaller decorations */
