@@ -51,42 +51,44 @@
 }
 #qg-theme-btn:hover { transform: translateY(-2px) scale(1.06) }
 
-/* ── Carnival in daylight ───────────────────────────── */
-/* The stall theme paints its own night-fair ground, so it needs a
+/* ── Cyber stall in daylight ────────────────────────── */
+/* The stall theme paints its own night-time ground, so it needs a
    matching daytime palette or light mode does nothing there. */
 :root[data-theme="light"] body.stall-mode {
   background:
-    radial-gradient(ellipse 120% 70% at 50% 0%, #ffe6c7 0%, transparent 62%),
-    radial-gradient(ellipse 90% 50% at 50% 100%, #ffd9e2 0%, transparent 70%),
+    radial-gradient(ellipse 120% 60% at 50% 0%, #dbeafe 0%, transparent 62%),
+    radial-gradient(ellipse 90% 45% at 50% 100%, #fce7f3 0%, transparent 72%),
     var(--bg);
 }
+:root[data-theme="light"] body.stall-mode:has(#home.active)::before { opacity: .22 }
+:root[data-theme="light"] .stall-canopy {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 46px, rgba(37,99,235,.12) 46px 47px),
+    linear-gradient(180deg, #ffffff 0%, #eef2ff 100%);
+  box-shadow: 0 2px 12px rgba(20,21,43,.10);
+}
 :root[data-theme="light"] .stall-mode .home-header h1 {
-  background: linear-gradient(180deg, #f0820f 0%, #d81e3f 70%, #a3122c 100%);
+  background: linear-gradient(180deg, #1d4ed8 0%, #7c3aed 50%, #db2777 100%);
   -webkit-background-clip: text; background-clip: text;
-  filter: drop-shadow(0 1px 0 rgba(255,255,255,.7));
+  filter: none;
 }
-:root[data-theme="light"] .stall-kicker {
-  color: #c2410c; text-shadow: none;
-}
-:root[data-theme="light"] .stall-mode .home-header p { color: #6b4a2f; opacity: 1 }
+:root[data-theme="light"] .stall-mode .home-header p { color: var(--muted); opacity: 1 }
 :root[data-theme="light"] .stall-mode .quantum-badge {
-  background: rgba(216,30,63,.10); border-color: rgba(216,30,63,.35); color: #a3122c;
+  background: rgba(37,99,235,.08); border-color: rgba(37,99,235,.35); color: #1d4ed8;
 }
 :root[data-theme="light"] .stall-mode .game-card {
-  background: linear-gradient(180deg, #fffaf2 0%, #ffffff 45%);
-  box-shadow: 0 6px 18px rgba(120,60,20,.14), inset 0 0 0 1px rgba(216,30,63,.10);
+  background: linear-gradient(180deg, #f5f7ff 0%, #ffffff 45%);
+  border-color: rgba(124,58,237,.28);
+  box-shadow: 0 6px 18px rgba(30,40,90,.10);
 }
 :root[data-theme="light"] .stall-mode .game-card:hover {
-  box-shadow: 0 14px 30px rgba(120,60,20,.20), inset 0 0 0 1px rgba(216,30,63,.28);
+  border-color: #db2777;
+  box-shadow: 0 14px 30px rgba(30,40,90,.16), 0 0 18px rgba(219,39,119,.18);
 }
-:root[data-theme="light"] .stall-mode .card-title { color: #2b1608 }
-:root[data-theme="light"] .stall-mode .card-desc  { color: #6b4a2f }
-/* Bulbs read as glowing dots at night; in daylight they need an edge */
-:root[data-theme="light"] .stall-lights i { box-shadow: 0 0 6px 1px rgba(180,90,0,.45) }
-:root[data-theme="light"] .stall-bunting::before {
-  background: linear-gradient(90deg, transparent, rgba(160,90,20,.55) 12%,
-              rgba(160,90,20,.55) 88%, transparent);
-}
+:root[data-theme="light"] .stall-mode .card-title { color: var(--text) }
+:root[data-theme="light"] .stall-mode .card-desc  { color: var(--muted) }
+/* LEDs glow at night; in daylight they need an edge */
+:root[data-theme="light"] .stall-lights i { box-shadow: 0 0 5px 1px rgba(30,40,90,.35) }
 
 @media (prefers-reduced-motion: reduce) {
   #qg-theme-btn { transition: none }

@@ -249,14 +249,14 @@ if (QG_STALL && typeof history !== 'undefined' && /[?&]game=stall(&|$)/.test(loc
 function qgApplyStall() {
   if (!QG_STALL) return
 
-  // Carnival dressing. The stylesheet is injected rather than linked from
+  // Cyber dressing. The stylesheet is injected rather than linked from
   // index.html so the main site never downloads or applies it.
   document.body.classList.add('stall-mode')
   if (!document.getElementById('stall-css')) {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=16'
+    link.href = QG_ROOT + 'css/stall.css?v=17'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -272,11 +272,7 @@ function qgApplyStall() {
   const lights = deco('stall-lights', 26)
   if (lights) document.body.insertBefore(lights, document.body.firstChild)
   const header = document.querySelector('.home-header')
-  if (header && !document.querySelector('.stall-kicker')) {
-    const kicker = document.createElement('span')
-    kicker.className = 'stall-kicker'
-    kicker.textContent = 'Step right up'
-    header.insertBefore(kicker, header.firstChild)
+  if (header) {
     const bunting = deco('stall-bunting', 15)
     if (bunting) header.parentNode.insertBefore(bunting, header.nextSibling)
   }
@@ -287,7 +283,7 @@ function qgApplyStall() {
   if (!document.getElementById('stall-js')) {
     const s = document.createElement('script')
     s.id = 'stall-js'
-    s.src = QG_ROOT + 'js/stall.js?v=3'
+    s.src = QG_ROOT + 'js/stall.js?v=4'
     document.body.appendChild(s)
   }
 
@@ -369,7 +365,7 @@ function qgApplyTheme() {
     const link = document.createElement('link')
     link.id = 'qg-theme-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/theme.css?v=3'
+    link.href = QG_ROOT + 'css/theme.css?v=4'
     document.head.appendChild(link)
   }
   if (!document.getElementById('qg-theme-btn')) {

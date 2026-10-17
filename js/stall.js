@@ -14,13 +14,13 @@
   const reduced = typeof matchMedia === 'function' &&
                   matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  // ── Bulbs ───────────────────────────────────────────
+  // ── LEDs (still called bulbs from the carnival days) ───────────────────────────────────────────
   const BULBS = [
-    ['#ffc23c', 'rgba(255,194,60,.85)'],
-    ['#ff6b8a', 'rgba(255,107,138,.8)'],
-    ['#6ee7f0', 'rgba(110,231,240,.8)'],
-    ['#9bf07a', 'rgba(155,240,122,.8)'],
-    ['#c58cff', 'rgba(197,140,255,.8)'],
+    ['#22d3ee', 'rgba(34,211,238,.8)'],
+    ['#ec4899', 'rgba(236,72,153,.8)'],
+    ['#3b82f6', 'rgba(59,130,246,.8)'],
+    ['#a78bfa', 'rgba(167,139,250,.8)'],
+    ['#4ade80', 'rgba(74,222,128,.8)'],
   ]
   document.querySelectorAll('.stall-lights i').forEach((b, i) => {
     b._c = i % BULBS.length

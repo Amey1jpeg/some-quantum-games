@@ -1,7 +1,13 @@
 /* ═══════════════════════════════════════════════════════
-   CARNIVAL THEME — /stall only
+   CYBER THEME — /stall only
    Loaded by qgApplyStall(), scoped entirely under
    body.stall-mode, so the main site and /beta never see it.
+
+   Same palette as Entangled Gauntlet's mirror horizon: a blue
+   sky over a pink synthwave floor, joined at one glowing line.
+   The class names are the old carnival ones (canopy, lights,
+   bunting) because stall.js binds to them — they are now a HUD
+   bar, a circuit trace of LEDs and a row of neon pennants.
 
    Everything here is drawn with gradients and borders — no
    images, no webfonts, no CDN. A stand may be on bad wifi or
@@ -9,69 +15,105 @@
    ═══════════════════════════════════════════════════════ */
 
 body.stall-mode {
-  --fair-red:   #d81e3f;
-  --fair-cream: #fff4e0;
-  --fair-gold:  #ffc23c;
-  --fair-deep:  #1a0b1f;
+  --cy-blue:  #3b82f6;
+  --cy-pink:  #ec4899;
+  --cy-cyan:  #22d3ee;
+  --cy-violet:#a78bfa;
+  --cy-deep:  #07061a;
   padding-top: 92px;
   background:
-    radial-gradient(ellipse 120% 70% at 50% 0%, #3a1030 0%, transparent 60%),
-    radial-gradient(ellipse 90% 50% at 50% 100%, #241033 0%, transparent 70%),
-    var(--bg);
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(59,130,246,.22) 0%, transparent 62%),
+    radial-gradient(ellipse 90% 45% at 50% 100%, rgba(236,72,153,.22) 0%, transparent 72%),
+    var(--cy-deep);
 }
 
-/* ── Big-top canopy ─────────────────────────────────── */
+/* ── Synthwave floor ────────────────────────────────── */
+/* A pink grid laid flat and tipped away from you, rolling toward the
+   horizon. Home screen only — the game screens have their own arena. */
+body.stall-mode:has(#home.active)::before {
+  content: ''; position: fixed; z-index: 0; pointer-events: none;
+  left: -50%; right: -50%; bottom: 0; height: 48vh;
+  background:
+    linear-gradient(90deg, rgba(236,72,153,.55) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(0deg,  rgba(236,72,153,.55) 1px, transparent 1px) 0 0 / 64px 64px;
+  transform: perspective(320px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(0deg, #000 10%, transparent 85%);
+  mask-image: linear-gradient(0deg, #000 10%, transparent 85%);
+  opacity: .35;
+  animation: cy-floor 2.4s linear infinite;
+}
+/* The horizon line where the floor meets the sky */
+body.stall-mode:has(#home.active)::after {
+  content: ''; position: fixed; z-index: 0; pointer-events: none;
+  left: 0; right: 0; bottom: 48vh; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cy-blue) 20%, var(--cy-pink) 80%, transparent);
+  box-shadow: 0 0 18px 2px rgba(236,72,153,.45), 0 0 40px 6px rgba(59,130,246,.2);
+  opacity: .5;
+}
+@keyframes cy-floor {
+  from { background-position: 0 0, 0 0 }
+  to   { background-position: 0 0, 0 64px }
+}
+
+/* ── HUD bar ────────────────────────────────────────── */
 .stall-canopy {
   position: fixed; top: 0; left: 0; right: 0;
   height: 46px; z-index: 60; pointer-events: none;
-  background: repeating-linear-gradient(90deg,
-    var(--fair-red) 0 44px, var(--fair-cream) 44px 88px);
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, transparent 0 46px, rgba(59,130,246,.16) 46px 47px),
+    linear-gradient(180deg, #0d0b2a 0%, #090722 100%);
   box-shadow: 0 4px 22px rgba(0,0,0,.6);
 }
-/* Scalloped hem: same stripes, cut into half-circles by a mask */
+/* Neon underline, with a glint sweeping along it */
 .stall-canopy::after {
-  content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 22px;
-  background: inherit;
-  -webkit-mask-image: radial-gradient(circle at 22px 0, #000 19px, transparent 19.5px);
-  -webkit-mask-size: 44px 22px; -webkit-mask-repeat: repeat-x;
-  mask-image: radial-gradient(circle at 22px 0, #000 19px, transparent 19.5px);
-  mask-size: 44px 22px; mask-repeat: repeat-x;
+  content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 2px;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(255,255,255,.95) 50%, transparent 100%) -30% 0 / 30% 100% no-repeat,
+    linear-gradient(90deg, var(--cy-blue), var(--cy-violet) 50%, var(--cy-pink));
+  box-shadow: 0 0 12px 1px rgba(167,139,250,.7);
+  animation: cy-glint 4.5s ease-in-out infinite;
+}
+@keyframes cy-glint {
+  0%   { background-position: -30% 0, 0 0 }
+  60%, 100% { background-position: 130% 0, 0 0 }
 }
 
-/* ── String lights ──────────────────────────────────── */
+/* ── Circuit trace of LEDs ──────────────────────────── */
 .stall-lights {
   position: fixed; top: 62px; left: 0; right: 0;
   z-index: 59; pointer-events: none;
   display: flex; justify-content: space-around; align-items: flex-start;
   padding: 0 10px;
 }
-/* The wire the bulbs hang from — without it they read as loose dots
-   rather than as festoon lights. */
+/* The trace the LEDs hang off */
 .stall-lights::before {
-  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
-  background: rgba(0,0,0,.45);
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34,211,238,.55) 8%,
+              rgba(236,72,153,.55) 92%, transparent);
 }
 .stall-lights i {
-  /* Only the bulbs take clicks — the strip spans the whole width and would
+  /* Only the LEDs take clicks — the strip spans the whole width and would
      otherwise swallow anything underneath it. */
   pointer-events: auto; cursor: pointer;
   margin-top: 7px;
-  width: 12px; height: 15px;
-  border-radius: 50% 50% 54% 54% / 42% 42% 58% 58%;
-  background: var(--fair-gold);
-  box-shadow: 0 0 10px 2px rgba(255,194,60,.85);
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  background: var(--cy-cyan);
+  box-shadow: 0 0 10px 2px rgba(34,211,238,.8);
   animation: stall-twinkle 2.4s ease-in-out infinite;
 }
-/* Brass cap and the short stem up to the wire */
+/* The short lead up to the trace */
 .stall-lights i::before {
   content: ''; position: absolute;
   top: -7px; left: 50%; transform: translateX(-50%);
-  width: 5px; height: 7px; border-radius: 1px 1px 0 0;
-  background: linear-gradient(180deg, #6b6f7d, #3f4351);
+  width: 1px; height: 7px;
+  background: rgba(148,163,184,.55);
 }
-.stall-lights i:nth-child(3n+1) { background:#ff6b8a; box-shadow:0 0 10px 2px rgba(255,107,138,.8); animation-delay:.35s }
-.stall-lights i:nth-child(3n+2) { background:#6ee7f0; box-shadow:0 0 10px 2px rgba(110,231,240,.8); animation-delay:.75s }
-/* Clicking a bulb pops it and rolls it to the next colour */
+.stall-lights i:nth-child(3n+1) { background:var(--cy-pink); box-shadow:0 0 10px 2px rgba(236,72,153,.8); animation-delay:.35s }
+.stall-lights i:nth-child(3n+2) { background:var(--cy-blue); box-shadow:0 0 10px 2px rgba(59,130,246,.8); animation-delay:.75s }
+/* Clicking an LED pops it and rolls it to the next colour */
 @keyframes stall-pop {
   0%   { transform: scale(1) }
   35%  { transform: scale(2.1) }
@@ -80,92 +122,92 @@ body.stall-mode {
 }
 @keyframes stall-twinkle {
   0%, 100% { opacity: 1;   transform: scale(1) }
-  50%      { opacity: .45; transform: scale(.82) }
+  50%      { opacity: .4;  transform: scale(.82) }
 }
 
-/* ── Bunting ────────────────────────────────────────── */
+/* ── Neon pennants ──────────────────────────────────── */
 .stall-bunting {
   position: relative;
   display: flex; justify-content: space-between; align-items: flex-start;
   gap: 0; margin: -.6rem auto .4rem; max-width: 900px; padding: 0 4px;
 }
-/* the string the flags hang from */
+/* the cable the pennants hang from */
 .stall-bunting::before {
-  content: ''; position: absolute; top: 1px; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255,205,110,.8) 12%,
-              rgba(255,205,110,.8) 88%, transparent);
-  border-radius: 2px;
+  content: ''; position: absolute; top: 1px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cy-blue) 12%,
+              var(--cy-pink) 88%, transparent);
+  box-shadow: 0 0 8px rgba(167,139,250,.6);
 }
 .stall-bunting i {
   pointer-events: auto; cursor: grab;
   touch-action: none;          /* so a drag on a phone swings, not scrolls */
   width: 0; height: 0;
-  border-left: 15px solid transparent;
-  border-right: 15px solid transparent;
-  border-top: 26px solid var(--fair-red);
-  filter: drop-shadow(0 3px 3px rgba(0,0,0,.45));
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-top: 22px solid var(--cy-blue);
+  filter: drop-shadow(0 0 6px rgba(59,130,246,.75));
+  opacity: .9;
   transform-origin: top center;
   animation: stall-sway 3.6s ease-in-out infinite;
 }
-.stall-bunting i:nth-child(4n+2) { border-top-color: var(--fair-gold);  animation-delay:.3s }
-.stall-bunting i:nth-child(4n+3) { border-top-color: var(--fair-cream); animation-delay:.6s }
-.stall-bunting i:nth-child(4n)   { border-top-color: #6ee7f0;           animation-delay:.9s }
+.stall-bunting i:nth-child(4n+2) { border-top-color: var(--cy-violet); filter: drop-shadow(0 0 6px rgba(167,139,250,.75)); animation-delay:.3s }
+.stall-bunting i:nth-child(4n+3) { border-top-color: var(--cy-pink);   filter: drop-shadow(0 0 6px rgba(236,72,153,.75));  animation-delay:.6s }
+.stall-bunting i:nth-child(4n)   { border-top-color: var(--cy-cyan);   filter: drop-shadow(0 0 6px rgba(34,211,238,.75));  animation-delay:.9s }
 @keyframes stall-sway {
   0%, 100% { transform: rotate(-3deg) }
   50%      { transform: rotate(3deg) }
 }
 
-/* ── Marquee heading ────────────────────────────────── */
+/* ── Heading ────────────────────────────────────────── */
 .stall-mode .home-header { position: relative; padding-top: .4rem }
-.stall-kicker {
-  display: block; text-align: center;
-  font-size: .8rem; font-weight: 800; letter-spacing: .34em;
-  color: var(--fair-gold); text-transform: uppercase;
-  margin-bottom: .5rem; text-shadow: 0 0 14px rgba(255,194,60,.6);
-}
 .stall-mode .home-header h1 {
-  background: linear-gradient(180deg, #fff6df 0%, var(--fair-gold) 55%, #ff8a3d 100%);
+  background: linear-gradient(180deg, #e0f2fe 0%, #60a5fa 45%, var(--cy-pink) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 3px 0 rgba(0,0,0,.4)) drop-shadow(0 0 22px rgba(255,150,60,.45));
+  filter: drop-shadow(0 0 1px rgba(255,255,255,.4)) drop-shadow(0 0 22px rgba(236,72,153,.45));
   letter-spacing: 1px;
 }
-.stall-mode .home-header p { color: #f7d9b0; opacity: .9 }
+.stall-mode .home-header p { color: #b9c3e6; opacity: .9 }
 .stall-mode .quantum-badge {
-  background: rgba(216,30,63,.18);
-  border-color: rgba(255,194,60,.5);
-  color: var(--fair-gold);
+  background: rgba(59,130,246,.12);
+  border-color: rgba(34,211,238,.45);
+  color: var(--cy-cyan);
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/* ── Booth cards ────────────────────────────────────── */
+/* ── Terminal cards ─────────────────────────────────── */
 .stall-mode .game-cards { gap: 1.6rem; margin-top: .4rem }
 .stall-mode .game-card {
+  position: relative;
   background:
-    linear-gradient(180deg, rgba(255,244,224,.06) 0%, transparent 40%),
-    #24102b;
-  border-width: 2px;
-  border-radius: 1rem;
-  padding-top: 1.9rem;
-  box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,194,60,.18);
+    repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(59,130,246,.10) 0%, transparent 45%),
+    #0c0a24;
+  border: 1px solid rgba(167,139,250,.35);
+  border-radius: .5rem;
+  padding-top: 1.7rem;
+  box-shadow: 0 10px 26px rgba(0,0,0,.55), inset 0 0 0 1px rgba(59,130,246,.10);
   overflow: hidden;
+  /* Clipped corner, like a HUD panel */
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
 }
-/* Striped awning across the top of each booth */
+/* Neon strip across the top of each card */
 .stall-mode .game-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 12px;
-  background: repeating-linear-gradient(90deg,
-    var(--fair-red) 0 16px, var(--fair-cream) 16px 32px);
-  opacity: .95;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--cy-blue), var(--cy-violet), var(--cy-pink));
+  box-shadow: 0 0 12px rgba(236,72,153,.7);
 }
 .stall-mode .game-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 16px 34px rgba(0,0,0,.6), 0 0 26px rgba(255,194,60,.35),
-              inset 0 0 0 1px rgba(255,194,60,.4);
+  transform: translateY(-6px);
+  border-color: var(--cy-pink);
+  box-shadow: 0 16px 34px rgba(0,0,0,.6), 0 0 26px rgba(236,72,153,.35),
+              inset 0 0 0 1px rgba(236,72,153,.35);
 }
-.stall-mode .card-title { color: #fff6df; letter-spacing: .3px }
-.stall-mode .card-desc  { color: #d9bfa4 }
+.stall-mode .card-title { color: #eef2ff; letter-spacing: .3px }
+.stall-mode .card-desc  { color: #a9b1d6 }
 
-/* The auth button outranks the canopy on z-index, so without this it sits
-   on top of the stripes. Drop it below the scalloped hem. */
+/* The auth button outranks the HUD bar on z-index, so without this it
+   sits on top of it. Drop it below the bar. */
 .stall-mode .auth-header-wrap { top: 80px }
 
 /* ── Chrome that a walk-up player does not need ─────── */
@@ -173,7 +215,8 @@ body.stall-mode {
 
 /* Motion is decoration here — switch it off when asked to. */
 @media (prefers-reduced-motion: reduce) {
-  .stall-lights i, .stall-bunting i { animation: none }
+  .stall-lights i, .stall-bunting i, .stall-canopy::after,
+  body.stall-mode::before { animation: none !important }
 }
 
 /* Narrow screens: fewer, smaller decorations */
@@ -181,28 +224,28 @@ body.stall-mode {
   body.stall-mode { padding-top: 74px }
   .stall-canopy { height: 34px }
   .stall-lights { top: 50px }
-  .stall-bunting i { border-left-width: 11px; border-right-width: 11px; border-top-width: 19px }
+  .stall-bunting i { border-left-width: 10px; border-right-width: 10px; border-top-width: 17px }
 }
 
 /* ── Interactive decorations ────────────────────────── */
-/* A 9px bulb and a 30px flag are far too small to hit reliably, especially
-   on a touchscreen. These invisible pads enlarge the hit area to a sane
-   target without changing how anything looks. */
+/* A 9px LED and a 26px pennant are far too small to hit reliably,
+   especially on a touchscreen. These invisible pads enlarge the hit area
+   to a sane target without changing how anything looks. */
 .stall-lights i { position: relative }
 .stall-lights i::after {
-  content: ''; position: absolute; inset: -11px; border-radius: 50%;
+  content: ''; position: absolute; inset: -12px; border-radius: 50%;
 }
 .stall-bunting i { position: relative }
-/* The flag is a CSS triangle: width/height are 0 and the shape is all
+/* The pennant is a CSS triangle: width/height are 0 and the shape is all
    border, so the pad's containing block sits at the inside corner of those
-   borders (15px across, 26px down). These offsets put the pad back over
-   the triangle rather than below it. */
+   borders. These offsets put the pad back over the triangle rather than
+   below it. */
 .stall-bunting i::after {
   content: ''; position: absolute;
-  left: -18px; right: -18px; top: -32px; bottom: -6px;
+  left: -16px; right: -16px; top: -28px; bottom: -6px;
 }
-/* While JS is driving a flag it owns the transform, so the idle CSS sway
-   has to stand down; it resumes once the flag settles. */
+/* While JS is driving a pennant it owns the transform, so the idle CSS
+   sway has to stand down; it resumes once the pennant settles. */
 .stall-bunting i.swinging { animation: none !important }
 .stall-bunting i.grabbed  { cursor: grabbing }
 
@@ -213,25 +256,29 @@ body.stall-mode {
 .stall-how {
   margin: .7rem 0 .2rem;
   padding: .6rem .7rem;
-  border-radius: .55rem;
-  background: rgba(255,244,224,.06);
-  border: 1px solid rgba(255,194,60,.22);
+  border-radius: .35rem;
+  background: rgba(34,211,238,.05);
+  border: 1px solid rgba(34,211,238,.25);
+  border-left: 2px solid var(--cy-cyan);
   text-align: left;
 }
 .stall-how b {
   display: block;
-  font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--fair-gold); margin-bottom: .35rem;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: .68rem; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--cy-cyan); margin-bottom: .35rem;
 }
 .stall-how ul { margin: 0; padding-left: 1.05rem }
 .stall-how li {
-  font-size: .78rem; line-height: 1.45; color: #e7d3ba; margin-bottom: .18rem;
+  font-size: .78rem; line-height: 1.45; color: #c7cdea; margin-bottom: .18rem;
 }
-.stall-how li::marker { color: var(--fair-red) }
+.stall-how li::marker { color: var(--cy-pink) }
 
 :root[data-theme="light"] .stall-how {
-  background: rgba(216,30,63,.05);
-  border-color: rgba(216,30,63,.22);
+  background: rgba(37,99,235,.05);
+  border-color: rgba(37,99,235,.22);
+  border-left-color: #2563eb;
 }
-:root[data-theme="light"] .stall-how b  { color: #c2410c }
-:root[data-theme="light"] .stall-how li { color: #5a3a22 }
+:root[data-theme="light"] .stall-how b  { color: #1d4ed8 }
+:root[data-theme="light"] .stall-how li { color: #334155 }
+:root[data-theme="light"] .stall-how li::marker { color: #db2777 }
