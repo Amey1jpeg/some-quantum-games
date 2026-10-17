@@ -213,6 +213,18 @@ body.stall-mode:has(#home.active)::after {
 /* ── Chrome that a walk-up player does not need ─────── */
 .stall-mode #beta-banner { display: none !important }
 
+/* Escape replaces the ← Back button on the stand; this is its hint */
+.stall-esc {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: .78rem; color: var(--muted); white-space: nowrap;
+}
+.stall-esc kbd {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: .72rem; padding: .15rem .45rem; border-radius: 5px;
+  border: 1px solid var(--border); border-bottom-width: 2px;
+  background: var(--card); color: var(--text);
+}
+
 /* Motion is decoration here — switch it off when asked to. */
 @media (prefers-reduced-motion: reduce) {
   .stall-lights i, .stall-bunting i, .stall-canopy::after,

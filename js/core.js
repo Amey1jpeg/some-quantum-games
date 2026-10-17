@@ -256,7 +256,7 @@ function qgApplyStall() {
     const link = document.createElement('link')
     link.id = 'stall-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/stall.css?v=17'
+    link.href = QG_ROOT + 'css/stall.css?v=18'
     document.head.appendChild(link)
   }
   const deco = (cls, n) => {
@@ -309,6 +309,30 @@ function qgApplyStall() {
     const tag = card.querySelector('.card-tag')
     card.insertBefore(box, tag || null)
   })
+
+  // No ← Back button on the stand: Escape takes you home instead, and a
+  // small key hint sits where the button was so walk-up players find it.
+  document.querySelectorAll('.top-bar .btn-back').forEach(b => {
+    const hint = document.createElement('span')
+    hint.className = 'stall-esc'
+    hint.setAttribute('aria-hidden', 'true')
+    hint.innerHTML = '<kbd>Esc</kbd> back'
+    b.replaceWith(hint)
+  })
+  if (!qgApplyStall._esc) {
+    qgApplyStall._esc = true
+    // Capture phase, so it runs before a game's own key handler sees Escape
+    window.addEventListener('keydown', e => {
+      if (e.key !== 'Escape' || e.repeat) return
+      if (document.getElementById('home').classList.contains('active')) return
+      // Let Escape close an open panel or the submit form first
+      if (typeof qgLbPanelOpen === 'function' && qgLbPanelOpen()) return
+      const sub = document.getElementById('submit-overlay')
+      if (sub && sub.classList.contains('show')) return
+      e.preventDefault(); e.stopImmediatePropagation()
+      goHome()
+    }, true)
+  }
 
   // Building a level is not a stand activity
   document.querySelectorAll('a[href^="editor.html"]').forEach(a => {
