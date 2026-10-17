@@ -952,6 +952,10 @@ function _g43Merge(w, h) {
   }
   _g43Apply(lv)
   G43.scrollX   -= was
+  // The wall tiles are pinned to the world, and the world origin just moved
+  // back by `was`. Carry that over or the tiling would jump sideways by
+  // was % 24 at every level change instead of running on unbroken.
+  G43.tileBase   = ((G43.tileBase || 0) + Math.round(was)) % 24
   G43.nextLv     = _g43SetSeam(_g43BuildChallenge(h, G43.score + 1, lv.challenge.name), lv, h)
   G43.phase      = 'playing'
   G43.portalCool = 0
@@ -1026,6 +1030,7 @@ function _g43LoadChallenge(w, h) {
   G43.portalCool    = 0
   G43.laps          = 0
   G43.scrollX       = 0
+  G43.tileBase      = 0
   G43.trail         = []
   G43.phase         = 'announce'
   G43.announceT     = 0
@@ -1655,7 +1660,7 @@ function _g43Draw(ctx, w, h) {
       ctx.beginPath(); ctx.moveTo(x0, rim)
       for (let k = i; k <= end; k++) ctx.lineTo(k * G43_DRAW_STEP, pick(wallCache[k]))
       ctx.lineTo(x1, pick(wallCache[end])); ctx.lineTo(x1, rim); ctx.closePath()
-      ctx.fillStyle = _g43WallPat(ctx, col, _lt, scrollI - waveX)
+      ctx.fillStyle = _g43WallPat(ctx, col, _lt, scrollI - waveX + (G43.tileBase || 0))
       ctx.fill()
       i = j + 1
     }
