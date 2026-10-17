@@ -389,7 +389,7 @@ function qgApplyTheme() {
     const link = document.createElement('link')
     link.id = 'qg-theme-css'
     link.rel = 'stylesheet'
-    link.href = QG_ROOT + 'css/theme.css?v=5'
+    link.href = QG_ROOT + 'css/theme.css?v=6'
     document.head.appendChild(link)
   }
   if (!document.getElementById('qg-theme-btn')) {

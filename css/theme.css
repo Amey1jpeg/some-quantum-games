@@ -147,3 +147,14 @@
 /* Chrome around the arena */
 :root[data-theme="light"] .game-title { color: var(--text) }
 :root[data-theme="light"] .canvas-overlay h3 { color: var(--text) }
+
+/* ── Touch bar under the touch-played games ─────────── */
+:root[data-theme="light"] #tp-pad {
+  background: linear-gradient(0deg, rgba(244,246,251,.96) 60%, rgba(244,246,251,0));
+}
+:root[data-theme="light"] .tp-hint { color: var(--muted) }
+:root[data-theme="light"] .tp-btn,
+:root[data-theme="light"] .tp-type-input {
+  background: #ffffff; color: var(--text); border-color: rgba(109,40,217,.35);
+  box-shadow: 0 2px 8px rgba(20,21,43,.10);
+}

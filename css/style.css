@@ -1352,36 +1352,42 @@ body:has(#home.active)::after {
 @keyframes lb-focus { from { background: rgba(6,182,212,.25); } }
 
 /* ══════════════════════════════════════
-   TOUCH PAD — js/touchpad.js
-   On-screen keys for the keyboard-only games, on touch screens only.
+   TOUCH CONTROLS — js/touchpad.js
+   On touch screens the keyboard-only games are played by touching the
+   game itself. This slim bar under them says how, and holds the few
+   game actions that are not a place on the screen (pause, the gates).
+   Type Racer gets a typing field here instead.
 ══════════════════════════════════════ */
 #tp-pad {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
-  display: flex; align-items: flex-end; justify-content: space-between; gap: .6rem;
-  padding: .6rem max(.8rem, env(safe-area-inset-right)) max(.8rem, env(safe-area-inset-bottom)) max(.8rem, env(safe-area-inset-left));
-  background: linear-gradient(0deg, rgba(7,6,26,.92) 55%, transparent);
-  pointer-events: none;
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  padding: .5rem max(.8rem, env(safe-area-inset-right)) max(.6rem, env(safe-area-inset-bottom)) max(.8rem, env(safe-area-inset-left));
+  background: linear-gradient(0deg, rgba(7,6,26,.94) 60%, rgba(7,6,26,0));
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
-#tp-pad > * { pointer-events: auto; }
-/* Room for the pad, so it never sits over the arena. Keyed off markup
-   that is there before the game starts, not off the pad itself, so the
+.tp-hint {
+  flex: 1; min-width: 0;
+  font-size: .76rem; line-height: 1.35; color: #a9b1d6;
+}
+/* Room for the bar, so it never sits over the arena. Keyed off markup
+   that is there before the game starts, not off the bar itself, so the
    arena is already its final size when the game measures its canvas. */
-body.tp-touch .game-screen.active[data-tp="pad"]  { padding-bottom: 100px; }
+body.tp-touch .game-screen.active[data-tp="bar"]  { padding-bottom: 72px; }
 body.tp-touch .game-screen.active[data-tp="type"] { padding-bottom: 84px; }
 /* Wave Collapse has a second row of buttons */
-body.tp-touch #game14.active[data-tp] { padding-bottom: 150px; }
-/* Entanglement has two pads */
-body.tp-touch #game15.active[data-tp] { padding-bottom: 168px; }
-/* The floating corner buttons would land on the arena or the pad */
+body.tp-touch #game14.active[data-tp] { padding-bottom: 116px; }
+/* Fingers on the game must steer, not scroll or zoom the page */
+body.tp-touch #g10-arena, body.tp-touch #g13-arena, body.tp-touch #g15-arena { touch-action: none; }
+body.tp-touch .g14-cell { cursor: pointer; }
+/* The floating corner buttons would land on the arena or the bar */
 body.has-tp #qg-lb-btn, body.has-tp #qg-theme-btn { display: none; }
 
 .tp-btn {
   touch-action: none;
-  min-width: 52px; height: 52px; padding: 0 .6rem;
+  min-width: 46px; height: 46px; padding: 0 .6rem;
   border-radius: 12px; border: 1px solid rgba(167,139,250,.45);
   background: rgba(22,22,42,.85); color: #e2e8f0;
-  font-family: inherit; font-weight: 700; font-size: 1.05rem; line-height: 1;
+  font-family: inherit; font-weight: 700; font-size: 1rem; line-height: 1;
   box-shadow: 0 0 10px rgba(59,130,246,.18), inset 0 0 0 1px rgba(255,255,255,.03);
   transition: transform .05s, background .05s;
 }
@@ -1390,29 +1396,16 @@ body.has-tp #qg-lb-btn, body.has-tp #qg-theme-btn { display: none; }
   background: rgba(236,72,153,.35); border-color: #ec4899;
   box-shadow: 0 0 16px rgba(236,72,153,.5);
 }
-.tp-btn.tp-wide { min-width: 76px; font-size: .85rem; letter-spacing: .06em; }
+.tp-btn.tp-wide { min-width: 76px; font-size: .82rem; letter-spacing: .04em; }
 
-.tp-dpad {
-  display: grid; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 46px); gap: 4px;
-}
-.tp-dpad .tp-btn { min-width: 0; width: 100%; height: 100%; padding: 0; }
-.tp-dpad .tp-up    { grid-area: 1 / 2; }
-.tp-dpad .tp-left  { grid-area: 2 / 1; }
-.tp-dpad .tp-right { grid-area: 2 / 3; }
-.tp-dpad .tp-down  { grid-area: 3 / 2; }
-.tp-dpad .tp-btn { border-color: rgba(59,130,246,.55); }
-.tp-wasd .tp-btn { border-color: rgba(236,72,153,.55); }
-
-.tp-keys { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.tp-keys { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex-shrink: 0; }
 .tp-row { display: flex; gap: 6px; }
-.tp-row.tp-col { flex-direction: column; align-items: stretch; }
+.tp-small .tp-btn { min-width: 40px; height: 38px; font-size: .9rem; }
 @media (max-width: 420px) {
   #tp-pad { gap: .4rem; padding-left: .6rem; padding-right: .6rem; }
-  .tp-dpad { grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
-  .tp-btn { min-width: 44px; height: 48px; }
-  .tp-small .tp-btn { min-width: 40px; height: 38px; }
+  .tp-btn { min-width: 42px; height: 44px; }
+  .tp-small .tp-btn { min-width: 38px; height: 36px; }
 }
-.tp-small .tp-btn { min-width: 42px; height: 40px; font-size: .9rem; }
 
 .tp-type { flex: 1; }
 .tp-type-input {
