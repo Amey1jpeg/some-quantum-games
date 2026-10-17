@@ -211,6 +211,14 @@ body.stall-mode {
   .stall-lights { top: 50px }
   .stall-bunting i { border-left-width: 10px; border-right-width: 10px; border-top-width: 17px }
 }
+/* Phones: the cards are app icons here too (see style.css). This file
+   loads after style.css, so the booth-card frame is switched off again. */
+@media (max-width: 600px) {
+  .stall-mode .game-card { border: 0; padding: 0; clip-path: none }
+  .stall-mode .game-card .card-icon { border-color: rgba(167,139,250,.45) }
+  .stall-mode .auth-header-wrap { top: .4rem }
+  .stall-mode .game-cards { gap: 1.1rem .4rem; margin-top: 0 }
+}
 
 /* ── Interactive decorations ────────────────────────── */
 /* A 9px LED and a 26px pennant are far too small to hit reliably,
