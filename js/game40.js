@@ -322,7 +322,20 @@ function _g40C() {
   return _g40Canvas
 }
 
+// Online: most levels cleared wins. Starts the Levels run, never Endless.
+window.g40FindMatch = function() {
+  qgMpRace.find({
+    game: 'ufolevels',
+    btn: 'g40-queue-btn', status: 'g40-queue-status',
+    hud: 'g40-opp-hud',   stat: 'g40-opp-stat',
+    fmt: n => n + (n === 1 ? ' level' : ' levels'),
+    onMatched: () => startUFOGame(),
+    onVerdict: v => qgMpVerdict('g40-mp-verdict', v),
+  })
+}
+
 async function initGame40() {
+  qgMpVerdict('g40-mp-verdict', null)
   stopGame40()
   _g40Canvas = null
   document.getElementById('g40-overlay').style.display = 'flex'
@@ -571,7 +584,17 @@ function _g40Spawn(x, h) {
   G40.pipes.push({ x, cy, passed: false, tunnel: _g40RollTunnel() })
 }
 
+// Only the Levels run is raced. Endless scores pillars passed and Levels
+// scores levels cleared, which are different numbers on different boards, so
+// a mixed match would compare nothing. Practice, test play, the bot and the
+// shared-keyboard 2P run are all unscored and stay out of it.
+function _g40Raced() {
+  return qgMpRace.on && G40.gauntlet && !G40.multi &&
+         !G40.practice && !G40.testLevel && !G40.botMode
+}
+
 function _g40Loop(ts) {
+  if (_g40Raced()) qgMpRace.send(G40.score)
   if (!G40.active) return
   // Hold the level still behind a clear card rather than running the next one
   if (G40.paused) {
@@ -830,6 +853,7 @@ function _g40Loop(ts) {
       else if (G40.gauntlet) label = `${s} level${s !== 1 ? 's' : ''}`
       else label = `${s} pipe${s !== 1 ? 's' : ''}`
       document.getElementById('g40-final-score').textContent = label
+      qgMpVerdict('g40-mp-verdict', _g40Raced() ? qgMpRace.finish(s) : null)
       // Levels scores cleared levels and Endless scores pillars passed, so
       // they post to separate boards rather than one mixed table. Levels
       // used to have no button at all, which left most runs unpostable.

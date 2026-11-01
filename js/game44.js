@@ -337,7 +337,22 @@ if (typeof document !== 'undefined') {
   })
 }
 
+// Online: most challenges cleared wins. Each player gets their own levels
+// from the pool, so there is nothing to keep in step — only the count.
+// A normal run, never practice: practice is not scored at all.
+window.spdFindMatch = function() {
+  qgMpRace.find({
+    game: 'spider',
+    btn: 'spd-queue-btn', status: 'spd-queue-status',
+    hud: 'spd-opp-hud',   stat: 'spd-opp-stat',
+    fmt: n => n + (n === 1 ? ' clear' : ' clears'),
+    onMatched: () => _spdStart(false),
+    onVerdict: v => qgMpVerdict('spd-mp-verdict', v),
+  })
+}
+
 async function initSpider() {
+  qgMpVerdict('spd-mp-verdict', null)
   try { _spdBuildPracticeUI() } catch (e) { console.error('practice picker:', e) }
   stopSpider(); _spdCvs = null
   document.getElementById('spd-overlay').style.display = 'flex'
@@ -650,6 +665,7 @@ function _spdLoop(ts) {
         _SPD.score++
         window._spdScore = _SPD.score
         document.getElementById('spd-score-hud').textContent = _SPD.score
+        qgMpRace.send(_SPD.score)
       }
       SFX.win()
       // Run the levels together, the way Wave Gauntlet does: cross the flag
@@ -670,6 +686,7 @@ function _spdLoop(ts) {
       window._spdScore = _SPD.score
       document.getElementById('spd-final-score').textContent =
         `${_SPD.score} clear${_SPD.score !== 1 ? 's' : ''}`
+      qgMpVerdict('spd-mp-verdict', qgMpRace.finish(_SPD.score))
       document.getElementById('spd-over').style.display = 'flex'
     }
   }

@@ -28,7 +28,21 @@ document.addEventListener('keydown', e => {
   reactClick()
 })
 
+// Online: the faster average over five rounds wins, so this is the one
+// race where the LOWER score is the better one.
+window.g3FindMatch = function() {
+  qgMpRace.find({
+    game: 'reaction',
+    btn: 'g3-queue-btn', status: 'g3-queue-status',
+    hud: 'g3-opp-hud',   stat: 'g3-opp-stat',
+    fmt: ms => ms + ' ms',
+    lower: true,
+    onVerdict: v => qgMpVerdict('g3-mp-verdict', v),
+  })
+}
+
 async function initGame3() {
+  qgMpVerdict('g3-mp-verdict', null)
   stopReact()
   G3.round = 0; G3.results = []; G3.state = 'idle'
   document.getElementById('g3-over').classList.remove('show')
@@ -90,6 +104,12 @@ window.reactClick = function() {
     document.getElementById('g3-sub').textContent = ms < 200 ? 'Incredible!' : ms < 280 ? 'Great!' : ms < 350 ? 'Good' : 'Keep practicing'
     document.getElementById('g3-time').style.display = 'none'
     renderReactRounds()
+    // Running average so far, so the opponent's bar means the same thing
+    // as the final score does. Nothing to send until one round has landed.
+    {
+      const ok = G3.results.filter(r => r !== null)
+      if (ok.length) qgMpRace.send(Math.round(ok.reduce((a, b) => a + b, 0) / ok.length))
+    }
     if (G3.round >= G3.totalRounds) {
       G3.waitTimeout = setTimeout(() => endGame3(), 1200)
     } else {
@@ -134,6 +154,7 @@ function endGame3() {
     `${valid.length}/${G3.totalRounds} valid · ${earlyCount} early clicks · Best: ${valid.length ? Math.min(...valid) : '—'} ms`
 
   window._g3Score = avg
+  qgMpVerdict('g3-mp-verdict', qgMpRace.finish(avg))
   renderMedalDisplay('g3-medal-display', 'reaction', avg)
   document.getElementById('g3-over').classList.add('show')
 }

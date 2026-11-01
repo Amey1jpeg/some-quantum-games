@@ -93,6 +93,138 @@ window.mpFindMatch = function(game, { onQueued, onMatched, onLeft, statusEl, btn
 }
 
 // ═══════════════════════════════════════════════════════
+//  SCORE RACES
+//  Both players run their own game and the better score wins.
+//
+//  CPS, Typing, Wave Dash and Parkour each grew their own copy of this: the
+//  queue button, the opponent's live score in a bar across the top, the
+//  verdict on the game-over card, the win recorded against the account. That
+//  is around sixty lines a game, and eight more games would have meant eight
+//  more copies of it to keep in step. It lives here once instead.
+//
+//  One race at a time, because you can only be in one game at a time —
+//  goHome and every solo start clear it.
+// ═══════════════════════════════════════════════════════
+
+let _mpRace = null
+
+function _mpRaceHud() {
+  if (!_mpRace) return
+  const hud  = document.getElementById(_mpRace.cfg.hud)
+  const stat = document.getElementById(_mpRace.cfg.stat)
+  if (!hud || !stat) return
+  if (_mpRace.opp === null) { hud.style.display = 'none'; return }
+  hud.style.display = 'flex'
+  stat.textContent = _mpRace.cfg.fmt(_mpRace.opp) + (_mpRace.oppDone ? ' · done' : '')
+}
+
+// What the over card should say. Null until both sides have finished.
+function _mpRaceVerdict() {
+  const r = _mpRace
+  if (!r || r.mine === null) return null
+  if (r.opp === null) return { text: 'Opponent left — no result.', won: null, opp: null }
+  if (!r.oppDone)     return { text: 'Waiting for opponent…', won: null, opp: r.opp, pending: true }
+  const lower = !!r.cfg.lower
+  const tie   = r.mine === r.opp
+  const won   = lower ? r.mine < r.opp : r.mine > r.opp
+  if (!r.counted && !tie && typeof recordMpResult === 'function') {
+    r.counted = true
+    recordMpResult(r.cfg.game, won)
+  }
+  return {
+    text: tie ? `Tie — ${r.cfg.fmt(r.opp)} each.`
+        : won ? `⚔️ You win! Opponent managed ${r.cfg.fmt(r.opp)}.`
+              : `Opponent wins with ${r.cfg.fmt(r.opp)}.`,
+    won: tie ? null : won, opp: r.opp,
+  }
+}
+
+// Puts a race result on a game's over card. Called again by onVerdict when
+// you finish first and the opponent is still going.
+window.qgMpVerdict = function(elId, v) {
+  const el = document.getElementById(elId)
+  if (!el) return
+  if (!v) { el.style.display = 'none'; return }
+  el.style.display = ''
+  el.textContent = v.text
+  el.style.color = v.won === null ? 'var(--muted)'
+                 : v.won ? 'var(--success)' : 'var(--danger)'
+}
+
+window.qgMpRace = {
+  // cfg: { game, btn, status, hud, stat, fmt, lower, onMatched, onLeft, onVerdict }
+  // `game` must also be in the GAMES allowlist in SERVER/server.js, or the
+  // queue is refused there and nothing happens at all.
+  find(cfg) {
+    mpFindMatch(cfg.game, {
+      statusEl: document.getElementById(cfg.status),
+      btnEl:    document.getElementById(cfg.btn),
+      onMatched: ({ code, sideBySide, isHost, ping }) => {
+        const sock = mpGetSocket()
+        _mpRace = { cfg, code, sideBySide, isHost, ping,
+                    opp: 0, oppDone: false, mine: null, counted: false, lastSent: 0 }
+        sock.off('opponent-score'); sock.off('opponent-done'); sock.off('opponent-left')
+        sock.on('opponent-score', sc => {
+          if (!_mpRace) return
+          _mpRace.opp = sc; _mpRaceHud()
+        })
+        sock.on('opponent-done', sc => {
+          if (!_mpRace) return
+          _mpRace.opp = sc; _mpRace.oppDone = true; _mpRaceHud()
+          // If we already finished, the result only becomes known now
+          const v = _mpRaceVerdict()
+          if (v && !v.pending) _mpRace.cfg.onVerdict?.(v)
+        })
+        sock.on('opponent-left', () => {
+          if (!_mpRace) return
+          _mpRace.opp = null; _mpRaceHud()
+          const v = _mpRaceVerdict()
+          if (v) _mpRace.cfg.onVerdict?.(v)
+          _mpRace.cfg.onLeft?.()
+        })
+        _mpRaceHud()
+        cfg.onMatched?.({ code, sideBySide, isHost, ping })
+      },
+      onLeft: () => { if (_mpRace) { _mpRace.opp = null; _mpRaceHud() } },
+    })
+  },
+
+  get code()       { return _mpRace ? _mpRace.code : null },
+  get opp()        { return _mpRace ? _mpRace.opp : null },
+  get oppDone()    { return !!(_mpRace && _mpRace.oppDone) },
+  get sideBySide() { return !!(_mpRace && _mpRace.sideBySide) },
+  get on()         { return !!_mpRace },
+
+  // Safe to call every frame: only four updates a second go out, which is as
+  // fast as the opponent's bar can usefully change and keeps the relay light.
+  send(score) {
+    if (!_mpRace) return
+    const now = Date.now()
+    if (now - _mpRace.lastSent < 250) return
+    _mpRace.lastSent = now
+    mpGetSocket().emit('score-update', { code: _mpRace.code, score })
+  },
+
+  // Once, when the run ends. Returns the verdict, or a pending line if the
+  // opponent is still going — onVerdict fires later with the real result.
+  finish(score) {
+    if (!_mpRace) return null
+    _mpRace.mine = score
+    mpGetSocket().emit('game-over', { code: _mpRace.code, score })
+    return _mpRaceVerdict()
+  },
+
+  // Starting a solo run, or leaving the game
+  clear() {
+    if (_mpRace) {
+      const hud = document.getElementById(_mpRace.cfg.hud)
+      if (hud) hud.style.display = 'none'
+    }
+    _mpRace = null
+  },
+}
+
+// ═══════════════════════════════════════════════════════
 //  QUANTUM ENTROPY — measured on real hardware
 //
 //  data/quantum.bin is 10 qubits x 204,683 measurements taken on a
@@ -764,6 +896,8 @@ window.goHome = function() {
   if (typeof stopGame46    === 'function') stopGame46()
   if (typeof stopGame47    === 'function') stopGame47()
   if (typeof stopGame48    === 'function') stopGame48()
+  // Leaving a game ends any score race it was in
+  if (typeof qgMpRace !== 'undefined') qgMpRace.clear()
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
   document.getElementById('home').classList.add('active')
   qgReleaseCanvases('home')

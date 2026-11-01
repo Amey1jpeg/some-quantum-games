@@ -26,7 +26,21 @@ function stopDodge() {
 }
 window.stopDodge = stopDodge
 
+// Online: whoever survives longer wins. Scored in tenths of a second, the
+// same unit the leaderboard stores, so the bar and the board agree.
+window.g4FindMatch = function() {
+  qgMpRace.find({
+    game: 'dodge',
+    btn: 'g4-queue-btn', status: 'g4-queue-status',
+    hud: 'g4-opp-hud',   stat: 'g4-opp-stat',
+    fmt: ds => (ds / 10).toFixed(1) + 's',
+    onMatched: () => startDodge(),
+    onVerdict: v => qgMpVerdict('g4-mp-verdict', v),
+  })
+}
+
 async function initGame4() {
+  qgMpVerdict('g4-mp-verdict', null)
   stopDodge()
   G4.active = false; G4.elapsed = 0; G4.obstacles = []; G4.keys = {}
   document.getElementById('g4-over').classList.remove('show')
@@ -167,6 +181,7 @@ function dodgeTick() {
   if (!G4.active) return
   G4.elapsed = (Date.now() - G4.startTime) / 1000
   document.getElementById('g4-score').textContent = G4.elapsed.toFixed(1) + 's'
+  qgMpRace.send(Math.round(G4.elapsed * 10))
   document.getElementById('dodge-timer-display').textContent = G4.elapsed.toFixed(1) + 's'
   const milestone = Math.floor(G4.elapsed / 10)
   if (milestone > G4.lastMilestone) { G4.lastMilestone = milestone; SFX.coin() }
@@ -203,6 +218,7 @@ function endGame4() {
   const survived = parseFloat(G4.elapsed.toFixed(1))
   const survivedDs = Math.round(survived * 10)
   window._g4Score = survivedDs
+  qgMpVerdict('g4-mp-verdict', qgMpRace.finish(survivedDs))
 
   document.getElementById('g4-final-score').textContent = survived.toFixed(1) + 's'
   document.getElementById('g4-over-stats').textContent = `Survived ${survived.toFixed(1)} seconds`

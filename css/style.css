@@ -685,7 +685,7 @@ body:has(#home.active)::after {
    GAME 3 — REACTION TEST
 ══════════════════════════════════════ */
 #game3 .arena {
-  flex: 1; display: flex; flex-direction: column;
+  flex: 1; position: relative; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 1.5rem;
   border-radius: 1.25rem; overflow: hidden; min-height: 400px;
   cursor: pointer; user-select: none;
@@ -1577,3 +1577,31 @@ body.has-tp #qg-lb-btn, body.has-tp #qg-theme-btn { display: none; }
   background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
   padding: .05rem .3rem; font-size: .72rem;
 }
+
+/* ══════════════════════════════════════
+   SCORE RACES — opponent bar
+   One bar across the top of whichever arena the match is in, so the six
+   games that share qgMpRace do not each carry the same inline style.
+══════════════════════════════════════ */
+.mp-opp-hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 12;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .35rem .8rem;
+  background: rgba(10, 10, 26, .82);
+  border-bottom: 1px solid rgba(148, 163, 184, .3);
+  font: 700 .82rem/1.3 ui-monospace, monospace;
+  color: var(--muted);
+  pointer-events: none;
+}
+:root[data-theme="light"] .mp-opp-hud {
+  background: rgba(255, 255, 255, .9);
+  border-bottom-color: rgba(0, 0, 0, .12);
+}
+.mp-find {
+  margin-top: 1rem; display: flex; flex-direction: column;
+  align-items: center; gap: .5rem; width: 100%; max-width: 260px;
+}
+.mp-find .mp-status {
+  color: var(--muted); font-size: .82rem; min-height: 1.2em; text-align: center;
+}
+.mp-verdict { font-size: .92rem; font-weight: 700; margin: .5rem 0; }

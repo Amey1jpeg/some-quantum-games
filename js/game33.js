@@ -23,7 +23,21 @@ function stopGame33() {
 }
 window.stopGame33 = stopGame33
 
+// Online: whoever remembers the longer sequence wins. The colours are
+// quantum-chosen per player, so only the round reached is compared.
+window.g33FindMatch = function() {
+  qgMpRace.find({
+    game: 'memseq',
+    btn: 'g33-queue-btn', status: 'g33-queue-status',
+    hud: 'g33-opp-hud',   stat: 'g33-opp-stat',
+    fmt: n => n + (n === 1 ? ' round' : ' rounds'),
+    onMatched: () => startMemSeq(),
+    onVerdict: v => qgMpVerdict('g33-mp-verdict', v),
+  })
+}
+
 function initGame33() {
+  qgMpVerdict('g33-mp-verdict', null)
   stopGame33()
   G33.sequence = []; G33.input = []; G33.round = 0
   document.getElementById('g33-over').classList.remove('show')
@@ -65,6 +79,7 @@ async function g33NextRound() {
   G33.showing = true
   g33SetDisabled(true)
   document.getElementById('g33-round-info').textContent = `Round ${G33.round} — ${G33.sequence.length} step${G33.sequence.length > 1 ? 's' : ''}`
+  qgMpRace.send(G33.round - 1)
   document.getElementById('g33-msg').textContent = 'Watch carefully…'
   g33DimAll()
 
@@ -122,6 +137,7 @@ function endGame33() {
   stopGame33()
   const score = G33.round - 1
   window._g33Score = score
+  qgMpVerdict('g33-mp-verdict', qgMpRace.finish(score))
   document.getElementById('g33-final-score').textContent = `${score} round${score !== 1 ? 's' : ''}`
   document.getElementById('g33-final-seq').textContent = `Reached sequence length ${G33.sequence.length}`
   renderMedalDisplay('g33-medal-display', 'memseq', score)

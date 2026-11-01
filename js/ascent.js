@@ -639,7 +639,11 @@ function gaUpdate(dt) {
     if (GA.x >= GA.endX) {
       if (GA.mode === 'gauntlet' && GA.next) gaMerge()
       else {
-        if (GA.mode === 'gauntlet') { GA.clears++; document.getElementById('ga-score').textContent = GA.clears }
+        if (GA.mode === 'gauntlet') {
+          GA.clears++
+          document.getElementById('ga-score').textContent = GA.clears
+          qgMpRace.send(GA.clears)
+        }
         return gaWin()
       }
     }
@@ -825,6 +829,7 @@ function gaShowOver() {
     final.textContent = GA.clears
     sub.innerHTML = `level${GA.clears === 1 ? '' : 's'} cleared · fell on ${_gaEsc(GA.level.name)} ${gaDiffBadge(GA.level.diff)}<br>` +
       (GA.clears >= best && GA.clears > 0 ? 'New best!' : 'Best: ' + best)
+    qgMpVerdict('ga-mp-verdict', qgMpRace.finish(GA.clears))
   } else if (GA.level) {
     const pct = won ? 100 : Math.max(0, Math.min(99, Math.floor(GA.x / GA.endX * 100)))
     title.textContent = won ? 'Level complete!' : 'Decohered!'
@@ -1158,7 +1163,22 @@ function gaShip(ctx, x, y, fill, ring, grav, tilt) {
 // stop when they leave, like every other game.
 let _gaReady = false
 
+// Online: most levels cleared in one Gauntlet run wins. Both players draw
+// from the same pool but get their own sequence, so only the count is
+// compared — the same bargain Wave Gauntlet's own race makes.
+window.gaFindMatch = function() {
+  qgMpRace.find({
+    game: 'ascent',
+    btn: 'ga-queue-btn', status: 'ga-queue-status',
+    hud: 'ga-opp-hud',   stat: 'ga-opp-stat',
+    fmt: n => n + (n === 1 ? ' level' : ' levels'),
+    onMatched: () => gaPlayGauntlet(),
+    onVerdict: v => qgMpVerdict('ga-mp-verdict', v),
+  })
+}
+
 window.initGame48 = function() {
+  qgMpVerdict('ga-mp-verdict', null)
   if (!_gaReady) { gaInit(); _gaReady = true }
   else { gaSize(); gaDrawBlank(); gaShowMenu() }
 }

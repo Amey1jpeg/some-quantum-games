@@ -30,6 +30,13 @@ const queues = new Map()  // game → [socket, ...]
 const GAMES = new Set([
   'typing', 'parkour', 'cps', 'wavedash', 'wavegauntlet', 'freighter', 'traprace',
   'chsh',
+  // Score races added 1 Nov 2026. Each name is the same key the game posts to
+  // the leaderboard under, so the queue, the board and the MP wins table all
+  // agree. A name missing here is not an error anywhere — the queue is simply
+  // refused and the button does nothing — so it is the first thing to check
+  // if a new game never finds a match.
+  'gravflip', 'spider', 'dodge', 'memseq', 'aim', 'reaction',
+  'ufolevels', 'ascent',
 ])
 
 // ── Quantum room codes ────────────────────────────────

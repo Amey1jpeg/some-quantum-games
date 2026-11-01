@@ -21,7 +21,21 @@ function g2Config() {
   }
 }
 
+// Online: higher score wins. Targets are quantum-placed per player, so
+// there is nothing to synchronise, only the score.
+window.g2FindMatch = function() {
+  qgMpRace.find({
+    game: 'aim',
+    btn: 'g2-queue-btn', status: 'g2-queue-status',
+    hud: 'g2-opp-hud',   stat: 'g2-opp-stat',
+    fmt: n => String(n),
+    onMatched: () => startAimGame(),
+    onVerdict: v => qgMpVerdict('g2-mp-verdict', v),
+  })
+}
+
 async function initGame2() {
+  qgMpVerdict('g2-mp-verdict', null)
   G2.score = 0; G2.level = 1; G2.combo = 0; G2.misses = 0
   G2.totalClicks = 0; G2.totalHits = 0
   G2.active = false; G2.started = false
@@ -146,6 +160,7 @@ function hitTarget(el, x, y, hue) {
   G2.totalHits++; G2.combo++
   const pts = Math.floor(10 * (1 + (G2.combo - 1) * .5) * G2.level)
   G2.score += pts
+  qgMpRace.send(G2.score)
 
   const arena = document.getElementById('g2-arena')
   const popup = document.createElement('div')
@@ -213,6 +228,7 @@ function endGame2() {
   stopSpawn()
   document.querySelectorAll('.target-circle').forEach(e => e.remove())
   document.getElementById('g2-final-score').textContent = G2.score
+  qgMpVerdict('g2-mp-verdict', qgMpRace.finish(G2.score))
   document.getElementById('g2-over-stats').textContent =
     `Level ${G2.level} · ${G2.totalHits} hits · ${G2.totalClicks} total clicks`
   renderMedalDisplay('g2-medal-display', 'aim', G2.score)

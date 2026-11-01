@@ -47,8 +47,23 @@ function _g32Key(e) {
   }
 }
 
+// Online: whoever clears more pillars wins. Both run their own course —
+// the gaps are quantum-placed per player, so there is nothing to keep in
+// step, only the score to compare.
+window.g32FindMatch = function() {
+  qgMpRace.find({
+    game: 'gravflip',
+    btn: 'g32-queue-btn', status: 'g32-queue-status',
+    hud: 'g32-opp-hud',   stat: 'g32-opp-stat',
+    fmt: n => n + (n === 1 ? ' pillar' : ' pillars'),
+    onMatched: () => startGravFlip(),
+    onVerdict: v => qgMpVerdict('g32-mp-verdict', v),
+  })
+}
+
 function initGame32() {
   stopGame32()
+  qgMpVerdict('g32-mp-verdict', null)
   document.getElementById('g32-over').classList.remove('show')
   document.getElementById('g32-overlay').style.display = 'flex'
   document.getElementById('g32-score-hud').textContent = '0'
@@ -133,6 +148,7 @@ function g32Loop(ts) {
       G32.score++
       SFX.coin()
       document.getElementById('g32-score-hud').textContent = G32.score
+      qgMpRace.send(G32.score)
     }
     const inX = G32.cx + G32_PR > p.x && G32.cx - G32_PR < p.x + G32_PW
     if (!inX) continue
@@ -214,6 +230,7 @@ function endGame32() {
   SFX.die()
   stopGame32()
   window._g32Score = G32.score
+  qgMpVerdict('g32-mp-verdict', qgMpRace.finish(G32.score))
   document.getElementById('g32-final-score').textContent = G32.score + ' pillars'
   renderMedalDisplay('g32-medal-display', 'gravflip', G32.score)
   document.getElementById('g32-over').classList.add('show')
