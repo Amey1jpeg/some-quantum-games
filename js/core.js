@@ -474,6 +474,10 @@ function qgApplyStall() {
   // Online-match controls: every game's queue/match button and its status line
   document.querySelectorAll('[id$="-match-btn"], [id$="-queue-btn"], [id$="-match-status"], [id$="-queue-status"]')
     .forEach(el => el.remove())
+  // The score-race block wraps the button and its status line, so once those
+  // two are gone it is left behind as an empty flex row with a top margin,
+  // putting a gap in the overlay it sat in.
+  document.querySelectorAll('.mp-find').forEach(el => { if (!el.children.length) el.remove() })
   const banner = document.getElementById('beta-banner')
   if (banner) banner.style.display = 'none'
 }
