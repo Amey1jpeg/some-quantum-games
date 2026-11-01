@@ -709,6 +709,12 @@ window.showGame = function(n) {
   if (n === 34) initGame34()
   if (n === 35) initGame35()
   if (n === 36) initGame36()
+  // 37 and 38 are beta-only, which is how they went unnoticed: both have
+  // a card and a screen, but showGame never ran their init, so the start
+  // overlay was whatever the last run left behind. Playing once and
+  // coming back gave a dead canvas with no Play button.
+  if (n === 37) initGame37()
+  if (n === 38) initGame38()
   if (n === 39) initLimboGame()
   if (n === 40) initGame40()
   if (n === 41) initGame41()
@@ -747,6 +753,15 @@ window.goHome = function() {
   if (typeof stopGame41    === 'function') stopGame41()
   if (typeof stopGame42    === 'function') stopGame42()
   if (typeof stopGame43    === 'function') stopGame43()
+  // These five were missing, so leaving them from here left the loop
+  // running: every frame still simulating behind the menu, and behind
+  // whatever game you opened next. Each init calls its own stop, so it
+  // only ever cleared itself when you happened to re-enter that game.
+  if (typeof stopGame37    === 'function') stopGame37()
+  if (typeof stopGame38    === 'function') stopGame38()
+  if (typeof stopGame44    === 'function') stopGame44()
+  if (typeof stopGame45    === 'function') stopGame45()
+  if (typeof stopGame46    === 'function') stopGame46()
   if (typeof stopGame47    === 'function') stopGame47()
   if (typeof stopGame48    === 'function') stopGame48()
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
@@ -871,26 +886,74 @@ function _coauthorFor(name) {
   return null
 }
 
+// ARHAM's bar and the co-authors' bars, for every game that has medals.
+//
+// This used to walk a hardcoded list of fifteen games, one request per game
+// per name. Two things were wrong with that. Any game added after the list
+// was written could never award the author or co-author medal, and fourteen
+// had piled up that way — Wave Gauntlet, Spin Flip, the Entangled Gauntlet,
+// Freighter, Trap Race, Tunnel, Rhythm and the rest. And every one of those
+// requests asked for `order=score.desc&limit=1`, which is the *worst* run
+// for a game where lower is better, so Reaction's author medal was handed
+// out for beating ARHAM's slowest recorded time instead of his best.
+//
+// Now it asks once per name for that name's rows across every game and
+// reduces here, respecting LOWER_IS_BETTER. A new game is covered the moment
+// it has a board, with no list to drift, and startup costs five requests
+// instead of seventy-five.
 async function fetchAuthorScores() {
-  for (const game of ['equation','aim','reaction','dodge','flash','deltae','gravity','typing','mrts','runsnake','gravflip','memseq','manualsort','wavedash','cps']) {
+  // Best of a name's rows in one game. Ignores 0 and below, as before:
+  // a placeholder row should not become the bar.
+  const bestOf = (game, rows) => {
+    const lower = LOWER_IS_BETTER.has(game)
+    let best = null
+    for (const r of rows) {
+      const s = r.score
+      if (!(s > 0)) continue
+      if (best === null || (lower ? s < best : s > best)) best = s
+    }
+    return best
+  }
+  // Every row this name holds, grouped by game. The limit is far above what
+  // one player accumulates here; it is only there so a runaway query cannot
+  // drag the whole page load down with it.
+  const rowsByGame = async name => {
+    const out = new Map()
     try {
-      const rows = await sbFetch(`/rest/v1/leaderboard?game=eq.${game}&name=eq.ARHAM&order=score.desc&limit=1`)
-      if (rows && rows.length > 0 && rows[0].score > 0) authorScores[game] = rows[0].score
-    } catch {}
-    // Best co-author score across every co-author and every name variant
-    try {
-      let best = null, holder = null
-      for (const name of COAUTHOR_NAMES) {
-        const rows = await sbFetch(`/rest/v1/leaderboard?game=eq.${game}&name=eq.${encodeURIComponent(name)}&order=score.desc&limit=1`)
-        if (rows && rows.length > 0) {
-          const s = rows[0].score
-          if (s > 0 && (best === null || (LOWER_IS_BETTER.has(game) ? s < best : s > best))) {
-            best = s; holder = _coauthorFor(name)
-          }
-        }
+      const rows = await sbFetch(
+        `/rest/v1/leaderboard?select=game,score&name=eq.${encodeURIComponent(name)}&limit=5000`)
+      for (const r of (Array.isArray(rows) ? rows : [])) {
+        if (!out.has(r.game)) out.set(r.game, [])
+        out.get(r.game).push(r)
       }
-      if (best !== null) { coauthorScores[game] = best; coauthorHolder[game] = holder }
     } catch {}
+    return out
+  }
+
+  // All of them at once: these are independent reads, and awaiting them in
+  // turn made page load as deep as the number of names.
+  const [mine, ...theirs] = await Promise.all(
+    ['ARHAM', ...COAUTHOR_NAMES].map(rowsByGame))
+
+  for (const [game, rows] of mine) {
+    const best = bestOf(game, rows)
+    if (best !== null) authorScores[game] = best
+  }
+
+  // Best co-author score across every co-author and every name variant.
+  // Reduced in COAUTHOR_NAMES order, so an exact tie always names the same
+  // holder however the requests happened to come back.
+  for (let i = 0; i < COAUTHOR_NAMES.length; i++) {
+    const who = _coauthorFor(COAUTHOR_NAMES[i])
+    for (const [game, rows] of theirs[i]) {
+      const best = bestOf(game, rows)
+      if (best === null) continue
+      const cur = coauthorScores[game]
+      if (cur == null || (LOWER_IS_BETTER.has(game) ? best < cur : best > cur)) {
+        coauthorScores[game] = best
+        coauthorHolder[game] = who
+      }
+    }
   }
 }
 
@@ -904,8 +967,8 @@ function getMedals(game, score) {
   const author   = authorScores[game]
   const coauthor = coauthorScores[game]
   const lower = LOWER_IS_BETTER.has(game)
-  if (author   !== null && (lower ? score < author   : score > author))   medals.push('author')
-  if (coauthor !== null && (lower ? score < coauthor : score > coauthor)) medals.push('coauthor')
+  if (author   != null && (lower ? score < author   : score > author))   medals.push('author')
+  if (coauthor != null && (lower ? score < coauthor : score > coauthor)) medals.push('coauthor')
   if (lower) {
     if (score <= t.gold)   medals.push('gold')
     else if (score <= t.silver) medals.push('silver')

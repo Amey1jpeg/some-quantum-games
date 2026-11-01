@@ -7,7 +7,15 @@ const crypto = require('crypto')
 
 const app = express()
 const httpServer = createServer(app)
-const io = new Server(httpServer, { cors: { origin: '*' } })
+const io = new Server(httpServer, {
+  cors: { origin: '*' },
+  // The biggest thing that crosses this server is a Freighter world frame —
+  // normalised coords at four decimals, a couple of hundred entities, a few
+  // kB — or a Gauntlet challenge handed from host to joiner. The default cap
+  // is a megabyte per message, which is three orders of magnitude more than
+  // anything real and is simply a buffer a bad client can make the Pi hold.
+  maxHttpBufferSize: 1 << 17,   // 128 kB
+})
 
 // Maps, not objects. A plain object inherits keys from Object.prototype, so
 // a client sending game:"__proto__" hit an existing truthy key, skipped the
@@ -39,8 +47,15 @@ const QUANTUM_PATHS = [
 
 let qBits = null, qBitPos = 0
 for (const p of QUANTUM_PATHS) {
-  try { qBits = fs.readFileSync(p); break } catch {}
+  // Length matters, not just readability: on a zero-byte file every index
+  // below goes through `% 0`, which is NaN, qBits[NaN] is undefined, and
+  // every bit then reads 0 — so every room code would come out 'AAAAAA'.
+  try { const b = fs.readFileSync(p); if (b.length) { qBits = b; break } } catch {}
 }
+// Start somewhere random in the pool. This used to begin at 0 on every boot,
+// so a restart replayed the same sequence from the top and the first match
+// after one always got the same code as the first match after the last one.
+if (qBits) qBitPos = crypto.randomInt(qBits.length * 8)
 console.log(qBits
   ? `Quantum entropy loaded: ${(qBits.length * 8).toLocaleString()} bits`
   : 'No quantum data found — room codes will use crypto.randomBytes')
@@ -98,8 +113,11 @@ function tryMatch(game) {
   const q = queues.get(game)
   if (!q || q.length < 2) return
   const [p1, p2] = q.splice(0, 2)
+  // dequeue() is careful not to leave empty arrays behind; this is the other
+  // way a queue empties, so it has to be too.
+  if (!q.length) queues.delete(game)
   const code = freshCode()
-  rooms.set(code, { players: [p1.id, p2.id], game, scores: {}, dead: {} })
+  rooms.set(code, { players: [p1.id, p2.id], game, scores: {}, dead: {}, touched: Date.now() })
   p1.join(code)
   p2.join(code)
   io.to(code).emit('matched', { code })
@@ -119,6 +137,9 @@ io.on('connection', socket => {
   // Without the check, anyone could push scores and state into someone
   // else's match by guessing its code.
   const inRoom = code => typeof code === 'string' && socket.rooms.has(code)
+
+  // Marks a room as still in use, for the sweep at the bottom of the file.
+  const touch = code => { const r = rooms.get(code); if (r) r.touched = Date.now() }
 
   // ── Queue ─────────────────────────────────────────
   on('join-queue', (p) => {
@@ -141,17 +162,23 @@ io.on('connection', socket => {
   // ── Game events ───────────────────────────────────
   on('score-update', (p) => {
     const { code, score } = p || {}
-    if (inRoom(code)) socket.to(code).emit('opponent-score', score)
+    if (!inRoom(code)) return
+    touch(code)
+    socket.to(code).emit('opponent-score', score)
   })
   on('state-sync', (p) => {
     const { code, state } = p || {}
-    if (inRoom(code)) socket.to(code).emit('opponent-state', state)
+    if (!inRoom(code)) return
+    touch(code)
+    socket.to(code).emit('opponent-state', state)
   })
 
   // Natural end (CPS timer, Typing rounds)
   on('game-over', (p) => {
     const { code, score } = p || {}
-    if (inRoom(code)) socket.to(code).emit('opponent-done', score)
+    if (!inRoom(code)) return
+    touch(code)
+    socket.to(code).emit('opponent-done', score)
   })
 
   // Player died mid-game
@@ -160,6 +187,7 @@ io.on('connection', socket => {
     if (!inRoom(code)) return
     const room = rooms.get(code)
     if (!room) return
+    room.touched = Date.now()
     if (room.game === 'parkour') {
       // Parkour: opponent keeps playing — tell them you died, they keep going
       room.dead[socket.id] = score
@@ -179,6 +207,47 @@ io.on('connection', socket => {
         rooms.delete(code)
       }
     })
+  })
+})
+
+// ── Housekeeping ──────────────────────────────────────
+// `rooms` only ever lost an entry when a player's socket dropped. The site is
+// one page, so the socket outlives the match: finish a game, go back to the
+// menu, start another, and the finished room stayed in the Map for as long as
+// the tab was open, with its scores and dead maps. On a box that is up for
+// weeks that only goes one way. inRoom() also kept returning true for those
+// codes, so a client could still relay into a match that had ended.
+//
+// Two conditions clear a room, and both are safe: nobody is left in it, or
+// nothing has been relayed through it for an hour, which no live match does.
+// Overridable so the sweep can be exercised without waiting an hour for it.
+const ROOM_TTL_MS = Number(process.env.ROOM_TTL_MS) || 60 * 60 * 1000
+const SWEEP_MS    = Number(process.env.SWEEP_MS)    || 5 * 60 * 1000
+
+function sweepRooms() {
+  const now = Date.now()
+  for (const [code, room] of rooms) {
+    const members = io.sockets.adapter.rooms.get(code)
+    const empty = !members || members.size === 0
+    if (!empty && now - (room.touched || 0) <= ROOM_TTL_MS) continue
+    rooms.delete(code)
+    // Let the sockets out as well, so socket.rooms stops growing for the
+    // life of the tab and the code can be handed out again.
+    if (!empty) io.in(code).socketsLeave(code)
+  }
+}
+setInterval(sweepRooms, SWEEP_MS).unref()
+
+// Somewhere to look without SSHing in: whether it is up, how much it is
+// holding, and whether it found the quantum pool.
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    uptime: Math.round(process.uptime()),
+    rooms: rooms.size,
+    queued: Object.fromEntries([...queues].map(([g, l]) => [g, l.length])),
+    rssMB: Math.round(process.memoryUsage().rss / 1048576),
+    entropy: qBits ? 'quantum' : 'crypto',
   })
 })
 
