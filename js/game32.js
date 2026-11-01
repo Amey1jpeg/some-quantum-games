@@ -11,6 +11,7 @@ const G32 = {
   pillars: [],
   speed: 180,
   pillarTimer: 0,
+  trail: [], scrollX: 0,
   raf: null, lastTime: 0,
 }
 window._g32Score = 0
@@ -19,6 +20,11 @@ const G32_GRAV    = 900
 const G32_PR      = 13     // player radius
 const G32_PW      = 52     // pillar width
 const G32_GAP     = 155    // gap height
+// Trail length in world pixels rather than a number of points. The ball sits
+// still and the world moves, so the trail is laid down in world space like
+// the pillars are; capping by distance keeps it the same length on screen
+// whether you are at 180 px/s on the first pillar or 680 px/s on the fiftieth.
+const G32_TRAIL_PX = 175
 
 function stopGame32() {
   G32.active = false
@@ -63,6 +69,8 @@ window.startGravFlip = function() {
   G32.pillars = []
   G32.speed = 180
   G32.pillarTimer = 0
+  G32.trail = []
+  G32.scrollX = 0
   G32.cx = c.width * 0.22
   G32.lastTime = performance.now()
   document.getElementById('g32-score-hud').textContent = '0'
@@ -113,6 +121,11 @@ function g32Loop(ts) {
   for (const p of G32.pillars) p.x -= G32.speed * dt
   G32.pillars = G32.pillars.filter(p => p.x > -G32_PW - 10)
 
+  // Where the ball has been, in the same world the pillars scroll through
+  G32.scrollX += G32.speed * dt
+  G32.trail.push({ sx: G32.scrollX, y: G32.y })
+  while (G32.trail.length && G32.scrollX - G32.trail[0].sx > G32_TRAIL_PX) G32.trail.shift()
+
   // Score + collision
   for (const p of G32.pillars) {
     if (!p.scored && p.x + G32_PW < G32.cx) {
@@ -156,6 +169,31 @@ function g32Loop(ts) {
     ctx.strokeStyle = '#f472b688'; ctx.lineWidth = 2
     ctx.beginPath(); ctx.moveTo(p.x, p.gapY); ctx.lineTo(p.x + G32_PW, p.gapY); ctx.stroke()
     ctx.beginPath(); ctx.moveTo(p.x, p.gapY + G32_GAP); ctx.lineTo(p.x + G32_PW, p.gapY + G32_GAP); ctx.stroke()
+  }
+
+  // Trail — wide soft pass, then a bright core on top, as in Wave Dash
+  if (G32.trail.length > 1) {
+    const pts = []
+    for (const t of G32.trail) {
+      const sx = G32.cx - (G32.scrollX - t.sx)
+      if (sx >= -4) pts.push({ x: sx, y: t.y })
+    }
+    if (pts.length > 1) {
+      const line = () => {
+        ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y)
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y)
+        ctx.stroke()
+      }
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round'
+      ctx.shadowColor = '#f472b6'; ctx.shadowBlur = 10
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(244,114,182,0.22)'
+      line()
+      ctx.shadowBlur = 6; ctx.lineWidth = 2
+      ctx.strokeStyle = _lt ? '#be185d' : '#f472b6'
+      line()
+      // Leave no shadow behind for the ball, the arrow or anything after it
+      ctx.shadowBlur = 0
+    }
   }
 
   // Player glow

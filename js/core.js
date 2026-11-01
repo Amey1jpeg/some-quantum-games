@@ -2007,6 +2007,13 @@ const _QG_NOT_TAP = new Set([
 ])
 
 window.qgTapKey = function(e) {
+  // Auto-repeat is not a new tap. Holding a key makes the OS fire keydown
+  // about thirty times a second, so resting on one acted as thirty taps:
+  // Gravity Flipper flipped gravity back and forth on its own. Spin Flip
+  // and seven other games each guard this themselves, Gravity Flipper was
+  // the one that did not — so the guard belongs here, where every tap game
+  // gets it and a new one cannot forget.
+  if (e.repeat) return false
   if (e.ctrlKey || e.metaKey || e.altKey) return false
   if (_QG_NOT_TAP.has(e.key)) return false
   if (/^F\d+$/.test(e.key)) return false
