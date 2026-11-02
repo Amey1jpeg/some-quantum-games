@@ -1605,3 +1605,90 @@ body.has-tp #qg-lb-btn, body.has-tp #qg-theme-btn { display: none; }
   color: var(--muted); font-size: .82rem; min-height: 1.2em; text-align: center;
 }
 .mp-verdict { font-size: .92rem; font-weight: 700; margin: .5rem 0; }
+
+/* ══════════════════════════════════════
+   HOW TO PLAY
+   The prose under each game, plus the About block on the menu. It lives in
+   the markup rather than being built by JS, so a reader and a crawler both
+   get it, and so it survives with scripts blocked.
+══════════════════════════════════════ */
+
+/* The panel is a sibling of the arena, which until now took flex:1 of a
+   100vh screen. Left alone the prose would eat that share and halve every
+   playfield. Games read the arena's size exactly once — when they size
+   their canvas at init — so the height has to be settled before that and
+   must not move afterwards. Hence a viewport-derived minimum rather than a
+   flexible share. (vh first for anything that doesn't know svh.) */
+.game-screen .canvas-arena,
+#game2 .arena, #game3 .arena, #game4 .arena {
+  min-height: calc(100vh - 10rem);
+  min-height: calc(100svh - 10rem);
+}
+/* These keep a hint line or a status bar below the arena, which the full
+   height would push off the bottom of the screen. */
+#game10 .canvas-arena, #game15 .canvas-arena, #game17 .canvas-arena,
+#game18 .canvas-arena, #game22 .canvas-arena, #game23 .canvas-arena,
+#game45 .canvas-arena {
+  min-height: calc(100vh - 13rem);
+  min-height: calc(100svh - 13rem);
+}
+
+.howto {
+  max-width: 54rem; width: 100%; margin: 2rem auto 0;
+  padding: 1.5rem 1.6rem 1.75rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  text-align: left; font-size: .9rem; line-height: 1.65; color: var(--text);
+}
+.howto h2 {
+  font-size: 1.05rem; margin-bottom: .75rem;
+  padding-bottom: .6rem; border-bottom: 1px solid var(--border);
+}
+.howto h3 {
+  font-family: var(--font-body);
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--accent2); margin: 1.25rem 0 .5rem;
+}
+.howto p { margin-bottom: .5rem; }
+.howto-intro { color: var(--muted); }
+.howto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+/* First heading in each column shouldn't add a second gap under the intro */
+.howto-grid .howto-block h3 { margin-top: .25rem; }
+.howto-controls {
+  display: grid; grid-template-columns: auto 1fr; gap: .4rem .9rem;
+  align-items: baseline;
+}
+.howto-controls dd { color: var(--muted); }
+.howto kbd {
+  display: inline-block; background: var(--surface);
+  border: 1px solid var(--border); border-bottom-width: 2px;
+  border-radius: 6px; padding: .1rem .45rem;
+  font-size: .78rem; color: var(--text); white-space: nowrap;
+}
+.howto-medals { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.howto-medals span {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: .15rem .6rem;
+  font-family: var(--font-mono); font-size: .78rem;
+}
+.howto-tips { margin: 0; padding-left: 1.1rem; color: var(--muted); }
+.howto-tips li { margin-bottom: .35rem; }
+.howto-note { color: var(--muted); font-size: .8rem; }
+.howto a { color: var(--accent2); }
+.howto-about { margin-bottom: 1rem; }
+
+@media (max-width: 700px) {
+  .howto {
+    margin-top: 1.5rem; padding: 1.1rem 1.1rem 1.35rem;
+    border-radius: 1rem; font-size: .86rem;
+  }
+  .howto-grid { grid-template-columns: 1fr; }
+}
+
+/* The stand gets the games and nothing to read. Hiding the panel also hands
+   the arena its old flex:1 share of the screen back. */
+body.stall-mode .howto { display: none; }
+body.stall-mode .game-screen .canvas-arena,
+body.stall-mode #game2 .arena,
+body.stall-mode #game3 .arena,
+body.stall-mode #game4 .arena { min-height: 450px; }

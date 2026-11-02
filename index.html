@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quantum Games — Powered by real qubits</title>
+  <meta name="description" content="Forty free browser games whose randomness comes from real qubit measurements rather than a pseudo-random generator. Reaction tests, platformers, a snake, an idle game, and a few built around actual quantum behaviour. No install, no account needed." />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/style.css?v=25" />
+  <link rel="stylesheet" href="css/style.css?v=26" />
 </head>
 <body>
 
@@ -283,6 +284,56 @@
   <!-- Where the leaderboard opens on the home screen. The panel itself is
        built by qgBuildLbPanel (js/core.js) and moved in here by the 🏆 button. -->
   <div id="qg-lb-slot"></div>
+
+  <!-- About. The landing page's own text: what the entropy actually is, how
+       scoring works, and what the site costs. Written for a first-time
+       visitor who has not clicked anything yet. -->
+  <div class="howto howto-about">
+    <h2>About Quantum Games</h2>
+    <p class="howto-intro">
+      Forty-odd small browser games that share one unusual ingredient: the
+      randomness is real. Where another game would call a pseudo-random number
+      generator — an algorithm that only looks unpredictable — these games pull
+      from a stored pool of over two million actual qubit measurements. The
+      delay before the flash in Reaction Test, the position of a target in Aim
+      Trainer, the gap in a Gravity Flipper pillar: all of it comes out of
+      measurements of physical quantum systems, where the unpredictability is a
+      property of nature rather than a property of the code.
+    </p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Why it matters</h3>
+        <p>
+          Mostly it doesn't, and that's the honest answer — a good pseudo-random
+          generator is indistinguishable from this in a browser game. But a few
+          of the games are built around quantum behaviour rather than just
+          seeded by it. Bell Test is the CHSH experiment, and the 75% ceiling
+          you cannot beat is a theorem. Spin Flip is a two-state system with no
+          in-between. Quantum Tunnel lets you through barriers a classical
+          object would bounce off. Those ones teach something.
+        </p>
+      </div>
+      <div class="howto-block">
+        <h3>Scores and medals</h3>
+        <p>
+          Every game with a leaderboard has bronze, silver and gold thresholds,
+          listed in that game's own how-to-play section below its arena. A few
+          also carry an author medal, set at a score one of us has actually
+          hit, so it is beatable rather than decorative. Submitting a score is
+          optional and you can play everything without an account.
+        </p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Playing</h3>
+      <ul class="howto-tips">
+        <li>Everything runs in the browser, on desktop or phone, with nothing to install and no cost.</li>
+        <li>Most games take one input — a key, a tap, a click — and explain themselves in a sentence on their start screen.</li>
+        <li>Several support online multiplayer against another player on a shared score race; look for the ⚔️ Find Match button.</li>
+        <li>Built a level? The <a href="editor.html">level editor</a> is open to anyone, and submitted levels can end up in the game.</li>
+      </ul>
+    </div>
+  </div>
 </section>
 
 <!-- Submit score modal (shared) -->
@@ -424,6 +475,37 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Equation Builder</h2>
+    <p class="howto-intro">A target number is drawn from the entropy pool, and you build an arithmetic expression that equals it out of the number and operator tiles you are dealt. There is almost always more than one way to reach the target, and the fast way is rarely the first one you see.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Drag</kbd></dt><dd>Move a number or operator tile into the equation slot</dd>
+          <dt><kbd>Click</kbd></dt><dd>Tap a tile, then tap a slot — works the same as dragging</dd>
+          <dt><kbd>Check ✓</kbd></dt><dd>Submit the equation you have built</dd>
+          <dt><kbd>Clear</kbd></dt><dd>Empty the slots and start the round over</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Each solved equation scores, and harder targets are worth more. The round clock keeps running, so points come from solving quickly rather than from solving elegantly.</p>
+        <p class="howto-medals"><span>🥉 50</span><span>🥈 150</span><span>🥇 300</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Scan the operators before the numbers — a division tile usually decides the whole approach.</li>
+        <li>If a target looks impossible, look for it as a product plus or minus a small remainder.</li>
+        <li>Clearing is free. Committing to a wrong equation costs you the clock.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -474,6 +556,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Aim Trainer</h2>
+    <p class="howto-intro">Targets appear at quantum-random coordinates, so there is no spawn pattern to learn and no way to pre-aim — the only thing that improves is your actual reaction and tracking. Targets shrink and expire faster as the level climbs.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Mouse / tap</kbd></dt><dd>Click a target to pop it</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Queue against another player on the same score race</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Every hit scores, multiplied by your current combo. A miss resets the combo to ×1, and letting a target expire ends the run. Accuracy and miss count are tracked live above the arena.</p>
+        <p class="howto-medals"><span>🥉 100</span><span>🥈 300</span><span>🥇 600</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Combo is worth more than speed — one careless miss can cost more than several slow hits.</li>
+        <li>Move the cursor to the target's edge rather than its centre; the hitbox is the whole circle.</li>
+        <li>At high levels the targets are smaller than the cursor's own travel per frame, so lead with small movements.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -513,6 +624,36 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Reaction Test</h2>
+    <p class="howto-intro">The delay before the green flash is drawn from real qubit measurements, so it is not pseudo-random and it is not predictable — there is no rhythm to anticipate and no seed to learn. Five rounds, and your score is the average.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Any key</kbd></dt><dd>Respond to the flash</dd>
+          <dt><kbd>Click / tap</kbd></dt><dd>Does the same thing</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Race another player — lower average wins</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Your score is your mean reaction time in milliseconds across five rounds, so lower is better. Clicking before the flash is a false start and does not help you.</p>
+        <p class="howto-medals"><span>🥉 300 ms</span><span>🥈 230 ms</span><span>🥇 180 ms</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Rest your finger on the key rather than hovering — travel time is part of your score.</li>
+        <li>Humans bottom out somewhere near 150 ms; anything under 200 ms is genuinely fast.</li>
+        <li>One bad round drags the average more than one good round lifts it, so stay honest and don't guess.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -555,6 +696,36 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Dodge</h2>
+    <p class="howto-intro">Obstacles spawn from quantum entropy rather than a pattern, which means there is no safe lane and no memorisable wave order. You survive on reading the field, not on learning it.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Mouse / finger</kbd></dt><dd>Your ship follows the cursor directly</dd>
+          <dt><kbd>WASD / arrows</kbd></dt><dd>Keyboard movement, if you prefer it</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Survive longer than your opponent</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Score is survival time. The leaderboard stores it in tenths of a second and displays it as seconds.</p>
+        <p class="howto-medals"><span>🥉 10s</span><span>🥈 25s</span><span>🥇 45s</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Stay near the middle. The edges look safe until a spawn cuts off your escape.</li>
+        <li>Small corrections beat big ones — the cursor is instant, so overshooting is the real danger.</li>
+        <li>Watch the spawn edge, not your own ship.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -598,6 +769,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Flash Number</h2>
+    <p class="howto-intro">A quantum-chosen number appears for a fraction of a second and you type back what you saw. Across ten rounds the numbers get longer and the flash gets shorter, so it stops being a reading test and becomes a test of how much you can take in at a single glance.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Number keys</kbd></dt><dd>Type the number you saw</dd>
+          <dt><kbd>Enter</kbd></dt><dd>Submit your answer</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per number recalled exactly, out of ten. Partial credit does not exist — a single wrong digit scores nothing for that round.</p>
+        <p class="howto-medals"><span>🥉 4/10</span><span>🥈 6/10</span><span>🥇 8/10</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Don't read left to right. Take the whole number as a shape and write it down immediately.</li>
+        <li>Chunk in pairs; most people hold three or four chunks but only five or six loose digits.</li>
+        <li>Type straight away. Every second you spend hesitating is a second the memory decays.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -647,6 +847,34 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Delta E</h2>
+    <p class="howto-intro">The strip is filled with two colours that differ by a measured hue distance, and you click where one becomes the other. It starts at about 15° of hue separation, which is obvious, and ends near 0.3°, which is at or past the limit of normal human colour discrimination. Forty rounds.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click / tap</kbd></dt><dd>Click the point on the strip where the colour changes</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Each round pays out on how close your click was to the real boundary, so near misses still score. Points accumulate across all forty rounds.</p>
+        <p class="howto-medals"><span>🥉 1,200</span><span>🥈 2,400</span><span>🥇 3,400</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Look slightly away from where you think the edge is — peripheral vision is better at low-contrast edges.</li>
+        <li>Turn your screen brightness up and your room lights down before a serious attempt.</li>
+        <li>In the last rounds the boundary is genuinely invisible to most people. Click the middle and take the partial credit.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -717,6 +945,36 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Gravity Wells</h2>
+    <p class="howto-intro">Quantum gravity wells drift around the arena pulling you in, and a new one spawns every fifteen seconds, forever — so the arena gets steadily less survivable and the run always ends. You fight it by shooting wells, collecting orbs, and spending points in the pause shop.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Mouse</kbd></dt><dd>Steer — your ship moves toward the cursor</dd>
+          <dt><kbd>WASD / arrows</kbd></dt><dd>Keyboard steering</dd>
+          <dt><kbd>ESC</kbd></dt><dd>Pause, and open the powerup shop</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Points come from orbs collected and wells destroyed. Spending points in the shop is a real trade: upgrades keep you alive longer, but the points you spend are points off your score.</p>
+        <p class="howto-medals"><span>🥉 100</span><span>🥈 300</span><span>🥇 500</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Resist the pull at an angle rather than straight out — you escape a well faster on a tangent.</li>
+        <li>Buy early. An upgrade that doubles your survival time pays for itself many times over.</li>
+        <li>After the first few minutes the spawn rate, not your skill, is what ends the run. Bank points before it does.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -764,6 +1022,34 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Type</h2>
+    <p class="howto-intro">A word chosen from the quantum pool flashes up and you type it as fast as you can, five times over. Your score is average words per minute, and typos are not forgiven — a single wrong character voids the round.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Letter keys</kbd></dt><dd>Type the word exactly as shown</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Average WPM across five rounds. Rounds with a typo do not count toward your average, so accuracy is effectively part of the score.</p>
+        <p class="howto-medals"><span>🥉 40 WPM</span><span>🥈 70 WPM</span><span>🥇 100 WPM</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Read the whole word before you start. Starting half a word early costs more than it saves.</li>
+        <li>Short words punish hesitation more than long words punish speed.</li>
+        <li>Gold is 100 WPM, which is a genuinely fast typing speed sustained over five cold starts.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -819,6 +1105,35 @@
     </div>
   </div>
   <div class="game-over-overlay" id="g16-over" style="display:none;"></div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Clicker</h2>
+    <p class="howto-intro">An idle game with a quantum front end: every click observes a qubit, and buildings observe them for you while you are away. There are more than fifty upgrades, golden qubits that appear briefly for a large bonus, and a prestige reset that trades your progress for a permanent multiplier.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click ⚛️</kbd></dt><dd>Observe a qubit by hand</dd>
+          <dt><kbd>Any key</kbd></dt><dd>Counts as a click</dd>
+          <dt><kbd>Upgrades / Buildings / Stats</kbd></dt><dd>Spend qubits and check your rates</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Qubits are the currency and the score. Buildings give you qubits per second; upgrades multiply clicks, buildings, or both. This game is not on the leaderboard — progress is saved locally instead.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Buy the cheapest building that raises your per-second rate; raw click upgrades fall off quickly.</li>
+        <li>Golden qubits are worth stopping whatever you are doing for.</li>
+        <li>Prestige earlier than feels comfortable. The permanent multiplier compounds and your old total does not.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -859,6 +1174,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Particle Collider</h2>
+    <p class="howto-intro">You sit at the rim of a circular arena and fire particles into it. Particles that collide with each other score; anti-particles annihilate you on contact. Three lives, and the arena fills up faster than it clears.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>← →</kbd></dt><dd>Rotate your aim around the rim</dd>
+          <dt><kbd>Space</kbd></dt><dd>Fire a particle</dd>
+          <dt><kbd>ESC</kbd></dt><dd>Pause</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Points are awarded for particle-on-particle collisions, with bigger payouts for multi-particle chains. Hitting an anti-particle costs a life.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Fire into the arena's existing traffic rather than at empty space — collisions are what score.</li>
+        <li>Let two or three particles build up before you start chaining them.</li>
+        <li>Anti-particles are worth tracking individually. Everything else you can treat as a crowd.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -927,6 +1271,40 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Wave Collapse</h2>
+    <p class="howto-intro">A grid of qubits sits in superposition and you apply real quantum gates from the keyboard to drive them into a target state before the clock runs out. The gates behave the way their namesakes do: X flips, H puts a definite state into superposition, and M measures, collapsing a superposed qubit to 0 or 1 at random.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Arrow keys</kbd></dt><dd>Move the cursor around the grid</dd>
+          <dt><kbd>X</kbd></dt><dd>Flip: |0⟩ ↔ |1⟩</dd>
+          <dt><kbd>H</kbd></dt><dd>Hadamard: |0⟩ or |1⟩ → |+⟩, and |+⟩ → |0⟩</dd>
+          <dt><kbd>M</kbd></dt><dd>Measure: collapses |+⟩ to |0⟩ or |1⟩, at random</dd>
+          <dt><kbd>Z</kbd></dt><dd>Undo the last gate</dd>
+          <dt><kbd>I</kbd></dt><dd>Hint</dd>
+          <dt><kbd>T</kbd></dt><dd>+10 seconds</dd>
+          <dt><kbd>P</kbd></dt><dd>Peek at the target</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Clearing a grid scores and advances the level, with harder targets on each one. The timer is the constraint — the run ends when it expires, and the level you reached is reported with your score.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>M is a gamble, not a tool. Use H and X to get where you want deterministically.</li>
+        <li>Z is free. Try a gate, look at the result, undo it if it was wrong.</li>
+        <li>Spend the +10s before you are desperate; it is worth more early, when you can still finish the grid.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -978,6 +1356,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Entanglement</h2>
+    <p class="howto-intro">Two particles are entangled, so moving one mirrors the other — which means every input you make is simultaneously useful and dangerous. Breaking the entanglement gives you direct control of one particle alone, and that trade is the whole game.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Arrows / WASD</kbd></dt><dd>Move — while entangled, the twin mirrors you</dd>
+          <dt><kbd>Space</kbd></dt><dd>Break entanglement for solo control</dd>
+          <dt><kbd>ESC</kbd></dt><dd>Pause</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Orbs score, with a combo multiplier for collecting them in quick succession, and the multiplier doubles while entangled. Filling the Resonance meter grants an invincibility burst. Three lives.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Stay entangled when you can — the ×2 is most of a good score.</li>
+        <li>Break the link to escape a corner, then re-enter it the moment you are clear.</li>
+        <li>Save the Resonance burst for a crowded screen rather than firing it as soon as it fills.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -1029,6 +1436,37 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Snake</h2>
+    <p class="howto-intro">A slither.io-style arena snake with teeth: enemy AI snakes compete for the same food, there is a ring boss that shoots at you, and you can shoot back. Eating builds energy, which is also your boost fuel, so growing and running are funded from the same pool.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Arrows / WASD</kbd></dt><dd>Steer</dd>
+          <dt><kbd>Hold Shift</kbd></dt><dd>Boost — burns energy</dd>
+          <dt><kbd>F</kbd></dt><dd>Shoot</dd>
+          <dt><kbd>V</kbd></dt><dd>Toggle auto-aim</dd>
+          <dt><kbd>ESC</kbd></dt><dd>Pause</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Score comes from food eaten and kills. You start with three lives and five segments. Inside the ring boss, auto-aim is jammed and you have to aim manually.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Boost is for escaping, not for chasing. Running the energy bar dry leaves you with no out.</li>
+        <li>Cut across an enemy snake's head rather than racing its body.</li>
+        <li>Turn auto-aim off before you go into the ring boss, so the switch isn't a surprise.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <section id="game18" class="screen game-screen">
@@ -1058,6 +1496,34 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Whip</h2>
+    <p class="howto-intro">You swing a physically simulated rope and catch orbs with its glowing tip — not with your cursor, which is the part that takes practice. Ninety seconds, with random wind, gravity flips, chain explosions and golden rain events arriving unannounced.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Mouse / drag</kbd></dt><dd>Move the rope anchor; the rope follows with real momentum</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Only the tip collects. Orbs caught in quick succession build a combo multiplier, and chain explosions can clear a cluster at once. Golden rain events are where the large scores come from.</p>
+        <p class="howto-medals"><span>🥉 1,200</span><span>🥈 3,500</span><span>🥇 8,000</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Lead the rope. The tip arrives where the anchor was heading, not where it is.</li>
+        <li>Swing in circles rather than flicking — a steady orbit keeps the tip moving fast and predictably.</li>
+        <li>When golden rain starts, stop aiming at individual orbs and just keep the tip moving through the densest part.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <section id="game22" class="screen game-screen">
@@ -1080,6 +1546,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Gravity Sling</h2>
+    <p class="howto-intro">A slingshot puzzle with real orbital mechanics: you drag to aim and release to fire, and the planets bend your shot on the way. A ball that curves around a planet to its target scores a gravity-assist bonus, so the clever shot is worth more than the direct one.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Drag from the green circle</kbd></dt><dd>Aim — the further you pull, the faster the launch</dd>
+          <dt><kbd>Release</kbd></dt><dd>Fire</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Targets score on contact, with a bonus for shots that use a gravity assist. Clearing every target leaves a large bonus of 50 points per unused shot, so finishing under par is where the score is.</p>
+        <p class="howto-medals"><span>🥉 350</span><span>🥈 900</span><span>🥇 2,000</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Aim past a planet, not at the target. Let the gravity do the last part of the turn.</li>
+        <li>A slow shot curves more than a fast one — pull back less when you want a bend.</li>
+        <li>The all-targets bonus is worth more than most individual hits. Don't spend shots you could save.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <section id="game23" class="screen game-screen">
@@ -1102,6 +1597,34 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Charge Rush</h2>
+    <p class="howto-intro">A charge pulse runs along a circuit toward you, and you have to click the numbered nodes in order — 1, then 2, then 3 — before it arrives. Click out of order or too slowly and you get zapped.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click / tap</kbd></dt><dd>Activate the next numbered node in sequence</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Each completed circuit scores, and the pulse gets faster as you go. One wrong or late node ends the run.</p>
+        <p class="howto-medals"><span>🥉 300</span><span>🥈 1,000</span><span>🥇 3,000</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Find node 1 before you start moving your hand; the sequence is laid out, not hidden.</li>
+        <li>Plan the whole path during the pulse's travel time rather than hunting node by node.</li>
+        <li>The pulse speed, not the node count, is what eventually kills you — so build muscle memory for the layout.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <section id="game24" class="screen game-screen">
@@ -1123,6 +1646,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Pulse</h2>
+    <p class="howto-intro">Rings expand from the centre and you click at the exact moment one overlaps the target circle. The BPM ramps up every ten seconds, from 58 to a cap of 170, so a pace that felt comfortable becomes unplayable if you stay on the back foot.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click / tap</kbd></dt><dd>Hit the beat as the ring crosses the target</dd>
+          <dt><kbd>Any key</kbd></dt><dd>Does the same thing</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>A hit inside the tight window is a PERFECT and pays 100 points; a looser hit is a GOOD and pays 50. Both are multiplied by your combo, which caps at ×6. A miss resets the combo and costs one of your lives.</p>
+        <p class="howto-medals"><span>🥉 500</span><span>🥈 2,000</span><span>🥇 5,000</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Chase the ×6 and then protect it — a perfect at ×6 is worth twelve loose hits at ×1.</li>
+        <li>Listen rather than watch once the BPM is high; the audio cue is steadier than the visual one.</li>
+        <li>If you lose the beat, deliberately take one miss to reset rather than panic-clicking into three.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <section id="game28" class="screen game-screen">
@@ -1166,6 +1718,36 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Parkour</h2>
+    <p class="howto-intro">A side-scrolling tile platformer across five handcrafted levels. Run, jump, avoid the spikes, and touch the ★ to advance. The levels are fixed, so unlike most of this collection it rewards learning the route.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Arrows / WASD / A-D</kbd></dt><dd>Run</dd>
+          <dt><kbd>Space / W / ↑</kbd></dt><dd>Jump</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Race another player for points</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Points come from progress and from the bonus awarded for reaching the goal, so finishing a level is worth considerably more than getting most of the way through one.</p>
+        <p class="howto-medals"><span>🥉 400</span><span>🥈 1,200</span><span>🥇 3,000</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Jump at the last tile, not the first safe one — the extra distance is usually there.</li>
+        <li>Spikes have a smaller hitbox than they look. Commit to the gap.</li>
+        <li>These five levels never change. A route you work out once is worth points every run after.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <section id="game26" class="screen game-screen">
@@ -1187,6 +1769,34 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Orbit</h2>
+    <p class="howto-intro">You are in orbit and you have to stay in the band that is survivable — too close and you burn up, too far and you are lost. Clicking thrusts you toward your cursor, and because this is real two-body motion, thrust changes your orbit rather than your position.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click / tap</kbd></dt><dd>Thrust toward the cursor</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>You score 2 points for every frame spent inside the safe zone, so score is really time-on-station. Straying out starts a timer; stay out for about three seconds and the run ends. Debris rains down throughout.</p>
+        <p class="howto-medals"><span>🥉 300</span><span>🥈 800</span><span>🥇 2,000</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Thrust across your direction of travel to change orbit height; thrusting along it just speeds you up.</li>
+        <li>Short taps. One long burn will throw you straight out of the band.</li>
+        <li>Being out of the zone is survivable for a moment — don't panic-burn and overshoot the other way.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -1226,6 +1836,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Blaster</h2>
+    <p class="howto-intro">A top-down shooter whose waves are composed from quantum entropy, so the enemy mix is never the same twice and there is no wave to memorise. Firing is automatic — your job is positioning, powerup pickup, and surviving the boss fights.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Mouse</kbd></dt><dd>Move — the ship follows the cursor</dd>
+          <dt><kbd>WASD</kbd></dt><dd>Keyboard movement</dd>
+          <dt><kbd>(automatic)</kbd></dt><dd>Your guns fire on their own</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Each enemy is worth its own point value, bosses pay a large completion bonus, and coins dropped alongside points buy upgrades. Clearing a wave awards every remaining enemy's value.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Keep moving laterally. Standing still is what kills runs, even with auto-fire doing the work.</li>
+        <li>Grab powerups the moment they drop; they expire, and the good ones change the wave entirely.</li>
+        <li>During a boss, circle rather than back away — you need to stay in range for auto-fire to do anything.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -1268,6 +1907,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Micro RTS</h2>
+    <p class="howto-intro">A real-time strategy game stripped down to a single unit. You click to move, it auto-attacks anything in range, and quantum-random waves come at you progressively bigger and faster. Kills pay coins, and coins buy fire rate and movement speed.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click / tap</kbd></dt><dd>Order a move to that point</dd>
+          <dt><kbd>(automatic)</kbd></dt><dd>Your unit attacks enemies that come into range</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Points and coins come from kills. Spending coins in the shop on fire rate or speed is how you keep up with the wave scaling.</p>
+        <p class="howto-medals"><span>🥉 100</span><span>🥈 350</span><span>🥇 800</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Kite. Move so enemies come to you one at a time instead of as a group.</li>
+        <li>Fire rate early, speed later — damage output is what keeps waves from overlapping.</li>
+        <li>Your unit keeps shooting while it walks, so almost every click should be a reposition.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -1301,6 +1969,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Runaway Snake</h2>
+    <p class="howto-intro">Snake, except the apple actively runs away from you, and the borders wrap Pac-Man style so there is no corner to trap it in. You get 60 seconds for the first apple, and the timer drops by one second per apple caught, down to a floor of 15 seconds.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Arrows / WASD</kbd></dt><dd>Steer</dd>
+          <dt><kbd>D-pad / swipe</kbd></dt><dd>On phones</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per apple. The run ends when you hit yourself or the timer expires, and since the timer shrinks every time you score, the game gets harder precisely because you are doing well.</p>
+        <p class="howto-medals"><span>🥉 10</span><span>🥈 25</span><span>🥇 50</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Cut it off at a wrap edge — the apple's escape routes are what you are actually hunting.</li>
+        <li>Don't chase directly. Move to where it is being pushed, not where it is.</li>
+        <li>Below about 20 seconds your own tail is the bigger threat. Keep the body loose and central.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -1339,6 +2036,36 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Gravity Flipper</h2>
+    <p class="howto-intro">An auto-runner with one input: gravity. You are always moving forward, and every tap flips which way is down, so you fall up through one pillar gap and down through the next. The gaps are quantum-placed, and the speed climbs with every pillar you clear.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Any key</kbd></dt><dd>Flip gravity</dd>
+          <dt><kbd>Click / tap</kbd></dt><dd>Does the same thing</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Clear more pillars than your opponent</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per pillar pair cleared. A single touch ends the run.</p>
+        <p class="howto-medals"><span>🥉 10</span><span>🥈 25</span><span>🥇 50</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Flip early. Falling takes time to build speed, so the input has to lead the gap.</li>
+        <li>Hold a key down and nothing happens — auto-repeat is deliberately ignored, so each flip needs a fresh press.</li>
+        <li>Pillars arrive on a timer rather than by distance, so the window stays the same length however fast you are going. It only feels tighter.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- ══════════════════════════════════
@@ -1383,13 +2110,42 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Memory Sequence</h2>
+    <p class="howto-intro">The classic lights-and-sounds memory test, with the sequence drawn from real quantum measurements so it is genuinely fresh every game. Watch the colours light up, repeat them back in order, and each round adds one more step.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click / tap</kbd></dt><dd>Repeat the sequence by clicking the colours in order</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>See who remembers further</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Your score is the longest sequence you reproduced correctly. One wrong colour ends the run.</p>
+        <p class="howto-medals"><span>🥉 5</span><span>🥈 10</span><span>🥇 16</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Say the colours out loud. Verbal rehearsal holds far more than visual memory does.</li>
+        <li>Chunk in threes and recall the chunks, not the individual steps.</li>
+        <li>Watch the whole sequence before you touch anything — starting to answer early is the usual cause of a loss at round 10+.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <!-- Scripts — core must load first, then game files -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="js/sfx.js?v=2"></script>
-<script src="js/core.js?v=60"></script>
+<script src="js/core.js?v=61"></script>
 <script src="js/touchpad.js?v=7"></script>
 <script src="js/auth.js"></script>
 <script src="js/game1.js?v=2"></script>
@@ -1453,6 +2209,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Manual Sort</h2>
+    <p class="howto-intro">A row of quantum-shuffled bars, and your hands as the only sorting algorithm. Click one bar to pick it up, click another to swap the two, and get the row into ascending order. The clock does not start until your first swap, so you can study the row for free.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click a bar</kbd></dt><dd>Select it</dd>
+          <dt><kbd>Click a second bar</kbd></dt><dd>Swap the two</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Score is 1000 minus a tenth of a second per tenth elapsed, so it is purely a time trial: silver is sorting the row in 30 seconds, gold in 15, and the author bar is 7. Swap count is reported but not scored.</p>
+        <p class="howto-medals"><span>🥉 100s</span><span>🥈 30s</span><span>🥇 15s</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Plan before the first click. The timer is not running and the whole row is visible.</li>
+        <li>Selection sort beats intuition here: find the smallest, put it at the front, repeat.</li>
+        <li>A swap is a swap whether it is useful or not, but only wall-clock time costs you score — so move fast and don't agonise.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game34.js?v=3"></script>
@@ -1501,6 +2286,37 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Wave Dash</h2>
+    <p class="howto-intro">The Geometry Dash wave gamemode. Hold to angle up, release to angle down — there is no in-between and no stopping. The corridor starts wide and slow and gets tighter and faster, and at score 100 a hidden Qubit Limbo event interrupts the run for a bonus.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Hold any key</kbd></dt><dd>Angle up</dd>
+          <dt><kbd>Release</kbd></dt><dd>Angle down</dd>
+          <dt><kbd>Click / tap</kbd></dt><dd>Works the same as a key</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Race another player through the same corridor</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per block passed. The Limbo event that triggers at score 100 awards a flat 150 points if you pick the right key, which is a substantial fraction of a silver run.</p>
+        <p class="howto-medals"><span>🥉 30</span><span>🥈 100</span><span>🥇 250</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Tap, don't hold. Short alternating inputs keep you near the centre line; long ones commit you to a wall.</li>
+        <li>In a tight corridor the safe path is a shallow zigzag, not a straight line — you cannot fly level.</li>
+        <li>Take the Limbo event seriously. 150 points is worth more than the next fifty blocks.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game35.js?v=5"></script>
@@ -1536,6 +2352,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: CPS Test</h2>
+    <p class="howto-intro">Ten seconds, as many clicks as you can. Both mouse and keyboard count, but only up to four keys at once, so the usual trick of mashing every finger at the same time is capped.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click</kbd></dt><dd>Counts</dd>
+          <dt><kbd>Any key</kbd></dt><dd>Counts too — maximum four at a time</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Score is clicks per second, averaged across the full ten seconds.</p>
+        <p class="howto-medals"><span>🥉 5</span><span>🥈 8</span><span>🥇 11</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Alternate two fingers rather than hammering one; the limit is muscle recovery, not speed.</li>
+        <li>Start the instant the timer does. A late start is a flat loss across a ten-second average.</li>
+        <li>Gold is 11 clicks per second sustained, which needs technique rather than effort.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game36.js?v=4"></script>
@@ -1569,6 +2414,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Rhythm</h2>
+    <p class="howto-intro">A one-button rhythm game in the spirit of A Dance of Fire and Ice. A planet orbits each tile on the path, and you press when it aligns with the next tile — the gold ring marks the spot. Twenty-one tiles, three hearts.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Any key</kbd></dt><dd>Advance to the next tile, on the beat</dd>
+          <dt><kbd>Click / tap</kbd></dt><dd>Does the same thing</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per tile taken on time. Mistimed presses cost hearts, and the run ends when the third one goes.</p>
+        <p class="howto-medals"><span>🥉 5</span><span>🥈 12</span><span>🥇 21</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Go by the sound, not the planet. The audio is the beat; the animation is a readout of it.</li>
+        <li>The tiles change angle, but the beat does not. Don't let a sharp turn make you rush.</li>
+        <li>Hearts mean three mistakes are survivable — but all three usually come from the same lost beat, so reset your timing after the first.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game37.js?v=3"></script>
@@ -1601,6 +2475,34 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Crossy</h2>
+    <p class="howto-intro">Hop across lanes of quantum-random traffic, rivers and train tracks. The twist is the purple quantum lanes, where cars flicker between solid and passthrough — when a car is transparent you can walk straight through it, and when it is solid it will flatten you.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Arrows / WASD</kbd></dt><dd>Hop one tile</dd>
+          <dt><kbd>Swipe</kbd></dt><dd>On phones</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Score is how far you get. Traffic, water and trains all end the run on contact.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>In a quantum lane, watch the flicker for a moment before you commit — the phase is readable.</li>
+        <li>Trains give more warning than cars but leave no gap at all. Never stand on a track.</li>
+        <li>On the river the logs are the only safe ground, and they move. Plan two hops ahead, not one.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game38.js?v=2"></script>
@@ -1623,6 +2525,33 @@
       <button class="btn-primary" style="background:#a855f7;border-color:#a855f7;" onclick="startLimboGame()">▶ Play</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Qubit Limbo</h2>
+    <p class="howto-intro">A qubit in superposition is not secretly in one state — it genuinely has no definite state until it is measured. This game is that idea as a shell game: one key glows, then all the keys shuffle for nine seconds, and you pick where it collapsed.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Click / tap</kbd></dt><dd>Pick the key you think is the right one</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Pick correctly before the clock runs out and you win the round. This one is a side game and does not post to the leaderboard.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Track one key, not the glowing one — follow the key that was glowing through the shuffle.</li>
+        <li>Keep your eyes still and let the motion pass through your vision rather than following it with your head.</li>
+        <li>If you lose it, pick immediately rather than running the clock down; a guess beats a timeout.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game39.js?v=4"></script>
@@ -1683,6 +2612,37 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Tunnel</h2>
+    <p class="howto-intro">Quantum tunnelling as an arcade game. A classical particle that hits a barrier bounces off; a quantum one has a real probability of appearing on the far side. You are the quantum one. Tap to thrust, release to fall, and use the three laser types rather than just avoiding them.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Any key</kbd></dt><dd>Thrust up</dd>
+          <dt><kbd>Release</kbd></dt><dd>Fall</dd>
+          <dt><kbd>Click / tap</kbd></dt><dd>Works the same</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Race another player</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per barrier passed. Red lasers kill you. Green lasers are solid ground — you can land on them and slide. Blue lasers are the tunnel barriers: fly into one and you come out the other side.</p>
+        <p class="howto-medals"><span>🥉 10</span><span>🥈 25</span><span>🥇 45</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Use the green lasers as rest stops. Sliding along one costs nothing and buys you time to read the next section.</li>
+        <li>Blue is not a hazard. Flying straight into it is usually the fastest route through a section.</li>
+        <li>Short thrusts. The saucer has momentum, and a long burn puts you into the ceiling.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game40.js?v=35"></script>
@@ -1716,6 +2676,34 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Jet Rush</h2>
+    <p class="howto-intro">The Geometry Dash platformer jetpack, with free movement in all directions and a screen that scrolls right whether you are ready or not. Fall behind the left edge and you are crushed, so the spike columns have to be solved at the scroll's pace rather than your own.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Arrows / WASD</kbd></dt><dd>Fly in any direction</dd>
+          <dt><kbd>Touch</kbd></dt><dd>Move toward where you touch</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per spike column cleared. Contact with a spike, or falling behind the scroll, ends the run.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Stay on the right half of the screen. The buffer is your reaction time.</li>
+        <li>Go through gaps diagonally rather than squaring up to them — you lose less ground.</li>
+        <li>When a column looks impossible, check the top and bottom edges; the route is usually at one of them.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game41.js?v=2"></script>
@@ -1747,6 +2735,33 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Type Racer</h2>
+    <p class="howto-intro">Words fall from the top of the screen and you type the highlighted one before it reaches the red line. Three lives. It gets faster and more crowded as your score climbs, so the pressure is as much about choosing what to type as about typing it.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Letter keys</kbd></dt><dd>Type the highlighted word</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per word typed before it lands. A word that crosses the red line costs a life, and the run ends after three.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Always type the lowest word, not the easiest one. The clock is distance from the line.</li>
+        <li>Long words near the top are safer to leave than short ones near the bottom.</li>
+        <li>When the screen is full, accept losing a life to a word you cannot reach rather than losing three to panic.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game42.js?v=2"></script>
@@ -1801,6 +2816,36 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Wave Gauntlet</h2>
+    <p class="howto-intro">A run of randomly chosen wave challenges, one after another, with a single life across the whole thing. The difficulty bands run Easy, Medium, Hard, Extreme, Purgatory and Frame Perfect, and the last of those is named accurately. Practice Mode gives you noclip and any challenge on its own, unscored.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Hold any key</kbd></dt><dd>Angle up</dd>
+          <dt><kbd>Release</kbd></dt><dd>Angle down</dd>
+          <dt><kbd>Click / tap</kbd></dt><dd>Works the same</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One point per challenge cleared in a row. Dying ends the run, whichever band you were in, so the score is a streak rather than a total.</p>
+        <p class="howto-medals"><span>🥉 5</span><span>🥈 12</span><span>🥇 20</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Use Practice Mode on the bands that keep ending your runs; it exists for exactly that.</li>
+        <li>Frame Perfect challenges have one correct input timing and no margin. Learn the pattern rather than reacting to it.</li>
+        <li>A streak is worth protecting — at 10+ the safest input is often the smallest one.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/levelcheck.js?v=21"></script>
@@ -1855,6 +2900,36 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Spin Flip</h2>
+    <p class="howto-intro">A real particle's spin is a two-state system: measure it and you get up or down, never anything in between. You are that system. Each tap teleports you between the floor and the ceiling with no travel in between, and the blocks have to pass on whichever side you are not.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Any key</kbd></dt><dd>Flip to the opposite surface</dd>
+          <dt><kbd>Click / tap</kbd></dt><dd>Does the same thing</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Clear more challenges than your opponent</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Score is challenges cleared, which take you up through the difficulty tiers. One hit ends the run.</p>
+        <p class="howto-medals"><span>🥉 4</span><span>🥈 10</span><span>🥇 18</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>The flip is instantaneous, so it is safe to leave it late — and late is usually correct.</li>
+        <li>Read two blocks ahead. A flip that saves you now can put you under the next one.</li>
+        <li>When both surfaces are blocked, the gap is a timing problem, not a position problem.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game44.js?v=33"></script>
@@ -1898,6 +2973,36 @@
     </div>
   </div>
   <p id="g45-role" style="text-align:center;font-size:.78rem;color:var(--muted);min-height:1rem;"></p>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Quantum Freighter</h2>
+    <p class="howto-intro">Co-op for exactly two people, on one screen or online. One of you pilots and one of you gunners, and neither can do the other's job — the pilot has no weapon and the gunner has no engine. The hull is shared, three points of it, so a mistake by either of you costs both.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Pilot: WASD</kbd></dt><dd>Fly the ship</dd>
+          <dt><kbd>Gunner: mouse</kbd></dt><dd>Aim</dd>
+          <dt><kbd>Gunner: hold</kbd></dt><dd>Fire</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>One shared score from the waves you survive together. Three hull points, also shared.</p>
+        <p class="howto-medals"><span>🥉 15</span><span>🥈 40</span><span>🥇 80</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Talk. This game is unplayable in silence and straightforward with one sentence of warning.</li>
+        <li>Pilot: fly so the gunner has a line, not so you personally feel safe.</li>
+        <li>Gunner: call out what you are prioritising, so the pilot isn't guessing which threat matters.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game45.js?v=2"></script>
@@ -1942,6 +3047,35 @@
       </div>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Trap Race</h2>
+    <p class="howto-intro">Ultimate Chicken Horse, condensed. Each round you both place one trap into the course, and then you both have to race the course you just sabotaged. The scoring is what makes it work: you only win big if you finish and they don't, so a trap that makes the course impossible is worth nothing to you.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>Place phase</kbd></dt><dd>Drag your trap into the course</dd>
+          <dt><kbd>Race phase</kbd></dt><dd>Arrows / WASD to run, Space to jump</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Finish when your opponent doesn't: +3. Both of you finish: only the faster one scores, +1. Nobody finishes: nothing at all. Keep the course just barely possible.</p>
+        <p class="howto-medals"><span>🥉 3</span><span>🥈 7</span><span>🥇 10</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Build traps you can clear and they probably can't — not traps nobody can clear.</li>
+        <li>Watch how they moved last round. Their habits are the thing you are actually trapping.</li>
+        <li>A course that has become impossible for both of you is a round wasted for both of you. Sometimes the right move is placing a trap somewhere harmless.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game46.js?v=2"></script>
@@ -2004,6 +3138,35 @@
       <button class="btn-back" style="margin-left:.5rem" onclick="goHome()">← Home</button>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Bell Test</h2>
+    <p class="howto-intro">The CHSH game, which is a real experiment in disguise. A referee deals Alice one bit and Bob one bit, and you each answer with a single bit without seeing the other's. You win the round when a XOR b = x AND y. You are on the same side, with one shared score — and no strategy you agree on beforehand can win more than 75% of the time. That is a theorem, not a difficulty setting. Real entangled particles manage about 85%, which is why this experiment matters.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>0 / 1 buttons</kbd></dt><dd>Answer with your bit</dd>
+          <dt><kbd>Pass the device</kbd></dt><dd>Player 2 must not see Player 1's bit or answer</dd>
+        </dl>
+        <p class="howto-note">Two players, same device or online.</p>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Rounds won out of 20. Agreeing a plan in advance is allowed and encouraged — the best classical plan is "both always answer 0", which wins 75% of rounds.</p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Agree your plan properly before you start. Guessing independently does worse than the simplest agreement.</li>
+        <li>If you are beating 75% over many rounds, you got lucky — check the maths, not your skill.</li>
+        <li>The point is the ceiling. Try to beat it, fail, and you have understood Bell's theorem better than most explanations manage.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/game47.js?v=3"></script>
@@ -2087,6 +3250,38 @@
       <div id="ga-over-btns"></div>
     </div>
   </div>
+  <!-- How to play. Real prose, in the markup rather than built by JS, so a
+       crawler and a reader both get it. Keep it true if the game changes. -->
+  <div class="howto">
+    <h2>How to play: Entangled Gauntlet</h2>
+    <p class="howto-intro">Two entangled ships and one pilot. Blue falls up, pink falls down, and you fly them both through the same spike levels at once. Whenever the two meet at the middle line they swap sides, each keeping its own gravity, which means the level you are reading is never quite the level you are flying. One life.</p>
+    <div class="howto-grid">
+      <div class="howto-block">
+        <h3>Controls</h3>
+        <dl class="howto-controls">
+          <dt><kbd>W</kbd></dt><dd>Thrust both ships against their gravity — has weight and drifts</dd>
+          <dt><kbd>S</kbd></dt><dd>Thrust the other way</dd>
+          <dt><kbd>↑ / ↓</kbd></dt><dd>Move both at a steady speed, stopping the moment you release</dd>
+          <dt><kbd>Space</kbd></dt><dd>Break the link — while split, every key moves directly with no drift</dd>
+          <dt><kbd>⚔️ Find Match</kbd></dt><dd>Race another player through the gauntlet</dd>
+        </dl>
+      </div>
+      <div class="howto-block">
+        <h3>Scoring</h3>
+        <p>Gauntlet mode runs levels back to back on one life, and your score is how many you clear, through Easy, Medium, Hard and Extreme. Red DESYNC columns have to be re-aligned or broken through. Speed portals — orange fast, cyan slow, purple normal — only count if you actually fly through them. Endless mode is unscored.</p>
+        <p class="howto-medals"><span>🥉 5</span><span>🥈 12</span><span>🥇 20</span></p>
+      </div>
+    </div>
+    <div class="howto-block">
+      <h3>Tips</h3>
+      <ul class="howto-tips">
+        <li>Learn the difference between the two control schemes. Thrust drifts; arrows don't. Most deaths are using the wrong one.</li>
+        <li>Breaking the link is not cheating, it is the escape hatch — and direct control has no drift to predict.</li>
+        <li>Watch the middle line. A swap is coming whenever the ships converge on it, and it inverts everything you were planning.</li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="js/ascent-builtin.js?v=5"></script>
