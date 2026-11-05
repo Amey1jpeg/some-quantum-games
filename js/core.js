@@ -268,14 +268,37 @@ let qInitPromise = null
 // it recognises the slug, so any game missing from GAME_SLUGS would break
 // this again. Taking the directory part of the path works either way.
 // ═══════════════════════════════════════════════════════
-//  BETA SITE
-//  Same app, reached at /beta. Games listed here are hidden
-//  from the main site entirely — no card, no leaderboard tab,
-//  and showGame refuses them — so the only way in is knowing
-//  the URL. Nothing links to it.
+//  WHAT LIVES WHERE
+//  The main site at /games is a shopfront: only the games in
+//  MAIN_GAMES get a card, a leaderboard tab and a working
+//  showGame there. /games/beta is the whole collection — these
+//  five included — and nothing links to it, so the only way in
+//  is knowing the URL.
+//
+//  A link to a game that is not on main does not drop you on the
+//  home screen; it redirects to the beta copy, so old bookmarks
+//  and anything already shared keep working.
+//
+//  To put a game on the main site: add its number here.
+//
+//  These are the same five the stand runs, but they answer
+//  different questions — what a walk-up player can pick up in
+//  ten seconds, versus what the public site leads with — so
+//  STALL_GAMES stays a separate list and the two can diverge.
 // ═══════════════════════════════════════════════════════
 
-const BETA_GAMES = new Set([
+const MAIN_GAMES = new Set([
+  39,  // Qubit Limbo
+  40,  // Quantum Tunnel
+  43,  // Wave Gauntlet
+  44,  // Spin Flip
+  48,  // Entangled Gauntlet
+])
+
+// Still being built. Beta lists every game, so this no longer decides what
+// is reachable anywhere — it only puts the BETA flag on a card, which would
+// mean nothing if it sat on all thirty-four.
+const UNRELEASED_GAMES = new Set([
   37,  // Rhythm
   38,  // Crossy
   45,  // Quantum Freighter
@@ -285,10 +308,17 @@ const BETA_GAMES = new Set([
 // Beta sticks for the tab once entered, so navigating into a game (which
 // rewrites the URL to its slug) doesn't silently drop you back to main.
 let QG_BETA = false
+// The ?game= value the 404 shim leaves behind. Captured here, at the top,
+// because the tidies further down rewrite the address bar and throw the
+// query string away — and the router at the bottom of this file still has
+// to read it. /games/beta/spider arrives as ?game=beta/spider, with the
+// slash sometimes percent-encoded, so it goes through URLSearchParams
+// rather than a regex over the raw query.
+let QG_ROUTE = ''
 try {
   const p = (typeof location !== 'undefined' && location.pathname) || ''
-  const q = (typeof location !== 'undefined' && location.search) || ''
-  const fromUrl = /(^|\/)beta\/?$/.test(p) || /[?&]game=beta(&|$)/.test(q)
+  QG_ROUTE = new URLSearchParams(location.search).get('game') || ''
+  const fromUrl = /(^|\/)beta(\/|$)/.test(p) || /^beta(\/|$)/.test(QG_ROUTE)
   QG_BETA = fromUrl || sessionStorage.getItem('qg_beta') === '1'
   if (fromUrl) sessionStorage.setItem('qg_beta', '1')
 } catch { QG_BETA = false }
@@ -318,8 +348,10 @@ function _quantumSrc() { return QG_ROOT + 'data/quantum.bin' }
 // ═══════════════════════════════════════════════════════
 //  STALL MODE
 //  Same app, reached at /stall — a cut-down build for running
-//  the games on a stand. Unlike BETA_GAMES (a blocklist), this
-//  is an ALLOWLIST: only the games named here exist at all.
+//  the games on a stand. Like MAIN_GAMES this is an ALLOWLIST:
+//  only the games named here exist at all. It happens to hold
+//  the same five, but see the note on MAIN_GAMES — they are
+//  separate decisions and either list can change alone.
 //  Server multiplayer is off entirely, so nothing on the stand
 //  depends on the match server being up or on a second machine.
 //  Same-device 2P (Wave Gauntlet's 👥 button) still works.
@@ -482,9 +514,11 @@ function qgApplyStall() {
   if (banner) banner.style.display = 'none'
 }
 
-// Strip the ?game=beta the 404 shim leaves behind, so the address bar
-// reads /beta rather than /?game=beta
-if (QG_BETA && typeof history !== 'undefined' && /[?&]game=beta(&|$)/.test(location.search)) {
+// Strip the ?game=beta the 404 shim leaves behind, so the address bar reads
+// /beta rather than /?game=beta. ?game=beta/<slug> is tidied to the same
+// place: this runs before the load handler that opens the game, so
+// pushGameUrl then writes /beta/<slug> off a base that still says beta.
+if (QG_BETA && typeof history !== 'undefined' && /^beta(\/|$)/.test(QG_ROUTE)) {
   try { history.replaceState({}, '', QG_ROOT + 'beta') } catch {}
 }
 
@@ -546,13 +580,14 @@ function qgApplyTheme() {
   qgSetTheme(saved)
 }
 
-// Strip beta games out of the main site, and label them on the beta one.
+// Cut the main site down to MAIN_GAMES, and flag the unfinished ones on beta.
 function qgApplyBeta() {
   document.querySelectorAll('.game-card').forEach(card => {
     const m = (card.getAttribute('onclick') || '').match(/showGame\((\d+)\)/)
     if (!m) return
-    if (!BETA_GAMES.has(+m[1])) return
-    if (!QG_BETA) { card.remove(); return }
+    const n = +m[1]
+    if (!QG_BETA && !MAIN_GAMES.has(n)) { card.remove(); return }
+    if (!QG_BETA || !UNRELEASED_GAMES.has(n)) return
     if (!card.querySelector('.beta-flag')) {
       const f = document.createElement('span')
       f.className = 'beta-flag'
@@ -807,9 +842,23 @@ function qgReleaseCanvases(keepId) {
 }
 window.qgReleaseCanvases = qgReleaseCanvases
 
+// A game that is not on the main site is not a dead end: hand it to beta.
+// The slug round-trips through the 404 shim as ?game=beta/<slug>, which
+// sets QG_BETA, so the reloaded page opens the game instead of bouncing
+// it back here — no loop.
+function qgBetaUrl(n) {
+  const slug = SLUG_BY_ID[n]
+  return slug ? QG_ROOT + 'beta/' + slug : null
+}
+function qgSendToBeta(n) {
+  const url = qgBetaUrl(n)
+  if (!url) { if (typeof goHome === 'function') goHome(); return }
+  location.replace(url)
+}
+
 window.showGame = function(n) {
-  // Beta games simply do not exist on the main site
-  if (BETA_GAMES.has(n) && !QG_BETA) { if (typeof goHome === 'function') goHome(); return }
+  // The main site carries MAIN_GAMES and nothing else; the rest are at beta
+  if (!QG_BETA && !QG_STALL && !MAIN_GAMES.has(n)) { qgSendToBeta(n); return }
   // On the stall, only the listed games exist — a stale link or a typed
   // ?game= slug for anything else lands back on the home screen
   if (QG_STALL && !STALL_GAMES.has(n)) { if (typeof goHome === 'function') goHome(); return }
@@ -919,7 +968,10 @@ window.addEventListener('popstate', e => {
 ;(function() {
   const segs = window.location.pathname.split('/').filter(Boolean)
   const slug = segs[segs.length - 1]
-  const routedGame = new URLSearchParams(window.location.search).get('game')
+  // ?game=beta/spider names the site and the game at once; the prefix has
+  // already been read into QG_BETA, so what is left is the slug. Read from
+  // QG_ROUTE, not the address bar, which the beta tidy has since rewritten.
+  const routedGame = QG_ROUTE.replace(/^beta\//, '')
   const gameId = GAME_SLUGS[slug] || GAME_SLUGS[routedGame]
   if (gameId) {
     window.addEventListener('load', () => showGame(gameId))
@@ -1272,11 +1324,11 @@ const LB_GAMES = [
   { n: 42, game: 'typerracer',   label: 'Type Racer' },
 ]
 
-// The boards this site can reach: the stall shows only its own games and
-// no MP wins, the main site leaves out beta games
+// The boards this site can reach: the stall shows only its own games and no
+// MP wins, the main site only the games it carries, beta the lot
 function lbAvailableGames() {
   const list = LB_GAMES.filter(g =>
-    !(QG_STALL && !STALL_GAMES.has(g.n)) && !(BETA_GAMES.has(g.n) && !QG_BETA))
+    QG_STALL ? STALL_GAMES.has(g.n) : (QG_BETA || MAIN_GAMES.has(g.n)))
   if (!QG_STALL) list.push({ n: null, game: 'mp', label: '⚔️ MP Wins' })
   return list
 }
@@ -1535,7 +1587,8 @@ function qgLbPanelShow() {
   const screen = document.querySelector('.screen.active')
   const m = screen && screen.id.match(/^game(\d+)$/)
   const onScreen = m && games.find(g => g.n === +m[1])?.game
-  const fallback = QG_STALL ? 'wavegauntlet' : 'parkour'
+  // Parkour is a beta game now, so it cannot be the main site's default
+  const fallback = QG_BETA ? 'parkour' : 'wavegauntlet'
   const want = [onScreen, qgLbPanelGame, fallback].find(g => g && select.querySelector(`option[value="${g}"]`))
   qgLbPanelGame = want || (select.options[0] && select.options[0].value)
   select.value = qgLbPanelGame
