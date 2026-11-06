@@ -269,41 +269,27 @@ let qInitPromise = null
 // this again. Taking the directory part of the path works either way.
 // ═══════════════════════════════════════════════════════
 //  WHAT LIVES WHERE
-//  The main site at /games is a shopfront: only the games in
-//  MAIN_GAMES get a card, a leaderboard tab and a working
-//  showGame there. /games/beta is the whole collection — these
-//  five included — and nothing links to it, so the only way in
-//  is knowing the URL.
+//  The main site at /games carries every game except the
+//  unfinished ones in UNRELEASED_GAMES. /games/beta is the whole
+//  collection, those included, and flags the unfinished ones with
+//  a BETA chip. Nothing links to beta, so the only way in is
+//  knowing the URL.
 //
-//  A link to a game that is not on main does not drop you on the
-//  home screen; it redirects to the beta copy, so old bookmarks
-//  and anything already shared keep working.
+//  A link to an unreleased game on main does not drop you on the
+//  home screen; it redirects to the beta copy, so bookmarks and
+//  anything already shared keep working.
 //
-//  To put a game on the main site: add its number here.
-//
-//  These are the same five the stand runs, but they answer
-//  different questions — what a walk-up player can pick up in
-//  ten seconds, versus what the public site leads with — so
-//  STALL_GAMES stays a separate list and the two can diverge.
+//  To release a game to the main site: take it out of this list.
+//  STALL_GAMES is a separate allowlist and is not affected.
 // ═══════════════════════════════════════════════════════
 
-const MAIN_GAMES = new Set([
-  39,  // Qubit Limbo
-  40,  // Quantum Tunnel
-  43,  // Wave Gauntlet
-  44,  // Spin Flip
-  48,  // Entangled Gauntlet
-])
-
-// Still being built. Beta lists every game, so this no longer decides what
-// is reachable anywhere — it only puts the BETA flag on a card, which would
-// mean nothing if it sat on all thirty-four.
 const UNRELEASED_GAMES = new Set([
   37,  // Rhythm
   38,  // Crossy
   45,  // Quantum Freighter
   46,  // Trap Race
 ])
+function qgOnMain(n) { return !UNRELEASED_GAMES.has(n) }
 
 // Beta sticks for the tab once entered, so navigating into a game (which
 // rewrites the URL to its slug) doesn't silently drop you back to main.
@@ -348,10 +334,8 @@ function _quantumSrc() { return QG_ROOT + 'data/quantum.bin' }
 // ═══════════════════════════════════════════════════════
 //  STALL MODE
 //  Same app, reached at /stall — a cut-down build for running
-//  the games on a stand. Like MAIN_GAMES this is an ALLOWLIST:
-//  only the games named here exist at all. It happens to hold
-//  the same five, but see the note on MAIN_GAMES — they are
-//  separate decisions and either list can change alone.
+//  the games on a stand. This is an ALLOWLIST: only the games
+//  named here exist at all.
 //  Server multiplayer is off entirely, so nothing on the stand
 //  depends on the match server being up or on a second machine.
 //  Same-device 2P (Wave Gauntlet's 👥 button) still works.
@@ -580,13 +564,13 @@ function qgApplyTheme() {
   qgSetTheme(saved)
 }
 
-// Cut the main site down to MAIN_GAMES, and flag the unfinished ones on beta.
+// Strip unreleased games out of the main site, and flag them on beta.
 function qgApplyBeta() {
   document.querySelectorAll('.game-card').forEach(card => {
     const m = (card.getAttribute('onclick') || '').match(/showGame\((\d+)\)/)
     if (!m) return
     const n = +m[1]
-    if (!QG_BETA && !MAIN_GAMES.has(n)) { card.remove(); return }
+    if (!QG_BETA && !qgOnMain(n)) { card.remove(); return }
     if (!QG_BETA || !UNRELEASED_GAMES.has(n)) return
     if (!card.querySelector('.beta-flag')) {
       const f = document.createElement('span')
@@ -857,8 +841,8 @@ function qgSendToBeta(n) {
 }
 
 window.showGame = function(n) {
-  // The main site carries MAIN_GAMES and nothing else; the rest are at beta
-  if (!QG_BETA && !QG_STALL && !MAIN_GAMES.has(n)) { qgSendToBeta(n); return }
+  // Unreleased games are not on the main site; they live at beta
+  if (!QG_BETA && !QG_STALL && !qgOnMain(n)) { qgSendToBeta(n); return }
   // On the stall, only the listed games exist — a stale link or a typed
   // ?game= slug for anything else lands back on the home screen
   if (QG_STALL && !STALL_GAMES.has(n)) { if (typeof goHome === 'function') goHome(); return }
@@ -1325,10 +1309,10 @@ const LB_GAMES = [
 ]
 
 // The boards this site can reach: the stall shows only its own games and no
-// MP wins, the main site only the games it carries, beta the lot
+// MP wins, the main site leaves out unreleased games, beta the lot
 function lbAvailableGames() {
   const list = LB_GAMES.filter(g =>
-    QG_STALL ? STALL_GAMES.has(g.n) : (QG_BETA || MAIN_GAMES.has(g.n)))
+    QG_STALL ? STALL_GAMES.has(g.n) : (QG_BETA || qgOnMain(g.n)))
   if (!QG_STALL) list.push({ n: null, game: 'mp', label: '⚔️ MP Wins' })
   return list
 }
@@ -1587,8 +1571,7 @@ function qgLbPanelShow() {
   const screen = document.querySelector('.screen.active')
   const m = screen && screen.id.match(/^game(\d+)$/)
   const onScreen = m && games.find(g => g.n === +m[1])?.game
-  // Parkour is a beta game now, so it cannot be the main site's default
-  const fallback = QG_BETA ? 'parkour' : 'wavegauntlet'
+  const fallback = QG_STALL ? 'wavegauntlet' : 'parkour'
   const want = [onScreen, qgLbPanelGame, fallback].find(g => g && select.querySelector(`option[value="${g}"]`))
   qgLbPanelGame = want || (select.options[0] && select.options[0].value)
   select.value = qgLbPanelGame
